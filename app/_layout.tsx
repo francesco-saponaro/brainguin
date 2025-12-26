@@ -20,6 +20,7 @@ import { Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import "../global.css";
 
 export const unstable_settings = {
@@ -115,6 +116,8 @@ export default function RootLayout() {
               options={{ presentation: "modal", title: "Modal" }}
             />
           </Stack>
+
+          <Toast />
           <StatusBar style="auto" />
         </ThemeProvider>
       </SafeAreaProvider>

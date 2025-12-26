@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { makeRedirectUri } from "expo-auth-session";
+import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useColorScheme } from "nativewind";
 import React, { useState } from "react";
@@ -21,65 +22,74 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message"; // <--- 1. IMPORT TOAST
 
 // Internal Imports
-import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
-import { LoginSchema, LoginSchemaType } from "@/zodSchemas";
+import { SignupSchema, SignupSchemaType } from "@/zodSchemas";
 
-// Handles WebBrowser cleanup on Web
 WebBrowser.maybeCompleteAuthSession();
 
 const PENGUIN_LOGO = require("@/assets/images/main.png");
 
-const LoginScreen = () => {
+const SignupScreen = () => {
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const setSession = useAuthStore((state) => state.setSession);
   const [loading, setLoading] = useState(false);
-  const [recoverVisible, setRecoverVisible] = useState<boolean>(false);
+  const router = useRouter();
 
-  const schema = LoginSchema(t);
+  const schema = SignupSchema(t);
   const {
     control,
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm<LoginSchemaType>({
+  } = useForm<SignupSchemaType>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", pwd: "" },
+    defaultValues: { email: "", pwd: "", confirmPwd: "" },
   });
 
   const email = watch("email");
   const pwd = watch("pwd");
-  const isFormValid = email?.trim() !== "" && pwd?.trim() !== "";
+  const confirmPwd = watch("confirmPwd");
 
-  // --- 1. EMAIL & PASSWORD LOGIN ---
-  const onLogin = async (data: LoginSchemaType) => {
+  // Logic: Enable button only if all fields have content
+  const isFormValid =
+    email?.trim() !== "" && pwd?.trim() !== "" && confirmPwd?.trim() !== "";
+
+  // --- 1. EMAIL SIGNUP ---
+  const onSignup = async (data: SignupSchemaType) => {
     setLoading(true);
     try {
-      const { data: sessionData, error } =
-        await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.pwd,
-        });
+      const { data: sessionData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.pwd,
+      });
 
       if (error) throw error;
 
-      if (sessionData.session) {
+      // Supabase usually requires email verification by default.
+      if (!sessionData.session) {
+        // Show Info Toast for Verification
+        Toast.show({
+          type: "info",
+          text1: t("auth.check_email_title"),
+          text2: t("auth.check_email_message"),
+          visibilityTime: 6000, // Longer visibility for instructions
+        });
+      } else {
         setSession(sessionData.session);
-
         // Show Success Toast
         Toast.show({
           type: "success",
-          text1: t("auth.login_success_title"),
-          text2: t("auth.login_success_message"),
+          text1: t("auth.signup_success_title"),
+          text2: t("auth.signup_success_message"),
         });
       }
     } catch (e: any) {
-      // Show Error Toast instead of Alert
+      // Show Error Toast
       Toast.show({
         type: "error",
-        text1: t("auth.login_failed"),
+        text1: t("auth.signup_failed"),
         text2: e.message || t("errors.generic"),
       });
     } finally {
@@ -87,11 +97,10 @@ const LoginScreen = () => {
     }
   };
 
-  // --- 2. SOCIAL LOGIN ---
+  // --- 2. SOCIAL SIGNUP ---
   const onSocialLogin = async (provider: "google" | "apple") => {
     try {
       setLoading(true);
-
       const redirectUrl = makeRedirectUri({
         scheme: "brainguin",
         path: "auth/callback",
@@ -108,12 +117,7 @@ const LoginScreen = () => {
       if (error) throw error;
 
       if (Platform.OS !== "web" && data.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUrl
-        );
-        // Toast will likely be handled by the auth state listener,
-        // but we can add one here if needed for specific flows.
+        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
       }
     } catch (e: any) {
       Toast.show({
@@ -125,10 +129,6 @@ const LoginScreen = () => {
       setLoading(false);
     }
   };
-
-  if (recoverVisible) {
-    return <ForgotPasswordModal onClose={() => setRecoverVisible(false)} />;
-  }
 
   return (
     <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark lg:flex-row">
@@ -155,10 +155,10 @@ const LoginScreen = () => {
               className="mb-4 lg:hidden"
             />
             <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center">
-              {t("auth.welcome_back")}
+              {t("auth.create_account")}
             </Text>
             <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center mt-2">
-              {t("auth.subtitle")}
+              {t("auth.start_journey")}
             </Text>
           </View>
 
@@ -193,9 +193,9 @@ const LoginScreen = () => {
           </View>
 
           {/* Password Input */}
-          <View className="mb-2">
+          <View className="mb-4">
             <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
-              {t("auth.password_placeholder")}
+              {t("auth.password_label")}
             </Text>
             <Controller
               control={control}
@@ -221,18 +221,40 @@ const LoginScreen = () => {
             )}
           </View>
 
-          <TouchableOpacity
-            onPress={() => setRecoverVisible(true)}
-            className="self-end mb-6"
-          >
-            <Text className="text-action font-body font-medium">
-              {t("auth.forgot_password")}
+          {/* Confirm Password Input */}
+          <View className="mb-8">
+            <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
+              {t("auth.confirm_password_label")}
             </Text>
-          </TouchableOpacity>
+            <Controller
+              control={control}
+              name="confirmPwd"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
+                    errors.confirmPwd
+                      ? "border-status-hard"
+                      : "border-transparent"
+                  } focus:border-action`}
+                  placeholder="••••••••"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+            {errors.confirmPwd && (
+              <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
+                {errors.confirmPwd.message}
+              </Text>
+            )}
+          </View>
 
-          {/* Main Login Button */}
+          {/* Signup Button */}
           <TouchableOpacity
-            onPress={handleSubmit(onLogin)}
+            onPress={handleSubmit(onSignup)}
             disabled={loading || !isFormValid}
             className={`p-4 rounded-xl items-center shadow-sm mb-6 ${
               loading || !isFormValid
@@ -244,16 +266,30 @@ const LoginScreen = () => {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text className="text-white font-heading text-lg font-bold">
-                {t("auth.login_button")}
+                {t("auth.create_account_button")}
               </Text>
             )}
           </TouchableOpacity>
+
+          {/* Login Link */}
+          <View className="flex-row justify-center mb-8">
+            <Text className="font-body text-text-muted-light dark:text-text-muted-dark mr-1">
+              {t("auth.already_have_account")}
+            </Text>
+            <Link href="/(auth)/login" asChild>
+              <TouchableOpacity>
+                <Text className="font-heading font-bold text-action">
+                  {t("auth.login_link")}
+                </Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
 
           {/* Divider */}
           <View className="flex-row items-center mb-6">
             <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
             <Text className="mx-4 text-text-muted-light dark:text-text-muted-dark font-body">
-              {t("auth.or_continue")}
+              {t("auth.or_signup_with")}
             </Text>
             <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
           </View>
@@ -303,14 +339,14 @@ const LoginScreen = () => {
         />
 
         <Text className="text-white font-heading text-4xl font-bold text-center mt-8">
-          {t("auth.hero_title")}
+          {t("auth.hero_signup_title")}
         </Text>
         <Text className="text-slate-300 font-body text-xl text-center mt-4 max-w-lg">
-          {t("auth.hero_subtitle")}
+          {t("auth.hero_signup_subtitle")}
         </Text>
       </View>
     </SafeAreaView>
   );
 };
 
-export default LoginScreen;
+export default SignupScreen;

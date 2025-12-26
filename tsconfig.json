@@ -11,6 +11,7 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "utils/i18n.js"
+    "utils/i18n.js",
+    "nativewind-env.d.ts"
   ]
 }
