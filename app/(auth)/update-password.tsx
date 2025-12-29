@@ -10,10 +10,10 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -75,7 +75,7 @@ const UpdatePasswordScreen = () => {
 
       // Navigate back after a short delay
       setTimeout(() => {
-        router.replace("/(tabs)/home");
+        router.replace("/(tabs)");
       }, 1500);
     } catch (e: any) {
       Toast.show({
@@ -180,10 +180,10 @@ const UpdatePasswordScreen = () => {
           </View>
 
           {/* Update Button */}
-          <TouchableOpacity
+          <Pressable
             onPress={handleSubmit(onUpdate)}
             disabled={loading}
-            className={`w-full p-4 rounded-xl items-center shadow-sm flex-row justify-center gap-2 ${
+            className={`w-full p-4 rounded-xl items-center shadow-sm flex-row justify-center gap-2 hover:brightness-90 transition-all duration-250 ${
               loading ? "bg-slate-400" : "bg-action active:bg-action-hover"
             }`}
           >
@@ -201,7 +201,7 @@ const UpdatePasswordScreen = () => {
                 </Text>
               </>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

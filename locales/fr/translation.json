@@ -39,6 +39,8 @@
     "signup_success_message": "Bienvenue sur BrainGuin.",
     "signup_failed": "Échec de l'inscription",
     "already_have_account": "Vous avez déjà un compte ?",
+    "dont_have_account": "Vous n'avez pas de compte ?",
+    "dont_have_account_link": "Inscrivez-vous",
     "login_link": "Se connecter",
     "or_signup_with": "Ou inscrivez-vous avec",
     "hero_signup_title": "Rejoignez BrainGuin.",

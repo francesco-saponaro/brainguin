@@ -7,10 +7,10 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import Toast from "react-native-toast-message"; // <--- 1. IMPORT TOAST
@@ -88,12 +88,12 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
         }}
       >
         {/* Close Button */}
-        <TouchableOpacity
+        <Pressable
           onPress={onClose}
-          className="absolute top-12 left-6 p-2 rounded-full bg-slate-100 dark:bg-slate-800 z-10"
+          className="absolute top-12 left-6 p-2 rounded-full bg-slate-100 dark:bg-slate-800 z-10 hover:brightness-90 transition-all duration-250"
         >
           <Ionicons name="close" size={24} color="#64748B" />
-        </TouchableOpacity>
+        </Pressable>
 
         <View className="items-center max-w-md self-center w-full">
           {/* Icon */}
@@ -113,14 +113,14 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
 
           {isSuccess ? (
             // --- SUCCESS STATE ---
-            <TouchableOpacity
+            <Pressable
               onPress={onClose}
               className="w-full bg-action p-4 rounded-xl items-center shadow-sm"
             >
               <Text className="text-white font-heading text-lg font-bold">
                 {t("auth.back_to_login")}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ) : (
             // --- FORM STATE ---
             <View className="w-full">
@@ -134,10 +134,8 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
                   name="email"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                      className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
-                        errors.email
-                          ? "border-status-hard"
-                          : "border-transparent"
+                      className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                        errors.email ? "border-status-hard" : ""
                       } focus:border-action`}
                       placeholder={t("auth.email_placeholder")}
                       placeholderTextColor="#94A3B8"
@@ -157,10 +155,10 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
               </View>
 
               {/* Submit Button */}
-              <TouchableOpacity
+              <Pressable
                 onPress={handleSubmit(onResetPassword)}
                 disabled={loading}
-                className={`w-full p-4 rounded-xl items-center shadow-sm ${
+                className={`w-full p-4 rounded-xl items-center shadow-sm hover:brightness-90 transition-all duration-250 ${
                   loading ? "bg-slate-400" : "bg-action active:bg-action-hover"
                 }`}
               >
@@ -171,7 +169,7 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
                     {t("auth.send_reset_link")}
                   </Text>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           )}
         </View>

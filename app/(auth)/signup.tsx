@@ -12,10 +12,10 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -28,7 +28,7 @@ import { SignupSchema, SignupSchemaType } from "@/zodSchemas";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const PENGUIN_LOGO = require("@/assets/images/main.png");
+const PENGUIN_LOGO = require("@/assets/images/greeter.png");
 
 const SignupScreen = () => {
   const { t } = useTranslation();
@@ -151,7 +151,7 @@ const SignupScreen = () => {
           <View className="items-center mb-8">
             <Image
               source={PENGUIN_LOGO}
-              style={{ width: 80, height: 80, resizeMode: "contain" }}
+              style={{ width: 100, height: 100, resizeMode: "contain" }}
               className="mb-4 lg:hidden"
             />
             <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center">
@@ -172,8 +172,8 @@ const SignupScreen = () => {
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
-                    errors.email ? "border-status-hard" : "border-transparent"
+                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                    errors.email ? "border-status-hard" : ""
                   } focus:border-action`}
                   placeholder={t("auth.email_placeholder")}
                   placeholderTextColor="#94A3B8"
@@ -202,8 +202,8 @@ const SignupScreen = () => {
               name="pwd"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
-                    errors.pwd ? "border-status-hard" : "border-transparent"
+                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                    errors.pwd ? "border-status-hard" : ""
                   } focus:border-action`}
                   placeholder="••••••••"
                   placeholderTextColor="#94A3B8"
@@ -231,10 +231,8 @@ const SignupScreen = () => {
               name="confirmPwd"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
-                    errors.confirmPwd
-                      ? "border-status-hard"
-                      : "border-transparent"
+                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                    errors.confirmPwd ? "border-status-hard" : ""
                   } focus:border-action`}
                   placeholder="••••••••"
                   placeholderTextColor="#94A3B8"
@@ -253,10 +251,10 @@ const SignupScreen = () => {
           </View>
 
           {/* Signup Button */}
-          <TouchableOpacity
+          <Pressable
             onPress={handleSubmit(onSignup)}
             disabled={loading || !isFormValid}
-            className={`p-4 rounded-xl items-center shadow-sm mb-6 ${
+            className={`p-4 rounded-xl items-center shadow-sm mb-6 hover:brightness-90 transition-all duration-250 ${
               loading || !isFormValid
                 ? "bg-slate-400 opacity-50"
                 : "bg-action active:bg-action-hover"
@@ -269,19 +267,19 @@ const SignupScreen = () => {
                 {t("auth.create_account_button")}
               </Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Login Link */}
           <View className="flex-row justify-center mb-8">
             <Text className="font-body text-text-muted-light dark:text-text-muted-dark mr-1">
               {t("auth.already_have_account")}
             </Text>
-            <Link href="/(auth)/login" asChild>
-              <TouchableOpacity>
+            <Link href="/(auth)" asChild>
+              <Pressable>
                 <Text className="font-heading font-bold text-action">
                   {t("auth.login_link")}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </Link>
           </View>
 
@@ -296,9 +294,9 @@ const SignupScreen = () => {
 
           {/* Social Buttons */}
           <View className="flex-row gap-4 justify-center">
-            <TouchableOpacity
+            <Pressable
               onPress={() => onSocialLogin("google")}
-              className="flex-1 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 p-4 rounded-xl flex-row justify-center items-center gap-2"
+              className="flex-1 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
             >
               <Ionicons
                 name="logo-google"
@@ -308,11 +306,11 @@ const SignupScreen = () => {
               <Text className="font-heading font-semibold text-text-main-light dark:text-text-main-dark">
                 {t("auth.google")}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               onPress={() => onSocialLogin("apple")}
-              className="flex-1 bg-black dark:bg-white border border-black dark:border-white p-4 rounded-xl flex-row justify-center items-center gap-2"
+              className="flex-1 bg-black dark:bg-white border border-black dark:border-white p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
             >
               <Ionicons
                 name="logo-apple"
@@ -322,7 +320,7 @@ const SignupScreen = () => {
               <Text className="font-heading font-semibold text-white dark:text-black">
                 {t("auth.apple")}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -334,16 +332,16 @@ const SignupScreen = () => {
 
         <Image
           source={PENGUIN_LOGO}
-          style={{ width: 500, height: 500, resizeMode: "contain" }}
-          className="shadow-2xl"
+          style={{ width: 420, height: 420, resizeMode: "contain" }}
+          // className="shadow-2xl"
         />
 
-        <Text className="text-white font-heading text-4xl font-bold text-center mt-8">
+        {/* <Text className="text-white font-heading text-4xl font-bold text-center mt-8">
           {t("auth.hero_signup_title")}
         </Text>
         <Text className="text-slate-300 font-body text-xl text-center mt-4 max-w-lg">
           {t("auth.hero_signup_subtitle")}
-        </Text>
+        </Text> */}
       </View>
     </SafeAreaView>
   );

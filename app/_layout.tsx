@@ -1,4 +1,5 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAuthStore } from "@/store/storeUser";
 import "@/utils/i18n";
 import i18n from "@/utils/i18n";
 import { Inter_400Regular, Inter_500Medium } from "@expo-google-fonts/inter";
@@ -52,13 +53,13 @@ export default function RootLayout() {
     Poppins: Poppins_600SemiBold,
     Inter: Inter_400Regular,
   });
+  const { user } = useAuthStore();
   const [isI18nInitialized, setIsI18nInitialized] = useState(false);
-  const [user, setUser] = useState(false);
-  const [isCheckingUser, setIsCheckingUser] = useState(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   useEffect(() => {
     setTimeout(() => {
-      setIsCheckingUser(true);
+      setIsCheckingUser(false);
     }, 2000);
   }, []);
 
@@ -90,6 +91,7 @@ export default function RootLayout() {
   // }, [user?.lang]);
 
   const appIsReady = fontsLoaded && !isCheckingUser && isI18nInitialized;
+  console.log(appIsReady, "appIsrefay");
 
   const onLayoutRootView = useCallback(async () => {
     if (appIsReady) {
@@ -98,6 +100,10 @@ export default function RootLayout() {
     }
   }, [appIsReady]);
 
+  if (!appIsReady) {
+    return null;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
@@ -105,7 +111,7 @@ export default function RootLayout() {
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
         >
           <Stack>
-            <Stack.Protected guard={user}>
+            <Stack.Protected guard={!!user}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             </Stack.Protected>
             <Stack.Protected guard={!user}>

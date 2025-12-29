@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { makeRedirectUri } from "expo-auth-session";
+import { Link } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useColorScheme } from "nativewind";
 import React, { useState } from "react";
@@ -11,10 +12,10 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -151,7 +152,7 @@ const LoginScreen = () => {
           <View className="items-center mb-8">
             <Image
               source={PENGUIN_LOGO}
-              style={{ width: 80, height: 80, resizeMode: "contain" }}
+              style={{ width: 100, height: 100, resizeMode: "contain" }}
               className="mb-4 lg:hidden"
             />
             <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center">
@@ -172,7 +173,7 @@ const LoginScreen = () => {
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
+                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
                     errors.email ? "border-status-hard" : "border-transparent"
                   } focus:border-action`}
                   placeholder={t("auth.email_placeholder")}
@@ -202,8 +203,8 @@ const LoginScreen = () => {
               name="pwd"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
-                    errors.pwd ? "border-status-hard" : "border-transparent"
+                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                    errors.pwd ? "border-status-hard" : ""
                   } focus:border-action`}
                   placeholder="••••••••"
                   placeholderTextColor="#94A3B8"
@@ -221,20 +222,20 @@ const LoginScreen = () => {
             )}
           </View>
 
-          <TouchableOpacity
+          <Pressable
             onPress={() => setRecoverVisible(true)}
             className="self-end mb-6"
           >
             <Text className="text-action font-body font-medium">
               {t("auth.forgot_password")}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Main Login Button */}
-          <TouchableOpacity
+          <Pressable
             onPress={handleSubmit(onLogin)}
             disabled={loading || !isFormValid}
-            className={`p-4 rounded-xl items-center shadow-sm mb-6 ${
+            className={`p-4 rounded-xl items-center shadow-sm mb-6 hover:brightness-90 transition-all duration-250 ${
               loading || !isFormValid
                 ? "bg-slate-400 opacity-50"
                 : "bg-action active:bg-action-hover"
@@ -247,7 +248,20 @@ const LoginScreen = () => {
                 {t("auth.login_button")}
               </Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
+
+          <View className="flex-row justify-center mb-8">
+            <Text className="font-body text-text-muted-light dark:text-text-muted-dark mr-1">
+              {t("auth.dont_have_account")}
+            </Text>
+            <Link href="/(auth)/signup" asChild>
+              <Pressable>
+                <Text className="font-heading font-bold text-action">
+                  {t("auth.dont_have_account_link")}
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
 
           {/* Divider */}
           <View className="flex-row items-center mb-6">
@@ -260,9 +274,9 @@ const LoginScreen = () => {
 
           {/* Social Buttons */}
           <View className="flex-row gap-4 justify-center">
-            <TouchableOpacity
+            <Pressable
               onPress={() => onSocialLogin("google")}
-              className="flex-1 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 p-4 rounded-xl flex-row justify-center items-center gap-2"
+              className="flex-1 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
             >
               <Ionicons
                 name="logo-google"
@@ -272,11 +286,11 @@ const LoginScreen = () => {
               <Text className="font-heading font-semibold text-text-main-light dark:text-text-main-dark">
                 {t("auth.google")}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               onPress={() => onSocialLogin("apple")}
-              className="flex-1 bg-black dark:bg-white border border-black dark:border-white p-4 rounded-xl flex-row justify-center items-center gap-2"
+              className="flex-1 bg-black dark:bg-white border border-black dark:border-white p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
             >
               <Ionicons
                 name="logo-apple"
@@ -286,7 +300,7 @@ const LoginScreen = () => {
               <Text className="font-heading font-semibold text-white dark:text-black">
                 {t("auth.apple")}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -299,15 +313,15 @@ const LoginScreen = () => {
         <Image
           source={PENGUIN_LOGO}
           style={{ width: 500, height: 500, resizeMode: "contain" }}
-          className="shadow-2xl"
+          // className="shadow-2xl"
         />
 
-        <Text className="text-white font-heading text-4xl font-bold text-center mt-8">
+        {/* <Text className="text-white font-heading text-4xl font-bold text-center mt-8">
           {t("auth.hero_title")}
         </Text>
         <Text className="text-slate-300 font-body text-xl text-center mt-4 max-w-lg">
           {t("auth.hero_subtitle")}
-        </Text>
+        </Text> */}
       </View>
     </SafeAreaView>
   );
