@@ -1,8 +1,8 @@
 import { supabase } from "@/lib/supabase";
-import { Ionicons } from "@expo/vector-icons";
+import { useAuthStore } from "@/store/storeUser";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router"; // Standard Hook
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,10 +17,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message"; // <--- 1. IMPORT TOAST
+import Toast from "react-native-toast-message";
 import { z } from "zod";
 
-// --- Validation Schema with i18n ---
 const UpdatePasswordSchema = (t: any) =>
   z
     .object({
@@ -37,14 +36,15 @@ const UpdatePasswordSchema = (t: any) =>
     });
 
 type UpdatePasswordType = z.infer<ReturnType<typeof UpdatePasswordSchema>>;
-
 const PENGUIN_LOGO = require("@/assets/images/main.png");
 
 const UpdatePasswordScreen = () => {
   const router = useRouter();
+  const { session, setSession, isOnboarded } = useAuthStore();
+  // ✅ NOW THIS WILL WORK because RootLayout converted # to ?
+  const params = useLocalSearchParams();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-
   const schema = UpdatePasswordSchema(t);
   const {
     control,
@@ -55,27 +55,71 @@ const UpdatePasswordScreen = () => {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // --- Update Logic ---
+  // Automatically restore session when params arrive
+  useEffect(() => {
+    const restoreSession = async () => {
+      // Handle array possibility from router
+      const accessToken = Array.isArray(params.access_token)
+        ? params.access_token[0]
+        : params.access_token;
+      const refreshToken = Array.isArray(params.refresh_token)
+        ? params.refresh_token[0]
+        : params.refresh_token;
+      const errorDesc = Array.isArray(params.error_description)
+        ? params.error_description[0]
+        : params.error_description;
+
+      if (errorDesc) {
+        Toast.show({
+          type: "error",
+          text1: "Link Error",
+          text2: errorDesc.replace(/\+/g, " "),
+        });
+        return;
+      }
+
+      if (accessToken && refreshToken) {
+        console.log("🔓 Tokens detected. Restoring session...");
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) console.error("Session restore failed:", error.message);
+        else console.log("✅ Session restored!");
+      }
+    };
+
+    restoreSession();
+  }, [params]);
+
   const onUpdate = async (data: UpdatePasswordType) => {
     setLoading(true);
     try {
-      // Supabase function to update the LOGGED IN user's password
+      // 1. Ensure we have a session (handled by useEffect above)
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session)
+        throw new Error("Session invalid. Please click the link again.");
+
+      // 2. Update Password
       const { error } = await supabase.auth.updateUser({
         password: data.password,
       });
 
       if (error) throw error;
 
-      // Show Success Toast
-      Toast.show({
-        type: "success",
-        text1: t("auth.password_updated_title"),
-        text2: t("auth.password_updated_message"),
-      });
-
-      // Navigate back after a short delay
+      Toast.show({ type: "success", text1: t("auth.password_updated_title") });
       setTimeout(() => {
-        router.replace("/(tabs)");
+        // 🚀 INSTANT CHECK ON LOGIN
+        const metadataOnboarded =
+          session.user.user_metadata?.is_onboarded ?? false;
+
+        if (metadataOnboarded) {
+          router.replace("/(tabs)");
+        } else {
+          router.replace("/onboarding");
+        }
       }, 1500);
     } catch (e: any) {
       Toast.show({
@@ -102,7 +146,7 @@ const UpdatePasswordScreen = () => {
           }}
           className="max-w-md self-center w-full"
         >
-          {/* Header */}
+          {/* UI Components */}
           <View className="items-center mb-8">
             <Image
               source={PENGUIN_LOGO}
@@ -112,94 +156,60 @@ const UpdatePasswordScreen = () => {
             <Text className="font-heading text-2xl font-bold text-text-main-light dark:text-text-main-dark text-center">
               {t("auth.set_new_password")}
             </Text>
-            <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center mt-2 px-4">
-              {t("auth.set_new_password_subtitle")}
-            </Text>
           </View>
 
-          {/* New Password Input */}
           <View className="mb-4">
-            <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
-              {t("auth.new_password_label")}
-            </Text>
             <Controller
               control={control}
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
-                    errors.password
-                      ? "border-status-hard"
-                      : "border-transparent"
-                  } focus:border-action`}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
                   secureTextEntry
-                  onBlur={onBlur}
+                  placeholder="••••••••"
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   value={value}
+                  className="bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark"
+                  placeholderTextColor="#94A3B8"
                 />
               )}
             />
             {errors.password && (
-              <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
+              <Text className="text-red-500 mt-1">
                 {errors.password.message}
               </Text>
             )}
           </View>
 
-          {/* Confirm Password Input */}
           <View className="mb-8">
-            <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
-              {t("auth.confirm_password_label")}
-            </Text>
             <Controller
               control={control}
               name="confirmPassword"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border ${
-                    errors.confirmPassword
-                      ? "border-status-hard"
-                      : "border-transparent"
-                  } focus:border-action`}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
                   secureTextEntry
-                  onBlur={onBlur}
+                  placeholder="••••••••"
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   value={value}
+                  className="bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark"
+                  placeholderTextColor="#94A3B8"
                 />
               )}
             />
-            {errors.confirmPassword && (
-              <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
-                {errors.confirmPassword.message}
-              </Text>
-            )}
           </View>
 
-          {/* Update Button */}
           <Pressable
             onPress={handleSubmit(onUpdate)}
             disabled={loading}
-            className={`w-full p-4 rounded-xl items-center shadow-sm flex-row justify-center gap-2 hover:brightness-90 transition-all duration-250 ${
-              loading ? "bg-slate-400" : "bg-action active:bg-action-hover"
-            }`}
+            className="bg-action p-4 rounded-xl items-center"
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <>
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={24}
-                  color="white"
-                />
-                <Text className="text-white font-heading text-lg font-bold">
-                  {t("auth.update_password_button")}
-                </Text>
-              </>
+              <Text className="text-white font-bold text-lg">
+                {t("auth.update_password_button")}
+              </Text>
             )}
           </Pressable>
         </ScrollView>

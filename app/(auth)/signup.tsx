@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useColorScheme } from "nativewind";
 import React, { useState } from "react";
@@ -23,19 +24,17 @@ import Toast from "react-native-toast-message"; // <--- 1. IMPORT TOAST
 
 // Internal Imports
 import { supabase } from "@/lib/supabase";
-import { useAuthStore } from "@/store/storeUser";
 import { SignupSchema, SignupSchemaType } from "@/zodSchemas";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const PENGUIN_LOGO = require("@/assets/images/greeter.png");
+const TEXT_LOGO = require("@/assets/images/icon-text-dark.png");
 
 const SignupScreen = () => {
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
-  const setSession = useAuthStore((state) => state.setSession);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const schema = SignupSchema(t);
   const {
@@ -68,16 +67,7 @@ const SignupScreen = () => {
       if (error) throw error;
 
       // Supabase usually requires email verification by default.
-      if (!sessionData.session) {
-        // Show Info Toast for Verification
-        Toast.show({
-          type: "info",
-          text1: t("auth.check_email_title"),
-          text2: t("auth.check_email_message"),
-          visibilityTime: 6000, // Longer visibility for instructions
-        });
-      } else {
-        setSession(sessionData.session);
+      if (sessionData.session) {
         // Show Success Toast
         Toast.show({
           type: "success",
@@ -97,38 +87,124 @@ const SignupScreen = () => {
     }
   };
 
-  // --- 2. SOCIAL SIGNUP ---
-  const onSocialLogin = async (provider: "google" | "apple") => {
+  // --- 2. SOCIAL LOGIN ---
+  const onGoogleLogin = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const redirectUrl = makeRedirectUri({
-        scheme: "brainguin",
-        path: "auth/callback",
-      });
+      const redirectUrl =
+        Platform.OS === "web"
+          ? window.location.origin
+          : makeRedirectUri({
+              scheme: "brainguin",
+              path: "auth/callback",
+            });
 
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
+        provider: "google",
         options: {
           redirectTo: redirectUrl,
-          skipBrowserRedirect: Platform.OS !== "web",
+          skipBrowserRedirect: Platform.OS !== "web", // Let Web handle it automatically
         },
       });
 
       if (error) throw error;
 
-      if (Platform.OS !== "web" && data.url) {
-        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+      // --- MOBILE FLOW ---
+      if (Platform.OS !== "web" && data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectUrl
+        );
+
+        if (result.type === "success" && result.url) {
+          const fragment = result.url.split("#")[1] || result.url.split("?")[1];
+          const params = new URLSearchParams(fragment);
+          const access_token = params.get("access_token");
+          const refresh_token = params.get("refresh_token");
+
+          if (access_token && refresh_token) {
+            // 2. Set Supabase Session
+            const { data: sessionData, error: sessionError } =
+              await supabase.auth.setSession({
+                access_token,
+                refresh_token,
+              });
+
+            if (sessionError) throw sessionError;
+
+            // 🚨 ADDED: Explicitly tell the user we are done
+            if (sessionData.session) {
+              // Ensure the store is updated manually just in case the listener is slow
+              Toast.show({
+                type: "success",
+                text1: t("auth.login_success_title"),
+              });
+            }
+          }
+        }
       }
+      // --- WEB FLOW ---
+      // On Web, Supabase redirects the entire window, so code after this point
+      // usually won't even execute as the page reloads.
     } catch (e: any) {
       Toast.show({
         type: "error",
         text1: t("auth.social_login_failed"),
-        text2: e.message || t("errors.generic"),
+        text2: e.message,
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const onAppleLogin = async () => {
+    try {
+      setLoading(true);
+      // 1. Request Credentials from Apple
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (credential.identityToken) {
+        // 2. Exchange Apple ID Token for Supabase Session
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: "apple",
+          token: credential.identityToken,
+        });
+
+        if (error) throw error;
+
+        // 3. Set Session in Zustand and check Onboarding
+        if (data.session) {
+          Toast.show({
+            type: "success",
+            text1: t("auth.login_success_title"),
+          });
+        }
+      }
+    } catch (e: any) {
+      // Don't show error if user just cancelled the modal
+      if (e.code !== "ERR_REQUEST_CANCELED") {
+        Toast.show({
+          type: "error",
+          text1: t("auth.social_login_failed"),
+          text2: e.message || t("errors.generic"),
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logic to check if we should show Apple Login
+  // (Usually available on all browsers for web, but some prefer Safari checks)
+  const isApple =
+    Platform.OS === "ios" ||
+    /Apple|Safari/.test(navigator.vendor) ||
+    /iPhone|iPad|Mac/.test(navigator.userAgent);
 
   return (
     <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark lg:flex-row">
@@ -158,7 +234,7 @@ const SignupScreen = () => {
               {t("auth.create_account")}
             </Text>
             <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center mt-2">
-              {t("auth.start_journey")}
+              {t("auth.hook_ai_power")}
             </Text>
           </View>
 
@@ -295,7 +371,7 @@ const SignupScreen = () => {
           {/* Social Buttons */}
           <View className="flex-row gap-4 justify-center">
             <Pressable
-              onPress={() => onSocialLogin("google")}
+              onPress={onGoogleLogin}
               className="flex-1 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
             >
               <Ionicons
@@ -308,19 +384,21 @@ const SignupScreen = () => {
               </Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => onSocialLogin("apple")}
-              className="flex-1 bg-black dark:bg-white border border-black dark:border-white p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
-            >
-              <Ionicons
-                name="logo-apple"
-                size={20}
-                color={colorScheme === "dark" ? "#000" : "#fff"}
-              />
-              <Text className="font-heading font-semibold text-white dark:text-black">
-                {t("auth.apple")}
-              </Text>
-            </Pressable>
+            {isApple ? (
+              <Pressable
+                onPress={onAppleLogin}
+                className="flex-1 bg-black dark:bg-white border border-black dark:border-white p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
+              >
+                <Ionicons
+                  name="logo-apple"
+                  size={20}
+                  color={colorScheme === "dark" ? "#000" : "#fff"}
+                />
+                <Text className="font-heading font-semibold text-white dark:text-black">
+                  {t("auth.apple")}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -331,9 +409,24 @@ const SignupScreen = () => {
         <View className="absolute bottom-[-50] left-[-50] w-72 h-72 bg-action opacity-10 rounded-full" />
 
         <Image
+          source={TEXT_LOGO}
+          style={{
+            width: "100%",
+            maxWidth: 380,
+            height: "100%",
+            maxHeight: 100,
+            resizeMode: "contain",
+          }}
+        />
+        <Image
           source={PENGUIN_LOGO}
-          style={{ width: 420, height: 420, resizeMode: "contain" }}
-          // className="shadow-2xl"
+          style={{
+            maxWidth: 400,
+            width: "100%",
+            height: "100%",
+            maxHeight: 400,
+            resizeMode: "contain",
+          }}
         />
 
         {/* <Text className="text-white font-heading text-4xl font-bold text-center mt-8">

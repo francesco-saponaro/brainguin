@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useState } from "react";
@@ -15,8 +16,6 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message"; // <--- 1. IMPORT TOAST
 import { z } from "zod";
-
-import { supabase } from "@/lib/supabase";
 
 // --- Validation Schema with i18n ---
 const ForgotPasswordSchema = (t: any) =>
@@ -49,8 +48,13 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
   const onResetPassword = async (data: ForgotPasswordType) => {
     setLoading(true);
     try {
+      const resetPasswordURL =
+        Platform.OS === "web"
+          ? "http://localhost:8081/update-password"
+          : "brainguin://link-to-reset-password";
+
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: "brainguin://auth/update-password",
+        redirectTo: resetPasswordURL,
       });
 
       if (error) throw error;

@@ -11,6 +11,10 @@ export default function AuthLayout() {
         name="signup"
         options={{ title: "Signup", headerShown: false }}
       />
+      <Stack.Screen
+        name="update-password"
+        options={{ title: "Update Password", headerShown: false }}
+      />
     </Stack>
   );
 }

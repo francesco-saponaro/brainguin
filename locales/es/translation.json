@@ -44,7 +44,11 @@
     "login_link": "Iniciar sesión",
     "or_signup_with": "O regístrate con",
     "hero_signup_title": "Únete a BrainGuin.",
-    "hero_signup_subtitle": "Crea una cuenta para seguir tu progreso, guardar tus mazos y dominar cualquier tema más rápido."
+    "hero_signup_subtitle": "Crea una cuenta para seguir tu progreso, guardar tus mazos y dominar cualquier tema más rápido.",
+    "hook_speed": "Convierte horas de lectura en minutos de maestría. Inicia sesión para empezar tu primer Sprint de Creación.",
+    "hook_recall": "Deja de releer. Empieza a recordar. Inicia sesión para convertir tus PDF en tarjetas de memoria de recuerdo activo.",
+    "hook_ai_power": "Desbloquea tu compañero de estudio con IA. Un PDF, un clic, un plan de estudio perfecto.",
+    "hook_mascot": "¡Únete a la colonia! Inicia sesión para fijar tus metas de examen y deja que nuestra IA cree tu cola de repaso diaria."
   },
   "formValidations": {
     "emailRequired": "El correo es obligatorio",
@@ -55,5 +59,24 @@
   },
   "errors": {
     "generic": "Algo salió mal. Por favor, inténtalo de nuevo."
+  },
+  "onboarding": {
+    "skip": "Saltar",
+    "next_button": "Siguiente",
+    "prev_button": "Anterior",
+    "select_language_button": "Elegir idioma",
+    "start_sprint_button": "Empezar mi primer Sprint",
+    "language_title": "Elige tu idioma",
+    "language_description": "Usaremos esto para tus resúmenes y flashcards generados por IA.",
+    "welcome_title": "Domina cualquier tema",
+    "welcome_description": "BrainGuin es tu compañero de estudio con IA diseñado para ayudarte a aprender más rápido y recordar por más tiempo.",
+    "creation_sprint_title": "Trae tu contenido",
+    "creation_sprint_description": "Sube un PDF, pega un enlace o escribe un tema. Lo procesamos todo en segundos.",
+    "flashcard_title": "Flashcards instantáneas",
+    "flashcard_description": "Nuestra IA crea automáticamente un mazzo personalizado para ti. Sin entrada de datos manual.",
+    "spaced_repetition_title": "Aprende para siempre",
+    "spaced_repetition_description": "Nuestro algoritmo programa tus repasos en el momento perfecto para que nunca olvides nada.",
+    "success_title": "¿Listo para el despegue?",
+    "success_description": "Todo está listo. ¡Empecemos tu primer Sprint de Creación y a por esos exámenes!"
   }
 }

@@ -44,7 +44,11 @@
     "login_link": "Log In",
     "or_signup_with": "Or sign up with",
     "hero_signup_title": "Join BrainGuin.",
-    "hero_signup_subtitle": "Create an account to track your progress, save your decks, and master any topic faster."
+    "hero_signup_subtitle": "Create an account to track your progress, save your decks, and master any topic faster.",
+    "hook_speed": "Turn hours of reading into minutes of mastery. Sign in to start your first Creation Sprint.",
+    "hook_recall": "Stop re-reading. Start remembering. Sign in to turn your PDFs into active-recall flashcards.",
+    "hook_ai_power": "Unlock your AI Study Partner. One PDF, one click, one perfect study plan.",
+    "hook_mascot": "Join the colony! Sign in to set your exam goals and let our AI build your daily review queue."
   },
   "formValidations": {
     "emailRequired": "Email is required",
@@ -55,5 +59,24 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again."
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next_button": "Next",
+    "prev_button": "Previous",
+    "select_language_button": "Choose Language",
+    "start_sprint_button": "Start My First Sprint",
+    "language_title": "Choose Language",
+    "language_description": "We'll use this for your AI-generated summaries and flashcards.",
+    "welcome_title": "Master any topic",
+    "welcome_description": "BrainGuin is your AI study partner designed to help you learn faster and remember longer.",
+    "creation_sprint_title": "Bring your content",
+    "creation_sprint_description": "Upload a PDF, paste a link, or type a topic. We process everything in seconds.",
+    "flashcard_title": "Instant Flashcards",
+    "flashcard_description": "Our AI automatically builds a custom deck for you. No more manual data entry.",
+    "spaced_repetition_title": "Learn Forever",
+    "spaced_repetition_description": "Our algorithm schedules your reviews at the perfect time so you never forget.",
+    "success_title": "Ready for takeoff?",
+    "success_description": "You're all set. Let's start your first Creation Sprint and crush those exams!"
   }
 }

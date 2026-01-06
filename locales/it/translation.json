@@ -44,7 +44,11 @@
     "login_link": "Accedi",
     "or_signup_with": "O registrati con",
     "hero_signup_title": "Unisciti a BrainGuin.",
-    "hero_signup_subtitle": "Crea un account per tracciare i tuoi progressi, salvare i tuoi mazzi e padroneggiare qualsiasi argomento più velocemente."
+    "hero_signup_subtitle": "Crea un account per tracciare i tuoi progressi, salvare i tuoi mazzi e padroneggiare qualsiasi argomento più velocemente.",
+    "hook_speed": "Trasforma ore di lettura in minuti di padronanza. Accedi per iniziare il tuo primo Sprint di Creazione.",
+    "hook_recall": "Smetti di rileggere. Inizia a ricordare. Accedi per trasformare i tuoi PDF in flashcard per il richiamo attivo.",
+    "hook_ai_power": "Sblocca il tuo partner di studio AI. Un PDF, un clic, un piano di studio perfetto.",
+    "hook_mascot": "Unisciti alla colonia! Accedi per impostare i tuoi obiettivi d'esame e lascia che la nostra AI crei la tua coda di ripasso quotidiana."
   },
   "formValidations": {
     "emailRequired": "L'email è obbligatoria",
@@ -55,5 +59,24 @@
   },
   "errors": {
     "generic": "Qualcosa è andato storto. Riprova."
+  },
+  "onboarding": {
+    "skip": "Salta",
+    "next_button": "Avanti",
+    "prev_button": "Indietro",
+    "select_language_button": "Scegli lingua",
+    "start_sprint_button": "Inizia il mio primo Sprint",
+    "language_title": "Scegli la lingua",
+    "language_description": "La useremo per i tuoi riassunti e le flashcard generati dall'IA.",
+    "welcome_title": "Padroneggia ogni argomento",
+    "welcome_description": "BrainGuin è il tuo partner di studio IA progettato per aiutarti a imparare più velocemente e ricordare più a lungo.",
+    "creation_sprint_title": "Porta i tuoi contenuti",
+    "creation_sprint_description": "Carica un PDF, incolla un link o scrivi un argomento. Elaboriamo tutto in pochi secondi.",
+    "flashcard_title": "Flashcard istantanee",
+    "flashcard_description": "La nostra IA crea automaticamente un mazzo personalizzato per te. Basta inserimento manuale dei dati.",
+    "spaced_repetition_title": "Impara per sempre",
+    "spaced_repetition_description": "Il nostro algoritmo programma i tuoi ripassi al momento perfetto per non farti dimenticare nulla.",
+    "success_title": "Pronto al decollo?",
+    "success_description": "È tutto pronto. Inizia il tuo primo Sprint di Creazione e supera alla grande i tuoi esami!"
   }
 }
