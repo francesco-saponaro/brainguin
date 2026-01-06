@@ -78,5 +78,9 @@
     "spaced_repetition_description": "Notre algorithme planifie vos révisions au moment idéal pour que vous n'oubliiez jamais rien.",
     "success_title": "Prêt pour le décollage ?",
     "success_description": "Tout est prêt. Commençons votre premier Sprint de Création et réussissons ces examens !"
+  },
+  "home": {
+    "welcome_back": "Bienvenue de nouveau",
+    "ready_to_sprint": "Prêt pour le Sprint ?"
   }
 }

@@ -78,5 +78,9 @@
     "spaced_repetition_description": "Il nostro algoritmo programma i tuoi ripassi al momento perfetto per non farti dimenticare nulla.",
     "success_title": "Pronto al decollo?",
     "success_description": "È tutto pronto. Inizia il tuo primo Sprint di Creazione e supera alla grande i tuoi esami!"
+  },
+  "home": {
+    "welcome_back": "Ben tornato",
+    "ready_to_sprint": "Pronto per lo Sprint?"
   }
 }

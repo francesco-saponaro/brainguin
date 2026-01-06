@@ -78,5 +78,9 @@
     "spaced_repetition_description": "Our algorithm schedules your reviews at the perfect time so you never forget.",
     "success_title": "Ready for takeoff?",
     "success_description": "You're all set. Let's start your first Creation Sprint and crush those exams!"
+  },
+  "home": {
+    "welcome_back": "Welcome Back",
+    "ready_to_sprint": "Ready to Sprint?"
   }
 }
