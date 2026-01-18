@@ -82,5 +82,79 @@
   "home": {
     "welcome_back": "Welcome Back",
     "ready_to_sprint": "Ready to Sprint?"
+  },
+  "creation": {
+    "thinking": "BrainGuin is thinking...",
+    "reading": "Reading your content...",
+    "extracting": "Extracting key concepts...",
+    "drafting": "Drafting flashcards...",
+    "checking": "Double-checking facts...",
+    "almost_ready": "Almost ready...",
+    "new_creation_sprint": "New Creation Sprint",
+    "tap_to_change_file": "Tap to change file",
+    "tap_to_select_pdf": "Tap to select a PDF",
+    "paste_link": "Paste Link",
+    "what_do_you_want_to_learn": "What do you want to learn?",
+    "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. The history of the Samurai, Quantum Mechanics 101...",
+    "generate_flashcards": "Generate Flashcards"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "delete_deck_title": "Delete Deck",
+    "delete_deck_message": "Are you sure you want to delete \"{{title}}\"? This will permanently remove all associated flashcards.",
+    "delete_deck_confirm": "Delete Everything"
+  },
+  "library": {
+    "header_small": "Your Lab",
+    "header_title": "Library",
+    "search_placeholder": "Search decks...",
+    "empty_title": "No Decks Found",
+    "filter_title": "Filters",
+    "apply_filters": "Apply Filters",
+    "sort_by": "Sort By",
+    "source_type": "Source Type",
+    "sort_options": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "reviewed": "Reviewed"
+    },
+    "source_types": {
+      "all": "All",
+      "pdf": "PDF",
+      "url": "URL",
+      "topic": "Topic"
+    },
+    "card": {
+      "flashcards": "Flashcards",
+      "created": "Created",
+      "reviewed": "Reviewed",
+      "never_reviewed": "Never reviewed",
+      "start_review": "Start Review"
+    },
+    "toast": {
+      "generating_title": "Generating More...",
+      "generating_desc": "BrainGuin is digging deeper into \"{{title}}\"",
+      "success_added": "Added new cards!",
+      "delete_title": "Deck Deleted",
+      "delete_desc": "\"{{title}}\" has been removed."
+    }
+  },
+  "study": {
+    "header_small": "Studying",
+    "next_card": "Next: {{title}}",
+    "card_counter": "Card {{index}} / {{total}}",
+    "tap_to_flip": "Tap to flip",
+    "swipe_instruction": "Swipe Left (Review) • Swipe Right (Mastered)",
+    "finished_title": "Session Complete!",
+    "finished_desc": "You reviewed {{count}} cards from \"{{title}}\".",
+    "finished_btn": "Back to Library",
+    "no_cards": "No cards found in this deck."
+  },
+  "errors": {
+    "fetch_failed": "Fetch Failed",
+    "expansion_failed": "Expansion failed",
+    "delete_failed": "Delete failed"
   }
 }

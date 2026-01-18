@@ -1,5 +1,6 @@
+import { Image } from "expo-image";
 import React from "react";
-import { Image, Text, useWindowDimensions, View } from "react-native";
+import { Text, useWindowDimensions, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 interface Props {
@@ -27,7 +28,7 @@ const OnboardingStep = ({ title, description, image }: Props) => {
             width: isLargeScreen ? 360 : isShorterDesktop ? 220 : 280,
             height: isLargeScreen ? 360 : isShorterDesktop ? 220 : 280,
           }}
-          resizeMode="contain"
+          contentFit="contain"
         />
       </Animated.View>
 

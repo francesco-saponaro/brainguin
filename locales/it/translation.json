@@ -82,5 +82,79 @@
   "home": {
     "welcome_back": "Ben tornato",
     "ready_to_sprint": "Pronto per lo Sprint?"
+  },
+  "creation": {
+    "thinking": "BrainGuin sta pensando...",
+    "reading": "Lettura del tuo contenuto...",
+    "extracting": "Estrazione dei concetti chiave...",
+    "drafting": "Creazione delle flashcard...",
+    "checking": "Controllo doppio dei fatti...",
+    "almost_ready": "Quasi pronto...",
+    "new_creation_sprint": "Nuovo Sprint di Creazione",
+    "tap_to_change_file": "Tocca per cambiare il file",
+    "tap_to_select_pdf": "Tocca per selezionare un PDF",
+    "paste_link": "Incolla il link",
+    "what_do_you_want_to_learn": "Cosa vuoi imparare?",
+    "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. La storia del Samurai, Meccanica Quantistica 101...",
+    "generate_flashcards": "Genera Flashcard"
+  },
+  "common": {
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "confirm": "Conferma",
+    "delete_deck_title": "Elimina Mazzo",
+    "delete_deck_message": "Sei sicuro di voler eliminare \"{{title}}\"? Questo rimuoverà permanentemente tutte le flashcard associate.",
+    "delete_deck_confirm": "Elimina Tutto"
+  },
+  "library": {
+    "header_small": "Il Tuo Laboratorio",
+    "header_title": "Libreria",
+    "search_placeholder": "Cerca mazzi...",
+    "empty_title": "Nessun Mazzo Trovato",
+    "filter_title": "Filtri",
+    "apply_filters": "Applica Filtri",
+    "sort_by": "Ordina Per",
+    "source_type": "Tipo di Fonte",
+    "sort_options": {
+      "newest": "Più recenti",
+      "oldest": "Meno recenti",
+      "reviewed": "Recensiti"
+    },
+    "source_types": {
+      "all": "Tutti",
+      "pdf": "PDF",
+      "url": "URL",
+      "topic": "Argomento"
+    },
+    "card": {
+      "flashcards": "Flashcard",
+      "created": "Creato",
+      "reviewed": "Recensito",
+      "never_reviewed": "Mai recensito",
+      "start_review": "Inizia Ripasso"
+    },
+    "toast": {
+      "generating_title": "Generazione in corso...",
+      "generating_desc": "BrainGuin sta approfondendo \"{{title}}\"",
+      "success_added": "Nuove carte aggiunte!",
+      "delete_title": "Mazzo Eliminato",
+      "delete_desc": "\"{{title}}\" è stato rimosso."
+    }
+  },
+  "study": {
+    "header_small": "Studio in corso",
+    "next_card": "Prossimo: {{title}}",
+    "card_counter": "Carta {{index}} / {{total}}",
+    "tap_to_flip": "Tocca per girare",
+    "swipe_instruction": "Scorri a sinistra (Ripassa) • a destra (Imparata)",
+    "finished_title": "Sessione Completata!",
+    "finished_desc": "Hai ripassato {{count}} carte da \"{{title}}\".",
+    "finished_btn": "Torna alla Libreria",
+    "no_cards": "Nessuna carta trovata in questo mazzo."
+  },
+  "errors": {
+    "fetch_failed": "Caricamento fallito",
+    "expansion_failed": "Espansione fallita",
+    "delete_failed": "Eliminazione fallita"
   }
 }

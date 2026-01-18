@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
+import clsx from "clsx";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -94,7 +95,11 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
         {/* Close Button */}
         <Pressable
           onPress={onClose}
-          className="absolute top-12 left-6 p-2 rounded-full bg-slate-100 dark:bg-slate-800 z-10 hover:brightness-90 transition-all duration-250"
+          className={clsx(
+            "absolute top-12 left-6 p-2 rounded-full z-10 transition-all duration-200 active:scale-90",
+            "bg-slate-100 dark:bg-slate-800",
+            "hover:bg-slate-200 dark:hover:bg-slate-700"
+          )}
         >
           <Ionicons name="close" size={24} color="#64748B" />
         </Pressable>
@@ -119,7 +124,10 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
             // --- SUCCESS STATE ---
             <Pressable
               onPress={onClose}
-              className="w-full bg-action p-4 rounded-xl items-center shadow-sm"
+              className={clsx(
+                "w-full p-4 rounded-xl items-center shadow-sm transition-all duration-200 active:scale-95",
+                "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30"
+              )}
             >
               <Text className="text-white font-heading text-lg font-bold">
                 {t("auth.back_to_login")}
@@ -162,9 +170,12 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
               <Pressable
                 onPress={handleSubmit(onResetPassword)}
                 disabled={loading}
-                className={`w-full p-4 rounded-xl items-center shadow-sm hover:brightness-90 transition-all duration-250 ${
-                  loading ? "bg-slate-400" : "bg-action active:bg-action-hover"
-                }`}
+                className={clsx(
+                  "w-full p-4 rounded-xl items-center shadow-sm transition-all duration-200 active:scale-95",
+                  loading
+                    ? "bg-slate-400 opacity-50"
+                    : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30"
+                )}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />

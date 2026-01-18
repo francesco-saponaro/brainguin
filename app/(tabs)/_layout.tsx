@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
+import { Image } from "expo-image";
 import { Tabs } from "expo-router";
 import { useColorScheme } from "nativewind";
 import React from "react";
 import {
-  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -36,12 +36,13 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         <View className="items-center mb-12 gap-4">
           <Image
             source={isDark ? TEXT_LOGO_LIGHT : TEXT_LOGO_DARK}
-            style={{ width: 130, height: 40, resizeMode: "contain" }}
+            style={{ width: 130, height: 40 }}
+            contentFit="contain"
           />
           <Image
             source={PENGUIN_SIGN}
             style={{ width: 120, height: 120 }}
-            resizeMode="contain"
+            contentFit="contain"
           />
         </View>
 
@@ -113,7 +114,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             <Pressable
               key={route.key}
               onPress={() => navigation.navigate(route.name)}
-              className="items-center justify-center"
+              className="items-center justify-center flex-1 h-full"
             >
               <Ionicons
                 name={

@@ -1,18 +1,20 @@
+// import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser"; // 1. Import Auth Store
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
+import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Image,
   Pressable,
   ScrollView,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const GREETER_PENGUIN = require("@/assets/images/greeter.png");
 const PENGUIN_SIGN = require("@/assets/images/processor.png");
@@ -20,10 +22,12 @@ const TEXT_LOGO_LIGHT = require("@/assets/images/icon-text-dark.png");
 const TEXT_LOGO_DARK = require("@/assets/images/icon-text-light.png");
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
-  const { session } = useAuthStore(); // 2. Get User Session
+  const { session, openCreationModal } = useAuthStore(); // 2. Get User Session
 
   const isDesktop = width > 1000;
   const isSmallMobile = width < 390;
@@ -34,7 +38,10 @@ export default function HomeScreen() {
     "Student";
 
   return (
-    <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark">
+    <View
+      className="flex-1 bg-page-light dark:bg-page-dark"
+      style={{ paddingTop: insets.top }}
+    >
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -54,13 +61,14 @@ export default function HomeScreen() {
                 source={
                   colorScheme === "dark" ? TEXT_LOGO_LIGHT : TEXT_LOGO_DARK
                 }
-                style={{ width: 140, height: 35, resizeMode: "contain" }}
+                style={{ width: 140, height: 35 }}
+                contentFit="contain"
               />
               {isSmallMobile && (
                 <Image
                   source={GREETER_PENGUIN}
                   style={{ width: 50, height: 50 }}
-                  resizeMode="contain"
+                  contentFit="contain"
                 />
               )}
             </View>
@@ -85,7 +93,7 @@ export default function HomeScreen() {
               <Image
                 source={GREETER_PENGUIN}
                 style={{ width: 80, height: 80 }}
-                resizeMode="contain"
+                contentFit="contain"
               />
             )}
           </View>
@@ -98,18 +106,21 @@ export default function HomeScreen() {
             label="PDF"
             sub="Auto-Flashcards"
             color="#38BDF8"
+            onPress={() => openCreationModal("pdf")}
           />
           <ActionButton
             icon="link"
             label="URL"
             sub="Web Articles"
             color="#F97316"
+            onPress={() => openCreationModal("url")}
           />
           <ActionButton
             icon="bulb"
             label="Topic"
             sub="AI Generation"
             color="#22C55E"
+            onPress={() => openCreationModal("topic")}
           />
         </View>
 
@@ -167,7 +178,7 @@ export default function HomeScreen() {
                     width: isDesktop ? 160 : 130,
                     height: isDesktop ? 160 : 130,
                   }}
-                  resizeMode="contain"
+                  contentFit="contain"
                   className="opacity-95"
                 />
               </View>
@@ -242,14 +253,25 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 // Modernized Action Button Component
-function ActionButton({ icon, label, sub, color }: any) {
+function ActionButton({ icon, label, sub, color, onPress }: any) {
   return (
-    <Pressable className="flex-1 bg-card-light dark:bg-card-dark p-5 rounded-[32px] border border-black/5 dark:border-white/5 shadow-md shadow-black/5 active:scale-95 transition-all flex-row items-center">
+    <Pressable
+      onPress={onPress}
+      className={clsx(
+        "flex-1 p-5 rounded-[32px] border shadow-md shadow-black/5 active:scale-95 transition-all duration-200 flex-row items-center",
+        // Base Colors
+        "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5",
+        // Light Mode Hover: Solid shift to a slightly deeper slate
+        "hover:bg-slate-100",
+        // Dark Mode Hover: Solid shift to a slightly lighter/vibrant slate to "glow"
+        "dark:hover:bg-slate-800"
+      )}
+    >
       <View
         style={{ backgroundColor: color + "15" }}
         className="w-14 h-14 rounded-2xl items-center justify-center mr-4"

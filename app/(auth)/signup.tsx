@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
+import clsx from "clsx";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
+import { Image } from "expo-image";
 import { Link } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useColorScheme } from "nativewind";
@@ -10,7 +12,6 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -227,8 +228,9 @@ const SignupScreen = () => {
           <View className="items-center mb-8">
             <Image
               source={PENGUIN_LOGO}
-              style={{ width: 100, height: 100, resizeMode: "contain" }}
+              style={{ width: 100, height: 100 }}
               className="mb-4 lg:hidden"
+              contentFit="contain"
             />
             <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center">
               {t("auth.create_account")}
@@ -330,11 +332,12 @@ const SignupScreen = () => {
           <Pressable
             onPress={handleSubmit(onSignup)}
             disabled={loading || !isFormValid}
-            className={`p-4 rounded-xl items-center shadow-sm mb-6 hover:brightness-90 transition-all duration-250 ${
+            className={clsx(
+              "p-4 rounded-xl items-center shadow-sm mb-6 transition-all duration-200 active:scale-95",
               loading || !isFormValid
                 ? "bg-slate-400 opacity-50"
-                : "bg-action active:bg-action-hover"
-            }`}
+                : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30"
+            )}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -372,7 +375,11 @@ const SignupScreen = () => {
           <View className="flex-row gap-4 justify-center">
             <Pressable
               onPress={onGoogleLogin}
-              className="flex-1 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
+              className={clsx(
+                "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
+                "bg-white dark:bg-card-dark border-gray-200 dark:border-gray-700",
+                "hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
             >
               <Ionicons
                 name="logo-google"
@@ -387,7 +394,11 @@ const SignupScreen = () => {
             {isApple ? (
               <Pressable
                 onPress={onAppleLogin}
-                className="flex-1 bg-black dark:bg-white border border-black dark:border-white p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250"
+                className={clsx(
+                  "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
+                  "bg-black dark:bg-white border-black dark:border-white",
+                  "hover:bg-slate-900 dark:hover:bg-slate-100"
+                )}
               >
                 <Ionicons
                   name="logo-apple"
@@ -415,8 +426,8 @@ const SignupScreen = () => {
             maxWidth: 380,
             height: "100%",
             maxHeight: 100,
-            resizeMode: "contain",
           }}
+          contentFit="contain"
         />
         <Image
           source={PENGUIN_LOGO}
@@ -425,16 +436,9 @@ const SignupScreen = () => {
             width: "100%",
             height: "100%",
             maxHeight: 400,
-            resizeMode: "contain",
           }}
+          contentFit="contain"
         />
-
-        {/* <Text className="text-white font-heading text-4xl font-bold text-center mt-8">
-          {t("auth.hero_signup_title")}
-        </Text>
-        <Text className="text-slate-300 font-body text-xl text-center mt-4 max-w-lg">
-          {t("auth.hero_signup_subtitle")}
-        </Text> */}
       </View>
     </SafeAreaView>
   );

@@ -4,11 +4,11 @@ import OnboardingStep from "@/components/OnboardingStep";
 import StepIndicator from "@/components/StepIndicator";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
+import { Image } from "expo-image";
 import { useColorScheme } from "nativewind";
 import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -185,8 +185,8 @@ export default function OnboardingScreen() {
             style={{
               width: 130,
               height: 40,
-              resizeMode: "contain",
             }}
+            contentFit="contain"
           />
           <Animated.View style={animatedSkipButtonStyles}>
             <Pressable

@@ -1,13 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router"; // Standard Hook
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -150,8 +150,9 @@ const UpdatePasswordScreen = () => {
           <View className="items-center mb-8">
             <Image
               source={PENGUIN_LOGO}
-              style={{ width: 80, height: 80, resizeMode: "contain" }}
+              style={{ width: 80, height: 80 }}
               className="mb-4"
+              contentFit="contain"
             />
             <Text className="font-heading text-2xl font-bold text-text-main-light dark:text-text-main-dark text-center">
               {t("auth.set_new_password")}

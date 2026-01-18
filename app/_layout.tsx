@@ -1,5 +1,8 @@
+import CreationModal from "@/components/Creation/CreationModal";
+import ThinkingState from "@/components/Creation/ThinkingState";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
+import useStoreLoader from "@/store/storeLoader";
 import { useAuthStore } from "@/store/storeUser";
 import "@/utils/i18n";
 import i18n from "@/utils/i18n";
@@ -57,10 +60,18 @@ export default function RootLayout() {
     Inter: Inter_400Regular,
   });
   const { t } = useTranslation();
-  const { session, setSession, isOnboarded } = useAuthStore();
+  const {
+    session,
+    setSession,
+    isOnboarded,
+    isCreationModalOpen,
+    closeCreationModal,
+    creationInitialType,
+  } = useAuthStore();
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isI18nInitialized, setIsI18nInitialized] = useState(false);
   const [isLangSynced, setIsLangSynced] = useState(false);
+  const { isThinking } = useStoreLoader();
 
   // 1. THE AUTH INITIALIZER & LISTENER
   useEffect(() => {
@@ -240,6 +251,13 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             </Stack.Protected>
 
+            <Stack.Protected guard={!!session?.user && isOnboarded}>
+              <Stack.Screen
+                name="study/[id]/index"
+                options={{ headerShown: false }}
+              />
+            </Stack.Protected>
+
             {/* 4. Update Password (Public/Recovery) */}
             <Stack.Screen
               name="update-password/index"
@@ -247,6 +265,13 @@ export default function RootLayout() {
             />
           </Stack>
 
+          <CreationModal
+            isVisible={isCreationModalOpen}
+            onClose={closeCreationModal}
+            initialType={creationInitialType}
+          />
+
+          {isThinking && <ThinkingState />}
           <Toast />
           <StatusBar style="auto" />
         </ThemeProvider>

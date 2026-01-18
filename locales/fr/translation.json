@@ -82,5 +82,79 @@
   "home": {
     "welcome_back": "Bienvenue de nouveau",
     "ready_to_sprint": "Prêt pour le Sprint ?"
+  },
+  "creation": {
+    "thinking": "BrainGuin est en train de réfléchir...",
+    "reading": "Lecture de votre contenu...",
+    "extracting": "Extraction des concepts clés...",
+    "drafting": "Création des flashcards...",
+    "checking": "Vérification des faits...",
+    "almost_ready": "Presque prêt...",
+    "new_creation_sprint": "Nouveau Sprint de Création",
+    "tap_to_change_file": "Touchez pour changer le fichier",
+    "tap_to_select_pdf": "Touchez pour sélectionner un PDF",
+    "paste_link": "Coller le lien",
+    "what_do_you_want_to_learn": "Qu'est-ce que vous voulez apprendre ?",
+    "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. L'histoire du samurai, Mécanique Quantique 101...",
+    "generate_flashcards": "Générer des Flashcards"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "delete_deck_title": "Supprimer le paquet",
+    "delete_deck_message": "Êtes-vous sûr de vouloir supprimer \"{{title}}\" ? Cela supprimera définitivement toutes les cartes associées.",
+    "delete_deck_confirm": "Tout supprimer"
+  },
+  "library": {
+    "header_small": "Votre Labo",
+    "header_title": "Bibliothèque",
+    "search_placeholder": "Rechercher des paquets...",
+    "empty_title": "Aucun paquet trouvé",
+    "filter_title": "Filtres",
+    "apply_filters": "Appliquer les filtres",
+    "sort_by": "Trier par",
+    "source_type": "Type de source",
+    "sort_options": {
+      "newest": "Plus récents",
+      "oldest": "Plus anciens",
+      "reviewed": "Révisés"
+    },
+    "source_types": {
+      "all": "Tous",
+      "pdf": "PDF",
+      "url": "URL",
+      "topic": "Sujet"
+    },
+    "card": {
+      "flashcards": "Cartes",
+      "created": "Créé",
+      "reviewed": "Révisé",
+      "never_reviewed": "Jamais révisé",
+      "start_review": "Réviser"
+    },
+    "toast": {
+      "generating_title": "Génération en cours...",
+      "generating_desc": "BrainGuin approfondit le sujet \"{{title}}\"",
+      "success_added": "Nouvelles cartes ajoutées !",
+      "delete_title": "Paquet supprimé",
+      "delete_desc": "\"{{title}}\" a été supprimé."
+    }
+  },
+  "study": {
+    "header_small": "Étude",
+    "next_card": "Suivant : {{title}}",
+    "card_counter": "Carte {{index}} / {{total}}",
+    "tap_to_flip": "Appuyer pour retourner",
+    "swipe_instruction": "Glisser Gauche (Réviser) • Droite (Appris)",
+    "finished_title": "Session terminée !",
+    "finished_desc": "Vous avez révisé {{count}} cartes de \"{{title}}\".",
+    "finished_btn": "Retour à la bibliothèque",
+    "no_cards": "Aucune carte trouvée dans ce paquet."
+  },
+  "errors": {
+    "fetch_failed": "Échec du chargement",
+    "expansion_failed": "Échec de l'extension",
+    "delete_failed": "Échec de la suppression"
   }
 }
