@@ -150,7 +150,20 @@
     "finished_title": "Session Complete!",
     "finished_desc": "You reviewed {{count}} cards from \"{{title}}\".",
     "finished_btn": "Back to Library",
-    "no_cards": "No cards found in this deck."
+    "no_cards": "No cards found in this deck.",
+    "hard": "Hard",
+    "medium": "Medium",
+    "easy": "Easy",
+
+    "time_short": "10m",
+    "time_med": "24h",
+    "time_long": "3d",
+
+    "schedule_label": "SCHEDULE NEXT REVIEW",
+    "swipe_hint_text": "Swipe Left (Hard) • Swipe Right (Easy)",
+
+    "hint_title": "Hint",
+    "hint_btn": "Got it"
   },
   "errors": {
     "fetch_failed": "Fetch Failed",

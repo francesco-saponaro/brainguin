@@ -150,7 +150,20 @@
     "finished_title": "Session terminée !",
     "finished_desc": "Vous avez révisé {{count}} cartes de \"{{title}}\".",
     "finished_btn": "Retour à la bibliothèque",
-    "no_cards": "Aucune carte trouvée dans ce paquet."
+    "no_cards": "Aucune carte trouvée dans ce paquet.",
+    "hard": "Difficile",
+    "medium": "Moyen",
+    "easy": "Facile",
+
+    "time_short": "10m",
+    "time_med": "24h",
+    "time_long": "3j",
+
+    "schedule_label": "PLANIFIER LA PROCHAINE RÉVISION",
+    "swipe_hint_text": "Glisser à G (Difficile) • Glisser à D (Facile)",
+
+    "hint_title": "Indice",
+    "hint_btn": "Compris"
   },
   "errors": {
     "fetch_failed": "Échec du chargement",

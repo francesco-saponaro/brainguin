@@ -150,7 +150,20 @@
     "finished_title": "Sessione Completata!",
     "finished_desc": "Hai ripassato {{count}} carte da \"{{title}}\".",
     "finished_btn": "Torna alla Libreria",
-    "no_cards": "Nessuna carta trovata in questo mazzo."
+    "no_cards": "Nessuna carta trovata in questo mazzo.",
+    "hard": "Difficile",
+    "medium": "Medio",
+    "easy": "Facile",
+
+    "time_short": "10m",
+    "time_med": "24h",
+    "time_long": "3g",
+
+    "schedule_label": "PROGRAMMA PROSSIMA REVISIONE",
+    "swipe_hint_text": "Scorri a Sx (Difficile) • Scorri a Dx (Facile)",
+
+    "hint_title": "Suggerimento",
+    "hint_btn": "Ho capito"
   },
   "errors": {
     "fetch_failed": "Caricamento fallito",

@@ -150,7 +150,20 @@
     "finished_title": "¡Sesión Completada!",
     "finished_desc": "Has revisado {{count}} tarjetas de \"{{title}}\".",
     "finished_btn": "Volver a la Biblioteca",
-    "no_cards": "No se encontraron tarjetas en este mazo."
+    "no_cards": "No se encontraron tarjetas en este mazo.",
+    "hard": "Difícil",
+    "medium": "Medio",
+    "easy": "Fácil",
+
+    "time_short": "10m",
+    "time_med": "24h",
+    "time_long": "3d",
+
+    "schedule_label": "PROGRAMAR PRÓXIMO REPASO",
+    "swipe_hint_text": "Desliza Izq (Difícil) • Desliza Der (Fácil)",
+
+    "hint_title": "Pista",
+    "hint_btn": "Entendido"
   },
   "errors": {
     "fetch_failed": "Error al cargar",

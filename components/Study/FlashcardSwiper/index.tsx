@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -21,45 +28,53 @@ interface CardProps {
   id: string;
   front: string;
   back: string;
+  context?: string;
 }
 
 interface SwiperProps {
   cards: CardProps[];
   onFinish: () => void;
+  onRate: (cardId: string, rating: "hard" | "medium" | "easy") => void;
+  onShowContext: (context: string) => void;
 }
 
-// --- CARD COMPONENT (Mobile Version) ---
+// --- MAIN CARD WRAPPER ---
 const SwipeableCard = ({
   card,
   index,
   currentIndex,
   total,
-  onSwipeComplete,
-}: {
-  card: CardProps;
-  index: number;
-  currentIndex: number;
-  total: number;
-  onSwipeComplete: () => void;
-}) => {
+  onRate,
+  onShowContext,
+}: any) => {
   const { width } = useWindowDimensions();
   const [isFlipped, setIsFlipped] = useState(false);
 
   const isActive = index === currentIndex;
   const isNext = index === currentIndex + 1;
 
-  // Animation Values
   const translateX = useSharedValue(0);
   const rotateY = useSharedValue(0);
   const scale = useSharedValue(isNext ? 0.95 : 1);
 
   useEffect(() => {
-    if (isActive) {
-      scale.value = withSpring(1);
-    }
+    if (isActive) scale.value = withSpring(1);
   }, [isActive]);
 
-  // --- GESTURES ---
+  const triggerFlip = () => {
+    rotateY.value = withTiming(isFlipped ? 0 : 180, { duration: 300 });
+    setIsFlipped(!isFlipped);
+  };
+
+  const triggerRate = (rating: "hard" | "medium" | "easy") => {
+    const direction = rating === "hard" ? -1 : 1;
+    const targetX = direction * width * 1.5;
+    translateX.value = withTiming(targetX, { duration: 300 }, () => {
+      runOnJS(onRate)(rating);
+    });
+  };
+
+  // --- SWIPE GESTURE (Binary: Left=Hard, Right=Easy) ---
   const pan = Gesture.Pan()
     .enabled(isActive)
     .onUpdate((event) => {
@@ -67,39 +82,28 @@ const SwipeableCard = ({
     })
     .onEnd((event) => {
       if (Math.abs(event.translationX) > width * 0.15) {
-        const direction = event.translationX > 0 ? 1 : -1;
+        // ✅ UX DECISION: Swiping maps to the extremes.
+        // Left (< 0) -> Hard
+        // Right (> 0) -> Easy
+        const rating = event.translationX > 0 ? "easy" : "hard";
+
         translateX.value = withTiming(
-          direction * width * 1.5,
+          (event.translationX > 0 ? 1 : -1) * width * 1.5,
           { duration: 250 },
-          () => runOnJS(onSwipeComplete)()
+          () => runOnJS(onRate)(rating),
         );
       } else {
-        translateX.value = withSpring(0, { damping: 50, stiffness: 300 });
+        translateX.value = withSpring(0);
       }
     });
 
-  const tap = Gesture.Tap()
-    .enabled(isActive)
-    // Small maxDistance allows scrolling/swiping without accidentally flipping
-    .maxDistance(10)
-    .onEnd(() => {
-      rotateY.value = withTiming(isFlipped ? 0 : 180, { duration: 300 });
-      runOnJS(setIsFlipped)(!isFlipped);
-    });
-
-  const gesture = Gesture.Race(pan, tap);
-
-  // --- ANIMATIONS ---
+  // --- ANIMATED STYLES ---
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
       { scale: scale.value },
       {
-        rotateZ: `${interpolate(
-          translateX.value,
-          [-width, width],
-          [-15, 15]
-        )}deg`,
+        rotateZ: `${interpolate(translateX.value, [-width, width], [-15, 15])}deg`,
       },
       { rotateY: "0deg" },
       { perspective: 1000 },
@@ -107,15 +111,16 @@ const SwipeableCard = ({
     zIndex: isActive ? 100 : 1,
   }));
 
-  // Color Overlay (Red/Green)
+  // Overlay only shows Red (Hard) or Green (Easy)
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       Math.abs(translateX.value),
       [0, width * 0.25],
       [0, 0.5],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     ),
     backgroundColor: translateX.value > 0 ? "#22C55E" : "#EF4444",
+    zIndex: 999,
   }));
 
   const frontStyle = useAnimatedStyle(() => ({
@@ -131,36 +136,41 @@ const SwipeableCard = ({
   }));
 
   return (
-    <GestureDetector gesture={gesture}>
+    <GestureDetector gesture={pan}>
       <Animated.View style={[styles.card, cardStyle]}>
-        {/* Overlay for Color Feedback */}
         {isActive && (
           <Animated.View
             style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
           />
         )}
 
-        {/* FRONT */}
         <Animated.View
           style={[StyleSheet.absoluteFill, styles.cardFace, frontStyle]}
         >
           <CardContent
-            text={card.front}
+            card={card}
             index={index}
             total={total}
             isBack={false}
+            onShowContext={onShowContext}
+            onFlip={triggerFlip}
+            isActive={isActive}
           />
         </Animated.View>
 
-        {/* BACK */}
         <Animated.View
           style={[StyleSheet.absoluteFill, styles.cardFace, backStyle]}
         >
           <CardContent
-            text={card.back}
+            card={card}
             index={index}
             total={total}
             isBack={true}
+            onShowContext={onShowContext}
+            onRate={triggerRate}
+            onFlip={triggerFlip}
+            isActive={isActive}
+            showButtons={isActive}
           />
         </Animated.View>
       </Animated.View>
@@ -168,77 +178,214 @@ const SwipeableCard = ({
   );
 };
 
-// --- INNER CONTENT (Cleaned up for Mobile) ---
+// --- INNER UI ---
 const CardContent = React.memo(
   ({
-    text,
+    card,
     index,
     total,
     isBack,
-  }: {
-    text: string;
-    index: number;
-    total: number;
-    isBack: boolean;
-  }) => {
+    onShowContext,
+    onRate,
+    onFlip,
+    isActive,
+    showButtons,
+  }: any) => {
     const { t } = useTranslation();
+
+    const tap = Gesture.Tap()
+      .enabled(isActive)
+      .maxDistance(10)
+      .onEnd(() => {
+        runOnJS(onFlip)();
+      });
+
     return (
       <View style={styles.cardContentContainer}>
+        {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.counter}>
             {t("study.card_counter", { index: index + 1, total })}
           </Text>
-          <Ionicons name="sync" size={20} color="#94A3B8" />
-        </View>
-
-        <View style={styles.content}>
-          <Text style={isBack ? styles.answerText : styles.questionText}>
-            {text}
-          </Text>
-          {!isBack && (
-            <Text style={styles.hintText}>{t("study.tap_to_flip")}</Text>
+          {card.context && (
+            <Pressable
+              onPress={() => onShowContext(card.context)}
+              style={({ pressed }) => [
+                { padding: 10, opacity: pressed ? 0.5 : 1 },
+              ]}
+            >
+              <Ionicons name="bulb-outline" size={24} color="#F97316" />
+            </Pressable>
           )}
         </View>
 
-        {/* Footer with just text, no buttons */}
-        <View style={styles.footer}>
-          {isBack ? (
-            <Text style={styles.footerText}>
-              {t("study.swipe_instruction")}
+        {/* CONTENT */}
+        <GestureDetector gesture={tap}>
+          <View style={styles.content}>
+            <Text style={isBack ? styles.answerText : styles.questionText}>
+              {isBack ? card.back : card.front}
             </Text>
+            {!isBack && (
+              <Text style={styles.hintText}>{t("study.tap_to_flip")}</Text>
+            )}
+          </View>
+        </GestureDetector>
+
+        {/* FOOTER */}
+        <View style={styles.footer}>
+          {isBack && showButtons ? (
+            <>
+              {/* EXPLANATORY TITLE */}
+              <Text style={styles.footerLabel}>
+                {t("study.schedule_label")}
+              </Text>
+
+              {Platform.OS === "web" ? (
+                <View style={styles.ratingRow}>
+                  {/* HARD */}
+                  <Pressable
+                    onPress={() => onRate("hard")}
+                    style={({ pressed, hovered }: any) => [
+                      styles.rateBtn,
+                      {
+                        backgroundColor:
+                          pressed || hovered ? "#FCA5A5" : "#FEE2E2", // Darker Red on Hover
+                        borderColor: "#EF4444",
+                        transform: [{ scale: pressed ? 0.95 : 1 }],
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.rateText, { color: "#EF4444" }]}>
+                      {t("study.hard")}
+                    </Text>
+                    <Text style={[styles.rateSubText, { color: "#EF4444" }]}>
+                      {t("study.time_short")} {/* Replaces "10m" */}
+                    </Text>
+                  </Pressable>
+
+                  {/* MEDIUM */}
+                  <Pressable
+                    onPress={() => onRate("medium")}
+                    style={({ pressed, hovered }: any) => [
+                      styles.rateBtn,
+                      {
+                        backgroundColor:
+                          pressed || hovered ? "#FDE047" : "#FEF9C3", // Darker Yellow on Hover
+                        borderColor: "#EAB308",
+                        transform: [{ scale: pressed ? 0.95 : 1 }],
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.rateText, { color: "#EAB308" }]}>
+                      {t("study.medium")}
+                    </Text>
+                    <Text style={[styles.rateSubText, { color: "#EAB308" }]}>
+                      {t("study.time_med")} {/* Replaces "24h" */}
+                    </Text>
+                  </Pressable>
+
+                  {/* EASY */}
+                  <Pressable
+                    onPress={() => onRate("easy")}
+                    style={({ pressed, hovered }: any) => [
+                      styles.rateBtn,
+                      {
+                        backgroundColor:
+                          pressed || hovered ? "#86EFAC" : "#DCFCE7", // Darker Green on Hover
+                        borderColor: "#22C55E",
+                        transform: [{ scale: pressed ? 0.95 : 1 }],
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.rateText, { color: "#22C55E" }]}>
+                      {t("study.easy")}
+                    </Text>
+                    <Text style={[styles.rateSubText, { color: "#22C55E" }]}>
+                      {t("study.time_long")} {/* Replaces "3d" */}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <View className="flex-row justify-between gap-2 w-full">
+                  {/* HARD (Red) */}
+                  <Pressable
+                    onPress={() => onRate("hard")}
+                    className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-red-100 border-red-500 active:bg-red-300"
+                  >
+                    <Text className="font-bold uppercase text-[11px] tracking-widest text-red-500">
+                      {t("study.hard")}
+                    </Text>
+                    <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-red-500">
+                      {t("study.time_short")}
+                    </Text>
+                  </Pressable>
+
+                  {/* MEDIUM (Yellow) */}
+                  <Pressable
+                    onPress={() => onRate("medium")}
+                    className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-yellow-100 border-yellow-500 active:bg-yellow-300"
+                  >
+                    <Text className="font-bold uppercase text-[11px] tracking-widest text-yellow-500">
+                      {t("study.medium")}
+                    </Text>
+                    <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-yellow-500">
+                      {t("study.time_med")}
+                    </Text>
+                  </Pressable>
+
+                  {/* EASY (Green) */}
+                  <Pressable
+                    onPress={() => onRate("easy")}
+                    className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-green-100 border-green-500 active:bg-green-300"
+                  >
+                    <Text className="font-bold uppercase text-[11px] tracking-widest text-green-500">
+                      {t("study.easy")}
+                    </Text>
+                    <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-green-500">
+                      {t("study.time_long")}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {/* ✅ NEW: SWIPE INSTRUCTION TEXT */}
+              <Text style={styles.swipeHint}>{t("study.swipe_hint_text")}</Text>
+            </>
           ) : (
-            // Spacer to keep layout consistent
-            <View style={{ height: 20 }} />
+            <View style={{ height: 50 }} />
           )}
         </View>
       </View>
     );
-  }
+  },
 );
 
-// --- MAIN CONTROLLER ---
-export default function FlashcardSwiper({ cards, onFinish }: SwiperProps) {
+export default function FlashcardSwiper({
+  cards,
+  onFinish,
+  onRate,
+  onShowContext,
+}: SwiperProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleSwipeComplete = useCallback(() => {
-    if (currentIndex >= cards.length - 1) {
-      onFinish();
-    } else {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  }, [currentIndex, cards.length, onFinish]);
+  const handleRate = useCallback(
+    (cardId: string, rating: any) => {
+      onRate(cardId, rating);
+      if (currentIndex >= cards.length - 1) onFinish();
+      else setCurrentIndex((prev) => prev + 1);
+    },
+    [currentIndex, cards.length, onFinish, onRate],
+  );
 
-  // Windowing: Render Active + Next
   const visibleCards = cards.filter(
-    (_, i) => i >= currentIndex && i <= currentIndex + 1
+    (_, i) => i >= currentIndex && i <= currentIndex + 1,
   );
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, width: "100%" }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
         {visibleCards.reverse().map((card) => {
           const originalIndex = cards.findIndex((c) => c.id === card.id);
-
           return (
             <SwipeableCard
               key={card.id || originalIndex}
@@ -246,7 +393,8 @@ export default function FlashcardSwiper({ cards, onFinish }: SwiperProps) {
               index={originalIndex}
               currentIndex={currentIndex}
               total={cards.length}
-              onSwipeComplete={handleSwipeComplete}
+              onRate={(r: any) => handleRate(card.id, r)}
+              onShowContext={onShowContext}
             />
           );
         })}
@@ -256,11 +404,7 @@ export default function FlashcardSwiper({ cards, onFinish }: SwiperProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  container: { flex: 1, alignItems: "center", justifyContent: "center" },
   card: {
     width: "100%",
     height: 500,
@@ -272,42 +416,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 5,
-    backfaceVisibility: "hidden", // Standard mobile property
+    backfaceVisibility: "hidden",
   },
-  overlay: {
-    borderRadius: 32,
-    zIndex: 999,
-    pointerEvents: "none",
-  },
+  overlay: { borderRadius: 32, pointerEvents: "none" },
   cardFace: {
     borderRadius: 32,
-    padding: 30,
+    padding: 25,
     backgroundColor: "white",
     backfaceVisibility: "hidden",
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.05)",
   },
-  cardContentContainer: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
+  cardContentContainer: { flex: 1, justifyContent: "space-between" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    height: 50,
   },
-  counter: {
-    color: "#94A3B8",
-    fontWeight: "bold",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    fontSize: 12,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  content: { flex: 1, justifyContent: "center", alignItems: "center" },
+  counter: { color: "#94A3B8", fontWeight: "bold", fontSize: 12 },
   questionText: {
     fontSize: 28,
     fontWeight: "bold",
@@ -328,390 +456,39 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     fontSize: 12,
   },
-  footer: {
-    alignItems: "center", // Centered for mobile text
-    justifyContent: "flex-end",
-    paddingBottom: 0,
-    height: 20,
+  footer: { justifyContent: "flex-end", paddingBottom: 0 },
+  ratingRow: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
+  rateBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderBottomWidth: 4,
   },
-  footerText: {
+  rateText: {
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  rateSubText: { fontWeight: "bold", fontSize: 10, marginTop: 2, opacity: 0.8 },
+
+  footerLabel: {
+    textAlign: "center",
     color: "#94A3B8",
-    fontSize: 12,
+    fontSize: 10,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+  },
+  // ✅ NEW: Swipe instruction text
+  swipeHint: {
+    textAlign: "center",
+    color: "#CBD5E1",
+    fontSize: 10,
     fontWeight: "600",
+    marginTop: 12,
   },
 });
-
-// import { Ionicons } from "@expo/vector-icons";
-// import React, { useCallback, useEffect, useState } from "react";
-// import { useTranslation } from "react-i18next";
-// import {
-//   Pressable,
-//   StyleSheet,
-//   Text,
-//   useWindowDimensions,
-//   View,
-// } from "react-native";
-// import {
-//   Gesture,
-//   GestureDetector,
-//   GestureHandlerRootView,
-// } from "react-native-gesture-handler";
-// import Animated, {
-//   Extrapolation,
-//   interpolate,
-//   interpolateColor,
-//   runOnJS,
-//   SharedValue,
-//   useAnimatedStyle,
-//   useSharedValue,
-//   withSpring,
-//   withTiming,
-// } from "react-native-reanimated";
-
-// interface CardProps {
-//   front: string;
-//   back: string;
-// }
-
-// interface SwiperProps {
-//   cards: CardProps[];
-//   onFinish: () => void;
-// }
-
-// // --- SHARED UI COMPONENT ---
-// const CardUI = ({
-//   card,
-//   index,
-//   total,
-//   isBack = false,
-// }: {
-//   card: CardProps;
-//   index: number;
-//   total: number;
-//   isBack?: boolean;
-// }) => {
-//   const { t } = useTranslation();
-
-//   return (
-//     <View style={styles.cardContentContainer}>
-//       <View style={styles.header}>
-//         <Text style={styles.counter}>
-//           {t("study.card_counter", { index: index + 1, total: total })}
-//         </Text>
-//         <Ionicons name="sync" size={20} color="#94A3B8" />
-//       </View>
-
-//       <View style={styles.content}>
-//         <Text
-//           // Key to preventing Android text jumps during animation
-//           textBreakStrategy="simple"
-//           style={isBack ? styles.answerText : styles.questionText}
-//         >
-//           {isBack ? card.back : card.front}
-//         </Text>
-//         {!isBack && (
-//           <Text style={styles.hintText}>{t("study.tap_to_flip")}</Text>
-//         )}
-//       </View>
-
-//       <View style={styles.footer}>
-//         {isBack ? (
-//           <Text style={styles.footerText}>{t("study.swipe_instruction")}</Text>
-//         ) : (
-//           <View style={{ height: 16 }} />
-//         )}
-//       </View>
-//     </View>
-//   );
-// };
-
-// export default function FlashcardSwiper({ cards, onFinish }: SwiperProps) {
-//   const { width } = useWindowDimensions();
-//   const [currentIndex, setCurrentIndex] = useState(0);
-
-//   const translateX = useSharedValue(0);
-
-//   const currentCard = cards[currentIndex];
-//   const nextCard = cards[currentIndex + 1];
-
-//   useEffect(() => {
-//     translateX.value = 0;
-//   }, [currentIndex]);
-
-//   const handleNext = useCallback(() => {
-//     if (currentIndex >= cards.length - 1) {
-//       onFinish();
-//     } else {
-//       setCurrentIndex((prev) => prev + 1);
-//     }
-//   }, [currentIndex, cards.length, onFinish]);
-
-//   // --- ANIMATION 1: Wrapper (Scale & Opacity) ---
-//   const wrapperStyle = useAnimatedStyle(() => {
-//     const absX = Math.abs(translateX.value);
-//     return {
-//       transform: [
-//         {
-//           scale: interpolate(
-//             absX,
-//             [0, width / 2],
-//             [0.9, 1],
-//             Extrapolation.CLAMP
-//           ),
-//         },
-//       ],
-//       opacity: interpolate(absX, [0, width / 2], [0.6, 1], Extrapolation.CLAMP),
-//     };
-//   });
-
-//   // --- ANIMATION 2: Inner Face (Color & 3D Fix) ---
-//   const backgroundMorphStyle = useAnimatedStyle(() => {
-//     const absX = Math.abs(translateX.value);
-//     return {
-//       backgroundColor: interpolateColor(
-//         absX,
-//         [0, width / 2],
-//         ["#F8FAFC", "#FFFFFF"] // Morph from Gray -> White
-//       ),
-//       // ✅ 3D FIX: This forces the GPU to render this text in the same context
-//       // as the active card (which has rotation). This prevents font thickening glitches.
-//       transform: [{ rotateY: "0deg" }],
-//     };
-//   });
-
-//   if (!currentCard) return null;
-
-//   return (
-//     <GestureHandlerRootView style={{ flex: 1, width: "100%" }}>
-//       <View style={styles.container}>
-//         {/* --- THE NEXT CARD (BACKGROUND) --- */}
-//         {nextCard && (
-//           <Animated.View
-//             key={`next-${currentIndex + 1}`}
-//             style={[styles.card, { zIndex: -1 }, wrapperStyle]}
-//           >
-//             <Animated.View
-//               style={[
-//                 StyleSheet.absoluteFill,
-//                 styles.cardFace, // ✅ Uses exact same padding/border as Active Card
-//                 backgroundMorphStyle,
-//               ]}
-//             >
-//               {/* ✅ Structure Match:
-//                   We use a disabled Pressable to match the nesting of the Active Card.
-//                   This ensures Flexbox behaves identically.
-//               */}
-//               <Pressable disabled style={{ flex: 1 }}>
-//                 <CardUI
-//                   card={nextCard}
-//                   index={currentIndex + 1}
-//                   total={cards.length}
-//                 />
-//               </Pressable>
-//             </Animated.View>
-//           </Animated.View>
-//         )}
-
-//         {/* --- THE ACTIVE CARD (FOREGROUND) --- */}
-//         <DraggableCard
-//           key={currentIndex}
-//           card={currentCard}
-//           onSwipeComplete={handleNext}
-//           index={currentIndex}
-//           total={cards.length}
-//           translateX={translateX}
-//         />
-//       </View>
-//     </GestureHandlerRootView>
-//   );
-// }
-
-// function DraggableCard({
-//   card,
-//   onSwipeComplete,
-//   index,
-//   total,
-//   translateX,
-// }: {
-//   card: CardProps;
-//   onSwipeComplete: () => void;
-//   index: number;
-//   total: number;
-//   translateX: SharedValue<number>;
-// }) {
-//   const { width } = useWindowDimensions();
-//   const [isFlipped, setIsFlipped] = useState(false);
-//   const rotateY = useSharedValue(0);
-
-//   const pan = Gesture.Pan()
-//     .onUpdate((event) => {
-//       translateX.value = event.translationX;
-//     })
-//     .onEnd((event) => {
-//       if (Math.abs(event.translationX) > width * 0.15) {
-//         const direction = event.translationX > 0 ? 1 : -1;
-//         translateX.value = withTiming(
-//           direction * width * 1.5,
-//           { duration: 250 },
-//           () => runOnJS(onSwipeComplete)()
-//         );
-//       } else {
-//         translateX.value = withSpring(0, {
-//           damping: 50,
-//           stiffness: 300,
-//           mass: 1,
-//           overshootClamping: true,
-//         });
-//       }
-//     });
-
-//   const handleFlip = () => {
-//     rotateY.value = withTiming(isFlipped ? 0 : 180, { duration: 300 });
-//     setIsFlipped(!isFlipped);
-//   };
-
-//   const cardStyle = useAnimatedStyle(() => ({
-//     transform: [
-//       { translateX: translateX.value },
-//       {
-//         rotateZ: `${interpolate(
-//           translateX.value,
-//           [-width, 0, width],
-//           [-15, 0, 15]
-//         )}deg`,
-//       },
-//     ],
-//   }));
-
-//   const frontStyle = useAnimatedStyle(() => ({
-//     transform: [{ rotateY: `${rotateY.value}deg` }],
-//     opacity: rotateY.value < 90 ? 1 : 0,
-//     zIndex: rotateY.value < 90 ? 1 : 0,
-//   }));
-
-//   const backStyle = useAnimatedStyle(() => ({
-//     transform: [{ rotateY: `${rotateY.value - 180}deg` }],
-//     opacity: rotateY.value >= 90 ? 1 : 0,
-//     zIndex: rotateY.value >= 90 ? 1 : 0,
-//   }));
-
-//   const overlayStyle = useAnimatedStyle(() => ({
-//     opacity: interpolate(
-//       Math.abs(translateX.value),
-//       [0, width * 0.4],
-//       [0, 0.4],
-//       Extrapolation.CLAMP
-//     ),
-//     backgroundColor: translateX.value > 0 ? "#22C55E" : "#EF4444",
-//   }));
-
-//   return (
-//     <GestureDetector gesture={pan}>
-//       <Animated.View style={[styles.card, cardStyle]}>
-//         <Animated.View
-//           style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
-//         />
-
-//         <Animated.View
-//           style={[StyleSheet.absoluteFill, styles.cardFace, frontStyle]}
-//         >
-//           <Pressable onPress={handleFlip} style={{ flex: 1 }}>
-//             <CardUI card={card} index={index} total={total} isBack={false} />
-//           </Pressable>
-//         </Animated.View>
-
-//         <Animated.View
-//           style={[StyleSheet.absoluteFill, styles.cardFace, backStyle]}
-//         >
-//           <Pressable onPress={handleFlip} style={{ flex: 1 }}>
-//             <CardUI card={card} index={index} total={total} isBack={true} />
-//           </Pressable>
-//         </Animated.View>
-//       </Animated.View>
-//     </GestureDetector>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-//   card: {
-//     width: "100%",
-//     height: 500,
-//     backgroundColor: "white",
-//     borderRadius: 32,
-//     position: "absolute",
-//     shadowColor: "#000",
-//     shadowOffset: { width: 0, height: 4 },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 12,
-//     elevation: 5,
-//   },
-//   // Ensure both Active and Next use this exact style
-//   cardFace: {
-//     borderRadius: 32,
-//     padding: 30, // The 1px difference here was causing your jump (31 vs 30)
-//     backgroundColor: "white",
-//     backfaceVisibility: "hidden",
-//     borderWidth: 1,
-//     borderColor: "rgba(0,0,0,0.05)",
-//   },
-//   cardContentContainer: {
-//     flex: 1,
-//     justifyContent: "space-between",
-//   },
-//   overlay: {
-//     borderRadius: 32,
-//     zIndex: 999,
-//     pointerEvents: "none",
-//   },
-//   header: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//   },
-//   counter: {
-//     color: "#94A3B8",
-//     fontWeight: "bold",
-//     textTransform: "uppercase",
-//     letterSpacing: 1,
-//     fontSize: 12,
-//   },
-//   content: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   questionText: {
-//     fontSize: 28,
-//     fontWeight: "bold",
-//     color: "#1E293B",
-//     textAlign: "center",
-//     lineHeight: 34,
-//   },
-//   answerText: {
-//     fontSize: 24,
-//     color: "#334155",
-//     textAlign: "center",
-//     lineHeight: 32,
-//   },
-//   hintText: {
-//     marginTop: 20,
-//     color: "#CBD5E1",
-//     fontWeight: "bold",
-//     textTransform: "uppercase",
-//     fontSize: 12,
-//   },
-//   footer: {
-//     alignItems: "center",
-//     height: 20,
-//   },
-//   footerText: {
-//     color: "#94A3B8",
-//     fontSize: 12,
-//     fontWeight: "600",
-//   },
-// });
