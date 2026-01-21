@@ -169,5 +169,16 @@
     "fetch_failed": "Error al cargar",
     "expansion_failed": "Error al expandir",
     "delete_failed": "Error al eliminar"
-  }
+  },
+  "web_articles": "Artículos web",
+  "ai_generation": "Generación por IA",
+  "start_session": "Iniciar sesión",
+  "great_job": "¡Buen trabajo!",
+  "memorized": "Memorizado",
+  "cards": "Tarjetas",
+  "days": "Días",
+  "cards_to_review": "Tarjetas por revisar",
+  "all_caught_up": "¡Todo al día!",
+  "daily_mission": "Misión diaria",
+  "mission_complete": "Misión completada"
 }

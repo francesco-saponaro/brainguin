@@ -35,7 +35,7 @@ export default function ConfirmModal({
           <View
             className={clsx(
               "w-20 h-20 rounded-full items-center justify-center mb-6",
-              isDestructive ? "bg-red-500/10" : "bg-action/10"
+              isDestructive ? "bg-red-500/10" : "bg-action/10",
             )}
           >
             <Ionicons
@@ -61,7 +61,7 @@ export default function ConfirmModal({
                 "w-full py-5 rounded-3xl items-center shadow-lg active:scale-95 transition-all duration-200",
                 isDestructive
                   ? "bg-red-500 hover:bg-red-600" // Red shifts to deep red
-                  : "bg-action hover:bg-orange-600" // Orange shifts to deep orange
+                  : "bg-action hover:bg-orange-600", // Orange shifts to deep orange
               )}
             >
               <Text className="text-white font-heading font-bold text-lg">
@@ -75,7 +75,7 @@ export default function ConfirmModal({
               className={clsx(
                 "w-full py-5 rounded-3xl items-center transition-all duration-200 active:scale-95",
                 // Neutral grey hover that works for both light and dark themes
-                "hover:bg-black/5 dark:hover:bg-white/10"
+                "hover:bg-black/5 dark:hover:bg-white/10",
               )}
             >
               <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-lg">

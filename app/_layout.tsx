@@ -20,7 +20,7 @@ import {
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";

@@ -169,5 +169,16 @@
     "fetch_failed": "Échec du chargement",
     "expansion_failed": "Échec de l'extension",
     "delete_failed": "Échec de la suppression"
-  }
+  },
+  "web_articles": "Articles Web",
+  "ai_generation": "Génération par IA",
+  "start_session": "Démarrer la session",
+  "great_job": "Beau travail !",
+  "memorized": "Mémorisé",
+  "cards": "Cartes",
+  "days": "Jours",
+  "cards_to_review": "Cartes à réviser",
+  "all_caught_up": "Tout est à jour !",
+  "daily_mission": "Mission quotidienne",
+  "mission_complete": "Mission terminée"
 }

@@ -169,5 +169,16 @@
     "fetch_failed": "Caricamento fallito",
     "expansion_failed": "Espansione fallita",
     "delete_failed": "Eliminazione fallita"
-  }
+  },
+  "web_articles": "Articoli Web",
+  "ai_generation": "Generazione AI",
+  "start_session": "Inizia Sessione",
+  "great_job": "Ottimo lavoro!",
+  "memorized": "Memorizzato",
+  "cards": "Carte",
+  "days": "Giorni",
+  "cards_to_review": "Carte da ripassare",
+  "all_caught_up": "Tutto in pari!",
+  "daily_mission": "Missione quotidiana",
+  "mission_complete": "Missione completata"
 }

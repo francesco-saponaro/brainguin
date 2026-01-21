@@ -169,5 +169,16 @@
     "fetch_failed": "Fetch Failed",
     "expansion_failed": "Expansion failed",
     "delete_failed": "Delete failed"
-  }
+  },
+  "web_articles": "Web Articles",
+  "ai_generation": "AI Generation",
+  "start_session": "Start Session",
+  "great_job": "Great Job!",
+  "memorized": "Memorized",
+  "cards": "Cards",
+  "days": "Days",
+  "cards_to_review": "Cards to Review",
+  "all_caught_up": "All Caught Up!",
+  "daily_mission": "Daily Mission",
+  "mission_complete": "Mission Complete"
 }
