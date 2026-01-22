@@ -91,11 +91,10 @@ struct WidgetEntryView : View {
             .padding(16)
         }
         // DEEP LINK: Opens app to specific route
-        .widgetURL(URL(string: "yourapp://study/daily"))
+        .widgetURL(URL(string: "brainguin://study/daily"))
     }
 }
 
-@main
 struct DailyWidget: Widget {
     let kind: String = "DailyWidget"
     var body: some WidgetConfiguration {

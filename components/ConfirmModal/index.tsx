@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
 import { BlurView } from "expo-blur";
+import { PressableScale } from "pressto";
 import React from "react";
 import { useTranslation } from "react-i18next"; // 1. Import hook
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -55,7 +56,7 @@ export default function ConfirmModal({
 
           <View className="w-full gap-3">
             {/* CONFIRM BUTTON (Confirm or Delete) */}
-            <Pressable
+            {/* <Pressable
               onPress={onConfirm}
               className={clsx(
                 "w-full py-5 rounded-3xl items-center shadow-lg active:scale-95 transition-all duration-200",
@@ -63,25 +64,52 @@ export default function ConfirmModal({
                   ? "bg-red-500 hover:bg-red-600" // Red shifts to deep red
                   : "bg-action hover:bg-orange-600", // Orange shifts to deep orange
               )}
+            > */}
+            <PressableScale
+              onPress={onConfirm}
+              style={{
+                width: "100%",
+                paddingVertical: 20,
+                borderRadius: 24,
+                alignItems: "center",
+                backgroundColor: isDestructive ? "#EF4444" : "#F97316",
+                // Shadow matching shadow-lg
+                shadowColor: isDestructive ? "#EF4444" : "#F97316",
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.2,
+                shadowRadius: 15,
+                elevation: 5,
+              }}
+              activateOnHover
             >
               <Text className="text-white font-heading font-bold text-lg">
                 {confirmLabel}
               </Text>
-            </Pressable>
+            </PressableScale>
 
             {/* CANCEL BUTTON */}
-            <Pressable
+            {/* <Pressable
               onPress={onCancel}
               className={clsx(
                 "w-full py-5 rounded-3xl items-center transition-all duration-200 active:scale-95",
                 // Neutral grey hover that works for both light and dark themes
                 "hover:bg-black/5 dark:hover:bg-white/10",
               )}
+            > */}
+            <PressableScale
+              onPress={onCancel}
+              style={{
+                width: "100%",
+                paddingVertical: 20,
+                borderRadius: 24,
+                alignItems: "center",
+              }}
+              activateOnHover
             >
               <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-lg">
                 {t("common.cancel")}
               </Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
       </View>

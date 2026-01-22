@@ -2,6 +2,7 @@ import GREETER_PENGUIN from "@/assets/images/greeter.png";
 import TEXT_LOGO_LIGHT from "@/assets/images/icon-text-dark.png";
 import TEXT_LOGO_DARK from "@/assets/images/icon-text-light.png";
 import PENGUIN_SIGN from "@/assets/images/processor.png";
+import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { ExtensionStorage } from "@bacons/apple-targets";
@@ -10,10 +11,10 @@ import clsx from "clsx";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router"; // Added useFocusEffect
 import { useColorScheme } from "nativewind";
+import { PressableScale } from "pressto";
 import React, { useCallback, useState } from "react"; // Added hooks
 import { useTranslation } from "react-i18next";
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -201,10 +202,13 @@ export default function HomeScreen() {
         </View>
 
         {/* 3. MAIN WIDGETS SECTION */}
-        <View className={`${isDesktop ? "flex-row" : "flex-col"} gap-6`}>
+        <View
+          className={`${isDesktop ? "flex-row" : "flex-col"} gap-6`}
+          pointerEvents={stats.dueCards === 0 ? "none" : "auto"}
+        >
           {/* --- AI STUDY PLAN (DAILY MISSION) --- */}
           {/* If there are due cards, show the Blue/Orange card. If 0, show Green 'Done' card. */}
-          <Pressable
+          {/* <Pressable
             onPress={() => {
               if (stats.dueCards > 0) {
                 router.push("/study/daily"); // ✅ Correct Route for Daily
@@ -218,6 +222,32 @@ export default function HomeScreen() {
                 ? "bg-primary shadow-primary/30"
                 : "bg-green-600 shadow-green-600/30", // Dynamic BG Color
             )}
+          > */}
+          <PressableScale
+            onPress={() => {
+              if (stats.dueCards > 0) {
+                router.push("/study/daily");
+              }
+            }}
+            activateOnHover
+            style={{
+              flex: 2,
+              position: "relative",
+              overflow: "hidden",
+              minHeight: 240,
+              justifyContent: "center",
+              padding: isSmallMobile ? 16 : 32,
+              borderRadius: isSmallMobile ? 32 : 48,
+              backgroundColor:
+                stats.dueCards > 0 ? Colors.brand.primary : "#16a34a",
+              // Match the shadow-2xl feel
+              shadowColor:
+                stats.dueCards > 0 ? Colors.brand.primary : "#16a34a",
+              shadowOffset: { width: 0, height: 20 },
+              shadowOpacity: 0.3,
+              shadowRadius: 30,
+              elevation: 10,
+            }}
           >
             {/* Background Decor */}
             <View
@@ -281,7 +311,7 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
-          </Pressable>
+          </PressableScale>
 
           {/* STATS / STREAK */}
           <View
@@ -348,15 +378,39 @@ export default function HomeScreen() {
 
 // Modernized Action Button Component (Unchanged)
 function ActionButton({ icon, label, sub, color, onPress }: any) {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const theme = isDark ? Colors.dark : Colors.light;
+
   return (
-    <Pressable
+    // <Pressable
+    //   onPress={onPress}
+    //   className={clsx(
+    //     "flex-1 p-5 rounded-[32px] border shadow-md shadow-black/5 active:scale-95 transition-all duration-200 flex-row items-center",
+    //     "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5",
+    //     "hover:bg-slate-100",
+    //     "dark:hover:bg-slate-800",
+    //   )}
+    // >
+    <PressableScale
       onPress={onPress}
-      className={clsx(
-        "flex-1 p-5 rounded-[32px] border shadow-md shadow-black/5 active:scale-95 transition-all duration-200 flex-row items-center",
-        "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5",
-        "hover:bg-slate-100",
-        "dark:hover:bg-slate-800",
-      )}
+      activateOnHover
+      style={{
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 20,
+        borderRadius: 32,
+        borderWidth: 1,
+        backgroundColor: isDark ? Colors.dark.card : Colors.light.card,
+        borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+        // Optional shadow for depth
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
+      }}
     >
       <View
         style={{ backgroundColor: color + "15" }}
@@ -372,6 +426,6 @@ function ActionButton({ icon, label, sub, color, onPress }: any) {
           {sub}
         </Text>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }

@@ -1,5 +1,7 @@
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
+import { PressableScale } from "pressto";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -32,6 +34,7 @@ export default function CreationModal({
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const colorScheme = useColorScheme();
 
   const [activeType, setActiveType] = useState<InputType>(initialType);
   const [inputText, setInputText] = useState("");
@@ -92,16 +95,28 @@ export default function CreationModal({
             <Text className="text-text-main-light dark:text-text-main-dark font-heading text-xl font-bold">
               {t("creation.new_creation_sprint")}
             </Text>
-            <Pressable
+            {/* <Pressable
               onPress={onClose}
               className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
+            > */}
+            <PressableScale
+              onPress={onClose}
+              style={{
+                backgroundColor:
+                  colorScheme === "dark"
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.05)",
+                padding: 8,
+                borderRadius: 99,
+              }}
+              activateOnHover
             >
               <Ionicons
                 name="close"
                 size={20}
                 color={Platform.OS === "ios" ? undefined : "#FFF"}
               />
-            </Pressable>
+            </PressableScale>
           </View>
 
           {/* Type Selector (Tabs) */}
@@ -111,18 +126,43 @@ export default function CreationModal({
               { id: "url", label: "URL", icon: "link" },
               { id: "topic", label: "Topic", icon: "bulb" },
             ].map((item) => (
-              <Pressable
+              // <Pressable
+              //   key={item.id}
+              //   onPress={() => {
+              //     setActiveType(item.id as InputType);
+              //     setInputText("");
+              //     setSelectedFile(null);
+              //   }}
+              //   className={`flex-1 flex-row items-center justify-center p-3 rounded-xl border transition-all ${
+              //     activeType === item.id
+              //       ? "bg-action border-action"
+              //       : "bg-transparent border-black/10 dark:border-white/10"
+              //   }`}
+              // >
+              <PressableScale
                 key={item.id}
                 onPress={() => {
                   setActiveType(item.id as InputType);
                   setInputText("");
                   setSelectedFile(null);
                 }}
-                className={`flex-1 flex-row items-center justify-center p-3 rounded-xl border transition-all ${
-                  activeType === item.id
-                    ? "bg-action border-action"
-                    : "bg-transparent border-black/10 dark:border-white/10"
-                }`}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 12,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  backgroundColor:
+                    activeType === item.id ? "#F97316" : "transparent",
+                  borderColor:
+                    activeType === item.id
+                      ? "#F97316"
+                      : colorScheme === "dark"
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(0,0,0,0.1)",
+                }}
               >
                 <Ionicons
                   name={item.icon as any}
@@ -138,7 +178,7 @@ export default function CreationModal({
                 >
                   {item.label}
                 </Text>
-              </Pressable>
+              </PressableScale>
             ))}
           </View>
 
@@ -147,9 +187,27 @@ export default function CreationModal({
             {/* 1. PDF INPUT */}
             {activeType === "pdf" && (
               <View className="items-center">
-                <Pressable
+                {/* <Pressable
                   onPress={handleFilePick}
                   className="w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-3xl items-center justify-center bg-black/5 dark:bg-white/5 mb-4 active:bg-action/5"
+                > */}
+                <PressableScale
+                  onPress={handleFilePick}
+                  style={{
+                    width: "100%",
+                    height: 240,
+                    borderWidth: 2,
+                    borderStyle: "dashed",
+                    borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                    borderRadius: 24,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor:
+                      colorScheme === "dark"
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(0,0,0,0.05)",
+                    marginBottom: 16,
+                  }}
                 >
                   {selectedFile ? (
                     <>
@@ -176,7 +234,7 @@ export default function CreationModal({
                       </Text>
                     </>
                   )}
-                </Pressable>
+                </PressableScale>
               </View>
             )}
 
@@ -207,7 +265,7 @@ export default function CreationModal({
                 <TextInput
                   className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action min-h-[120px] border border-card-light dark:border-card-dark"
                   placeholder={t(
-                    "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101..."
+                    "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
                   )}
                   placeholderTextColor="#94A3B8"
                   value={inputText}
@@ -225,8 +283,13 @@ export default function CreationModal({
             style={{
               paddingBottom: Platform.OS === "ios" ? insets.bottom + 20 : 24,
             }}
+            pointerEvents={
+              (activeType === "pdf" ? !selectedFile : inputText.length < 3)
+                ? "none"
+                : "auto"
+            }
           >
-            <Pressable
+            {/* <Pressable
               onPress={handleSubmit}
               disabled={
                 activeType === "pdf" ? !selectedFile : inputText.length < 3
@@ -236,11 +299,46 @@ export default function CreationModal({
                   ? "bg-slate-300 dark:bg-slate-700 opacity-50"
                   : "bg-action active:bg-action-hover shadow-action/30"
               }`}
+            > */}
+            <PressableScale
+              onPress={handleSubmit}
+              style={{
+                width: "100%",
+                paddingVertical: 16,
+                borderRadius: 12,
+                alignItems: "center",
+                backgroundColor: (
+                  activeType === "pdf" ? !selectedFile : inputText.length < 3
+                )
+                  ? colorScheme === "dark"
+                    ? "#334155"
+                    : "#CBD5E1"
+                  : "#F97316",
+                opacity: (
+                  activeType === "pdf" ? !selectedFile : inputText.length < 3
+                )
+                  ? 0.5
+                  : 1,
+                // Shadow logic
+                shadowColor: "#F97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: (
+                  activeType === "pdf" ? !selectedFile : inputText.length < 3
+                )
+                  ? 0
+                  : 0.2,
+                shadowRadius: 8,
+                elevation: (
+                  activeType === "pdf" ? !selectedFile : inputText.length < 3
+                )
+                  ? 0
+                  : 4,
+              }}
             >
               <Text className="text-white font-heading font-bold text-lg">
                 {t("creation.generate_flashcards")} ⚡
               </Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
       </KeyboardAvoidingView>

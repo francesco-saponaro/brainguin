@@ -1,4 +1,5 @@
 import ConfirmModal from "@/components/ConfirmModal";
+import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import useStoreLoader from "@/store/storeLoader";
 import { useAuthStore } from "@/store/storeUser";
@@ -6,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
+import { PressableScale } from "pressto";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -43,6 +45,8 @@ export default function LibraryScreen() {
   const { width } = useWindowDimensions();
   const { setIsThinking } = useStoreLoader();
   const { session } = useAuthStore();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const [decks, setDecks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,10 +58,10 @@ export default function LibraryScreen() {
   // Filtering States
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "reviewed">(
-    "newest"
+    "newest",
   );
   const [filterType, setFilterType] = useState<"all" | "pdf" | "url" | "topic">(
-    "all"
+    "all",
   );
 
   const insets = useSafeAreaInsets();
@@ -107,7 +111,7 @@ export default function LibraryScreen() {
   // --- 2. LOGIC: FILTERING & SORTING ---
   const processedDecks = useMemo(() => {
     let result = decks.filter((d) =>
-      d.title.toLowerCase().includes(search.toLowerCase())
+      d.title.toLowerCase().includes(search.toLowerCase()),
     );
 
     if (filterType !== "all") {
@@ -117,18 +121,18 @@ export default function LibraryScreen() {
     if (sortBy === "newest")
       result.sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
     if (sortBy === "oldest")
       result.sort(
         (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
       );
     if (sortBy === "reviewed")
       result.sort(
         (a, b) =>
           new Date(b.last_reviewed_at || 0).getTime() -
-          new Date(a.last_reviewed_at || 0).getTime()
+          new Date(a.last_reviewed_at || 0).getTime(),
       );
 
     return result;
@@ -221,7 +225,7 @@ export default function LibraryScreen() {
             data: item.source_content,
             userId: session?.user?.id,
           },
-        }
+        },
       );
 
       if (error) throw error;
@@ -269,7 +273,7 @@ export default function LibraryScreen() {
                 {t("library.header_title")}
               </Text>
             </View>
-            <Pressable
+            {/* <Pressable
               onPress={() => router.push("/(tabs)")}
               className={clsx(
                 "bg-action w-12 h-12 rounded-full items-center justify-center shadow-lg active:scale-90 transition-all duration-200",
@@ -278,9 +282,28 @@ export default function LibraryScreen() {
                 // Dark Mode Hover: Use a solid slightly lighter/vibrant orange to pop
                 "dark:hover:bg-orange-400"
               )}
+            > */}
+            <PressableScale
+              onPress={() => router.push("/(tabs)")}
+              activateOnHover
+              style={{
+                backgroundColor: Colors.brand.action,
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                alignItems: "center",
+                justifyContent: "center",
+                // Shadow logic
+                shadowColor: Colors.brand.action,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 5,
+              }}
             >
               <Ionicons name="add" size={28} color="white" />
-            </Pressable>
+              <Ionicons name="add" size={28} color="white" />
+            </PressableScale>
           </View>
 
           {/* SEARCH & FILTER ROW */}
@@ -295,7 +318,7 @@ export default function LibraryScreen() {
                 onChangeText={setSearch}
               />
             </View>
-            <Pressable
+            {/* <Pressable
               onPress={() => setIsFilterOpen(true)}
               className={clsx(
                 "w-14 h-14 rounded-2xl items-center justify-center border shadow-sm transition-all duration-200 active:scale-95",
@@ -303,7 +326,7 @@ export default function LibraryScreen() {
                 filterType !== "all" || sortBy !== "newest"
                   ? "bg-action border-action hover:bg-orange-600"
                   : // 2. Logic for INACTIVE state (Neutral)
-                    "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-800",
               )}
             >
               <Ionicons
@@ -315,7 +338,41 @@ export default function LibraryScreen() {
                     : "#94A3B8"
                 }
               />
-            </Pressable>
+            </Pressable> */}
+            <PressableScale
+              onPress={() => setIsFilterOpen(true)}
+              activateOnHover
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                backgroundColor:
+                  filterType !== "all" || sortBy !== "newest"
+                    ? Colors.brand.action
+                    : isDark
+                      ? Colors.dark.card
+                      : Colors.light.card,
+                borderColor:
+                  filterType !== "all" || sortBy !== "newest"
+                    ? Colors.brand.action
+                    : isDark
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
+              }}
+            >
+              <Ionicons
+                name="options"
+                size={24}
+                color={
+                  filterType !== "all" || sortBy !== "newest"
+                    ? "white"
+                    : "#94A3B8"
+                }
+              />
+            </PressableScale>
           </View>
 
           {/* LIST */}
@@ -393,18 +450,43 @@ export default function LibraryScreen() {
 }
 
 function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
   const { t } = useTranslation();
   const count = item.flashcards?.[0]?.count || 0;
 
   return (
-    <Pressable
+    // <Pressable
+    //   onPress={onPress}
+    //   className={clsx(
+    //     "flex-1 p-5 rounded-[32px] mb-4 border relative overflow-hidden h-64 justify-between transition-all duration-250 active:scale-[0.98] shadow-xl shadow-black/5",
+    //     "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5",
+    //     "hover:bg-slate-50 hover:border-black/[0.08]",
+    //     "dark:hover:bg-slate-800/60 dark:hover:border-white/10",
+    //   )}
+    // >
+    <PressableScale
       onPress={onPress}
-      className={clsx(
-        "flex-1 p-5 rounded-[32px] mb-4 border relative overflow-hidden h-64 justify-between transition-all duration-250 active:scale-[0.98] shadow-xl shadow-black/5",
-        "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5",
-        "hover:bg-slate-50 hover:border-black/[0.08]",
-        "dark:hover:bg-slate-800/60 dark:hover:border-white/10"
-      )}
+      activateOnHover
+      style={{
+        flex: 1,
+        padding: 20,
+        borderRadius: 32,
+        marginBottom: 16,
+        borderWidth: 1,
+        position: "relative",
+        overflow: "hidden",
+        height: 256,
+        justifyContent: "space-between",
+        backgroundColor: isDark ? Colors.dark.card : Colors.light.card,
+        borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+        // Shadow
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.05,
+        shadowRadius: 20,
+        elevation: 3,
+      }}
     >
       {/* Decorative Background Blur */}
       <View className="absolute right-[-30] top-[-30] w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
@@ -418,23 +500,23 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
                 item.source_type === "pdf"
                   ? "document-text"
                   : item.source_type === "url"
-                  ? "link"
-                  : "bulb"
+                    ? "link"
+                    : "bulb"
               }
               size={24}
               color={
                 item.source_type === "pdf"
                   ? "#38BDF8"
                   : item.source_type === "url"
-                  ? "#F97316"
-                  : "#22C55E"
+                    ? "#F97316"
+                    : "#22C55E"
               }
             />
           </View>
 
           {/* Action Buttons (Mobile Friendly Size) */}
           <View className="flex-row gap-2">
-            <Pressable
+            {/* <Pressable
               onPress={onGenerate}
               className="w-12 h-12 rounded-full bg-accent/10 items-center justify-center active:bg-accent/20"
             >
@@ -445,7 +527,38 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
               className="w-12 h-12 rounded-full bg-red-500/10 items-center justify-center active:bg-red-500/20"
             >
               <Ionicons name="trash" size={18} color="#EF4444" />
-            </Pressable>
+            </Pressable> */}
+            {/* Sparkles Button */}
+            <PressableScale
+              activateOnHover
+              onPress={onGenerate}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: `${Colors.brand.accent}1A`, // 10% accent
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="sparkles" size={18} color={Colors.brand.action} />
+            </PressableScale>
+
+            {/* Trash Button */}
+            <PressableScale
+              activateOnHover
+              onPress={onDelete}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: "#EF44441A", // 10% red
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="trash" size={18} color="#EF4444" />
+            </PressableScale>
           </View>
         </View>
 
@@ -470,13 +583,13 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
             <View
               className={clsx(
                 "w-2 h-2 rounded-full mr-1.5",
-                item.last_reviewed_at ? "bg-green-400" : "bg-slate-300"
+                item.last_reviewed_at ? "bg-green-400" : "bg-slate-300",
               )}
             />
             <Text className="text-text-muted-light dark:text-text-muted-dark text-[11px] font-medium">
               {item.last_reviewed_at
                 ? `${t("library.card.reviewed")}: ${formatDate(
-                    item.last_reviewed_at
+                    item.last_reviewed_at,
                   )}`
                 : t("library.card.never_reviewed")}
             </Text>
@@ -490,7 +603,7 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
           </Text>
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -531,8 +644,8 @@ const FilterButton = ({ label, isActive, onPress, isDark }: any) => {
               ? colors.active.hover
               : colors.active.base
             : isInteracting
-            ? colors.inactive.hover
-            : colors.inactive.base,
+              ? colors.inactive.hover
+              : colors.inactive.base,
           borderColor: isActive
             ? isInteracting
               ? colors.active.hover
@@ -569,6 +682,7 @@ function FilterModal({
   const [tempSort, setTempSort] = useState(sortBy);
   const [tempType, setTempType] = useState(filterType);
   const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   React.useEffect(() => {
     if (visible) {
@@ -605,68 +719,98 @@ function FilterModal({
             {t("library.sort_by")}
           </Text>
           <View className="flex-row flex-wrap gap-2 mb-8">
-            {["newest", "oldest", "reviewed"].map((opt: any) =>
-              Platform.OS === "web" ? (
-                <Pressable
-                  key={opt}
-                  onPress={() => setTempSort(opt)}
-                  className={clsx(
-                    "px-5 py-3 rounded-2xl border transition-all duration-200",
-                    // ORANGE HOVER: We use a slightly darker orange (orange-600)
+            {["newest", "oldest", "reviewed"].map((opt: any) => (
+              // Platform.OS === "web" ? (
+              //   <Pressable
+              //     key={opt}
+              //     onPress={() => setTempSort(opt)}
+              //     className={clsx(
+              //       "px-5 py-3 rounded-2xl border transition-all duration-200",
+              //       // ORANGE HOVER: We use a slightly darker orange (orange-600)
+              //       tempSort === opt
+              //         ? "bg-action border-action hover:bg-orange-600"
+              //         : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5",
+              //     )}
+              //   >
+              //     <Text
+              //       className={clsx(
+              //         "font-body font-bold capitalize",
+              //         tempSort === opt
+              //           ? "text-white"
+              //           : "text-text-muted-light dark:text-text-muted-dark",
+              //       )}
+              //     >
+              //       {t(`library.sort_options.${opt}`)}
+              //     </Text>
+              //   </Pressable>
+              // ) : (
+              //   <Pressable
+              //     key={opt}
+              //     onPress={() => setTempSort(opt)}
+              //     // PURE STYLE IMPLEMENTATION
+              //     style={{
+              //       // Layout (Matches px-5 py-3 rounded-2xl border)
+              //       paddingHorizontal: 20,
+              //       paddingVertical: 12,
+              //       borderRadius: 16,
+              //       borderWidth: 1,
+
+              //       // Colors (Orange vs Transparent)
+              //       backgroundColor:
+              //         tempSort === opt ? "#F97316" : "transparent",
+
+              //       // Border (Orange vs Subtle Gray)
+              //       borderColor:
+              //         tempSort === opt
+              //           ? "#F97316"
+              //           : colorScheme === "dark"
+              //             ? "rgba(255,255,255,0.1)"
+              //             : "rgba(0,0,0,0.1)",
+              //     }}
+              //   >
+              //     <Text
+              //       className={clsx(
+              //         "font-body font-bold uppercase",
+              //         tempSort === opt
+              //           ? "text-white"
+              //           : "text-text-muted-light dark:text-text-muted-dark",
+              //       )}
+              //     >
+              //       {t(`library.sort_options.${opt}`)}
+              //     </Text>
+              //   </Pressable>
+              // ),
+              <PressableScale
+                key={opt}
+                activateOnHover
+                onPress={() => setTempSort(opt)}
+                style={{
+                  paddingHorizontal: 20,
+                  paddingVertical: 12,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  backgroundColor:
+                    tempSort === opt ? Colors.brand.action : "transparent",
+                  borderColor:
                     tempSort === opt
-                      ? "bg-action border-action hover:bg-orange-600"
-                      : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                  )}
-                >
-                  <Text
-                    className={clsx(
-                      "font-body font-bold capitalize",
-                      tempSort === opt
-                        ? "text-white"
-                        : "text-text-muted-light dark:text-text-muted-dark"
-                    )}
-                  >
-                    {t(`library.sort_options.${opt}`)}
-                  </Text>
-                </Pressable>
-              ) : (
-                <Pressable
-                  key={opt}
-                  onPress={() => setTempSort(opt)}
-                  // PURE STYLE IMPLEMENTATION
-                  style={{
-                    // Layout (Matches px-5 py-3 rounded-2xl border)
-                    paddingHorizontal: 20,
-                    paddingVertical: 12,
-                    borderRadius: 16,
-                    borderWidth: 1,
-
-                    // Colors (Orange vs Transparent)
-                    backgroundColor:
-                      tempSort === opt ? "#F97316" : "transparent",
-
-                    // Border (Orange vs Subtle Gray)
-                    borderColor:
-                      tempSort === opt
-                        ? "#F97316"
-                        : colorScheme === "dark"
+                      ? Colors.brand.action
+                      : isDark
                         ? "rgba(255,255,255,0.1)"
                         : "rgba(0,0,0,0.1)",
-                  }}
+                }}
+              >
+                <Text
+                  className={clsx(
+                    "font-body font-bold uppercase",
+                    tempSort === opt
+                      ? "text-white"
+                      : "text-text-muted-light dark:text-text-muted-dark",
+                  )}
                 >
-                  <Text
-                    className={clsx(
-                      "font-body font-bold uppercase",
-                      tempSort === opt
-                        ? "text-white"
-                        : "text-text-muted-light dark:text-text-muted-dark"
-                    )}
-                  >
-                    {t(`library.sort_options.${opt}`)}
-                  </Text>
-                </Pressable>
-              )
-            )}
+                  {t(`library.sort_options.${opt}`)}
+                </Text>
+              </PressableScale>
+            ))}
           </View>
 
           {/* SOURCE TYPE SECTION */}
@@ -674,72 +818,102 @@ function FilterModal({
             {t("library.source_type")}
           </Text>
           <View className="flex-row flex-wrap gap-2 mb-10">
-            {["all", "pdf", "url", "topic"].map((type: any) =>
-              Platform.OS === "web" ? (
-                <Pressable
-                  key={type}
-                  onPress={() => setTempType(type)}
-                  className={clsx(
-                    "px-5 py-3 rounded-2xl border transition-all duration-200",
-                    // ORANGE HOVER: We use a slightly darker orange (orange-600)
+            {["all", "pdf", "url", "topic"].map((type: any) => (
+              // Platform.OS === "web" ? (
+              //   <Pressable
+              //     key={type}
+              //     onPress={() => setTempType(type)}
+              //     className={clsx(
+              //       "px-5 py-3 rounded-2xl border transition-all duration-200",
+              //       // ORANGE HOVER: We use a slightly darker orange (orange-600)
+              //       tempType === type
+              //         ? "bg-action border-action hover:bg-orange-600"
+              //         : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5",
+              //     )}
+              //   >
+              //     <Text
+              //       className={clsx(
+              //         "font-body font-bold capitalize",
+              //         tempType === type
+              //           ? "text-white"
+              //           : "text-text-muted-light dark:text-text-muted-dark",
+              //       )}
+              //     >
+              //       {t(`library.source_types.${type}`)}
+              //     </Text>
+              //   </Pressable>
+              // ) : (
+              //   <Pressable
+              //     key={type}
+              //     onPress={() => setTempType(type)}
+              //     // PURE STYLE IMPLEMENTATION
+              //     style={{
+              //       // Layout (Matches px-5 py-3 rounded-2xl border)
+              //       paddingHorizontal: 20,
+              //       paddingVertical: 12,
+              //       borderRadius: 16,
+              //       borderWidth: 1,
+
+              //       // Colors (Orange vs Transparent)
+              //       backgroundColor:
+              //         tempType === type ? "#F97316" : "transparent",
+
+              //       // Border (Orange vs Subtle Gray)
+              //       borderColor:
+              //         tempType === type
+              //           ? "#F97316"
+              //           : colorScheme === "dark"
+              //             ? "rgba(255,255,255,0.1)"
+              //             : "rgba(0,0,0,0.1)",
+              //     }}
+              //   >
+              //     <Text
+              //       className={clsx(
+              //         "font-body font-bold uppercase",
+              //         tempType === type
+              //           ? "text-white"
+              //           : "text-text-muted-light dark:text-text-muted-dark",
+              //       )}
+              //     >
+              //       {t(`library.source_types.${type}`)}
+              //     </Text>
+              //   </Pressable>
+              // ),
+              <PressableScale
+                key={type}
+                activateOnHover
+                onPress={() => setTempType(type)}
+                style={{
+                  paddingHorizontal: 20,
+                  paddingVertical: 12,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  backgroundColor:
+                    tempType === type ? Colors.brand.action : "transparent",
+                  borderColor:
                     tempType === type
-                      ? "bg-action border-action hover:bg-orange-600"
-                      : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                  )}
-                >
-                  <Text
-                    className={clsx(
-                      "font-body font-bold capitalize",
-                      tempType === type
-                        ? "text-white"
-                        : "text-text-muted-light dark:text-text-muted-dark"
-                    )}
-                  >
-                    {t(`library.source_types.${type}`)}
-                  </Text>
-                </Pressable>
-              ) : (
-                <Pressable
-                  key={type}
-                  onPress={() => setTempType(type)}
-                  // PURE STYLE IMPLEMENTATION
-                  style={{
-                    // Layout (Matches px-5 py-3 rounded-2xl border)
-                    paddingHorizontal: 20,
-                    paddingVertical: 12,
-                    borderRadius: 16,
-                    borderWidth: 1,
-
-                    // Colors (Orange vs Transparent)
-                    backgroundColor:
-                      tempType === type ? "#F97316" : "transparent",
-
-                    // Border (Orange vs Subtle Gray)
-                    borderColor:
-                      tempType === type
-                        ? "#F97316"
-                        : colorScheme === "dark"
+                      ? Colors.brand.action
+                      : isDark
                         ? "rgba(255,255,255,0.1)"
                         : "rgba(0,0,0,0.1)",
-                  }}
+                }}
+              >
+                <Text
+                  className={clsx(
+                    "font-body font-bold uppercase",
+                    tempType === type
+                      ? "text-white"
+                      : "text-text-muted-light dark:text-text-muted-dark",
+                  )}
                 >
-                  <Text
-                    className={clsx(
-                      "font-body font-bold uppercase",
-                      tempType === type
-                        ? "text-white"
-                        : "text-text-muted-light dark:text-text-muted-dark"
-                    )}
-                  >
-                    {t(`library.source_types.${type}`)}
-                  </Text>
-                </Pressable>
-              )
-            )}
+                  {t(`library.source_types.${type}`)}
+                </Text>
+              </PressableScale>
+            ))}
           </View>
 
           {/* APPLY BUTTON */}
-          <Pressable
+          {/* <Pressable
             onPress={handleApply}
             // DARK HOVER: Shifting Slate color for the main button
             className="bg-text-main-light dark:bg-text-main-dark py-5 rounded-3xl items-center shadow-lg hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-[0.98] transition-all duration-250"
@@ -747,7 +921,27 @@ function FilterModal({
             <Text className="text-white dark:text-black font-heading font-bold text-lg">
               {t("library.apply_filters")}
             </Text>
-          </Pressable>
+          </Pressable> */}
+          <PressableScale
+            onPress={handleApply}
+            activateOnHover
+            style={{
+              backgroundColor: isDark ? Colors.dark.text : Colors.light.text,
+              paddingVertical: 20,
+              borderRadius: 24,
+              alignItems: "center",
+              // Shadow
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+          >
+            <Text className="text-white dark:text-black font-heading font-bold text-lg">
+              {t("library.apply_filters")}
+            </Text>
+          </PressableScale>
         </View>
       </View>
     </Modal>

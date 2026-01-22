@@ -17,9 +17,11 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { PressablesConfig } from "pressto";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Text, TextInput } from "react-native";
@@ -232,48 +234,58 @@ export default function RootLayout() {
         <ThemeProvider
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
         >
-          <Stack>
-            {/* 1. If not logged in: show Auth */}
-            <Stack.Protected guard={!session?.user}>
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            </Stack.Protected>
+          <PressablesConfig
+            globalHandlers={{
+              onPress: () => {
+                Haptics.selectionAsync();
+              },
+            }}
+            // animationType="spring"
+            // animationConfig={{ damping: 20, stiffness: 150 }}
+          >
+            <Stack>
+              {/* 1. If not logged in: show Auth */}
+              <Stack.Protected guard={!session?.user}>
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              </Stack.Protected>
 
-            {/* 2. If logged in but NOT onboarded: show Onboarding */}
-            <Stack.Protected guard={!!session?.user && !isOnboarded}>
+              {/* 2. If logged in but NOT onboarded: show Onboarding */}
+              <Stack.Protected guard={!!session?.user && !isOnboarded}>
+                <Stack.Screen
+                  name="onboarding/index"
+                  options={{ headerShown: false }}
+                />
+              </Stack.Protected>
+
+              {/* 3. If logged in AND onboarded: show Main App */}
+              <Stack.Protected guard={!!session?.user && isOnboarded}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              </Stack.Protected>
+
+              <Stack.Protected guard={!!session?.user && isOnboarded}>
+                <Stack.Screen
+                  name="study/[id]/index"
+                  options={{ headerShown: false }}
+                />
+              </Stack.Protected>
+
+              {/* 4. Update Password (Public/Recovery) */}
               <Stack.Screen
-                name="onboarding/index"
+                name="update-password/index"
                 options={{ headerShown: false }}
               />
-            </Stack.Protected>
+            </Stack>
 
-            {/* 3. If logged in AND onboarded: show Main App */}
-            <Stack.Protected guard={!!session?.user && isOnboarded}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            </Stack.Protected>
-
-            <Stack.Protected guard={!!session?.user && isOnboarded}>
-              <Stack.Screen
-                name="study/[id]/index"
-                options={{ headerShown: false }}
-              />
-            </Stack.Protected>
-
-            {/* 4. Update Password (Public/Recovery) */}
-            <Stack.Screen
-              name="update-password/index"
-              options={{ headerShown: false }}
+            <CreationModal
+              isVisible={isCreationModalOpen}
+              onClose={closeCreationModal}
+              initialType={creationInitialType}
             />
-          </Stack>
 
-          <CreationModal
-            isVisible={isCreationModalOpen}
-            onClose={closeCreationModal}
-            initialType={creationInitialType}
-          />
-
-          {isThinking && <ThinkingState />}
-          <Toast />
-          <StatusBar style="auto" />
+            {isThinking && <ThinkingState />}
+            <Toast />
+            <StatusBar style="auto" />
+          </PressablesConfig>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -1,9 +1,11 @@
+import { Colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
 import { useColorScheme } from "nativewind";
+import { PressableScale } from "pressto";
 import React from "react";
 import {
   Platform,
@@ -24,15 +26,13 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const isDesktop = width > 1000;
+  const theme = isDark ? Colors.dark : Colors.light;
 
   if (isDesktop) {
     // ... (Desktop Sidebar Code remains the same, but let's ensure background handles themes)
     return (
       <View
-        style={[
-          styles.desktopSidebar,
-          { backgroundColor: isDark ? "#1E293B" : "white" },
-        ]}
+        style={[styles.desktopSidebar, { backgroundColor: theme.background }]}
       >
         <View className="items-center mb-12 gap-4">
           <Image
@@ -52,12 +52,28 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             const { options } = descriptors[route.key];
             const isFocused = state.index === index;
             return (
-              <Pressable
+              // <PressableScale
+              //   key={route.key}
+              //   onPress={() => navigation.navigate(route.name)}
+              //   className={`flex-row items-center px-6 py-4 rounded-2xl mx-4 ${
+              //     isFocused ? "bg-action/10" : "bg-transparent"
+              //   }`}
+              // >
+              <PressableScale
                 key={route.key}
+                activateOnHover
                 onPress={() => navigation.navigate(route.name)}
-                className={`flex-row items-center px-6 py-4 rounded-2xl mx-4 ${
-                  isFocused ? "bg-action/10" : "bg-transparent"
-                }`}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 24,
+                  paddingVertical: 16,
+                  borderRadius: 16,
+                  marginHorizontal: 16,
+                  backgroundColor: isFocused
+                    ? `${Colors.brand.action}1A` // 10% opacity orange
+                    : "transparent",
+                }}
               >
                 <Ionicons
                   name={
@@ -79,7 +95,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 >
                   {options.title}
                 </Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>

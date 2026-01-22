@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Pressable,
   ScrollView,
   Text,
   View,
@@ -33,6 +32,7 @@ import PROCESSOR_PENGUIN from "@/assets/images/processor.png";
 
 import TEXT_LOGO_LIGHT from "@/assets/images/icon-text-dark.png";
 import TEXT_LOGO_DARK from "@/assets/images/icon-text-light.png";
+import { PressableScale } from "pressto";
 
 const onboardingContent = (t: any) => [
   {
@@ -189,15 +189,20 @@ export default function OnboardingScreen() {
             contentFit="contain"
           />
           <Animated.View style={animatedSkipButtonStyles}>
-            <Pressable
+            {/* <Pressable
               onPress={completeOnboarding}
               disabled={currentPage === 0 || isLastPage}
               className="hover:brightness-90 transition-all duration-250"
+            > */}
+            <PressableScale
+              onPress={completeOnboarding}
+              activateOnHover
+              style={{ opacity: currentPage === 0 || isLastPage ? 0.5 : 1 }}
             >
               <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-base">
                 {t("onboarding.skip")}
               </Text>
-            </Pressable>
+            </PressableScale>
           </Animated.View>
         </View>
 
@@ -249,7 +254,7 @@ export default function OnboardingScreen() {
           <View className="flex-row gap-4 mt-4">
             {currentPage > 0 && (
               <View className="flex-1">
-                <Pressable
+                {/* <Pressable
                   onPress={() => {
                     const prevStep = currentPage - 1;
                     scrollRef.current?.scrollTo({
@@ -259,31 +264,68 @@ export default function OnboardingScreen() {
                     setCurrentPage(prevStep);
                   }}
                   className="bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 p-4 rounded-xl flex-row justify-center items-center gap-2 hover:brightness-90 transition-all duration-250 w-fit"
+                > */}
+                <PressableScale
+                  activateOnHover
+                  onPress={() => {
+                    const prevStep = currentPage - 1;
+                    scrollRef.current?.scrollTo({
+                      x: prevStep * windowWidth,
+                      animated: true,
+                    });
+                    setCurrentPage(prevStep);
+                  }}
+                  style={{
+                    backgroundColor:
+                      colorScheme === "dark" ? "#334155" : "#FFFFFF",
+                    padding: 16,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colorScheme === "dark" ? "#475569" : "#E5E7EB",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
                 >
                   <Text className="text-text-muted-light dark:text-text-muted-dark font-heading text-lg font-bold">
                     {t("onboarding.prev_button")}
                   </Text>
-                </Pressable>
+                </PressableScale>
               </View>
             )}
 
             <Animated.View
               style={[animatedButtonStyles, { flex: currentPage > 0 ? 2 : 1 }]}
             >
-              <Pressable
+              {/* <Pressable
                 onPress={goToNextPage}
                 className={`p-4 rounded-xl items-center shadow-sm hover:brightness-90 transition-all duration-250 ${
                   isLastPage
                     ? "bg-primary active:bg-primary-hover"
                     : "bg-action active:bg-action-hover"
                 }`}
+              > */}
+              <PressableScale
+                onPress={goToNextPage}
+                activateOnHover
+                style={{
+                  padding: 16,
+                  borderRadius: 12,
+                  alignItems: "center",
+                  backgroundColor: isLastPage ? "#0F172A" : "#F97316",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 2,
+                }}
               >
                 <Text className="text-white font-heading text-lg font-bold">
                   {isLastPage
                     ? t("onboarding.start_sprint_button")
                     : t("onboarding.next_button")}
                 </Text>
-              </Pressable>
+              </PressableScale>
             </Animated.View>
           </View>
         </View>

@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import clsx from "clsx";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
 import { Image } from "expo-image";
@@ -31,6 +30,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 import PENGUIN_LOGO from "@/assets/images/greeter.png";
 import TEXT_LOGO from "@/assets/images/icon-text-dark.png";
+import { PressableScale } from "pressto";
 
 const SignupScreen = () => {
   const { t } = useTranslation();
@@ -329,7 +329,7 @@ const SignupScreen = () => {
           </View>
 
           {/* Signup Button */}
-          <Pressable
+          {/* <Pressable
             onPress={handleSubmit(onSignup)}
             disabled={loading || !isFormValid}
             className={clsx(
@@ -338,6 +338,23 @@ const SignupScreen = () => {
                 ? "bg-slate-400 opacity-50"
                 : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
             )}
+          > */}
+          <PressableScale
+            onPress={() => handleSubmit(onSignup)()}
+            activateOnHover
+            style={{
+              padding: 16,
+              borderRadius: 12,
+              alignItems: "center",
+              marginBottom: 24,
+              backgroundColor: loading || !isFormValid ? "#94A3B8" : "#F97316",
+              opacity: loading || !isFormValid ? 0.5 : 1,
+              shadowColor: "#F97316",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: loading || !isFormValid ? 0 : 0.2,
+              shadowRadius: 8,
+              elevation: loading || !isFormValid ? 0 : 4,
+            }}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -346,7 +363,7 @@ const SignupScreen = () => {
                 {t("auth.create_account_button")}
               </Text>
             )}
-          </Pressable>
+          </PressableScale>
 
           {/* Login Link */}
           <View className="flex-row justify-center mb-8">
@@ -373,13 +390,28 @@ const SignupScreen = () => {
 
           {/* Social Buttons */}
           <View className="flex-row gap-4 justify-center">
-            <Pressable
+            {/* <Pressable
               onPress={onGoogleLogin}
               className={clsx(
                 "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
                 "bg-white dark:bg-card-dark border-gray-200 dark:border-gray-700",
                 "hover:bg-slate-100 dark:hover:bg-slate-800",
               )}
+            > */}
+            <PressableScale
+              onPress={onGoogleLogin}
+              style={{
+                flex: 1,
+                padding: 16,
+                borderRadius: 12,
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                borderWidth: 1,
+                backgroundColor: colorScheme === "dark" ? "#334155" : "#FFFFFF",
+                borderColor: colorScheme === "dark" ? "#374151" : "#E5E7EB",
+              }}
+              activateOnHover
             >
               <Ionicons
                 name="logo-google"
@@ -389,16 +421,32 @@ const SignupScreen = () => {
               <Text className="font-heading font-semibold text-text-main-light dark:text-text-main-dark">
                 {t("auth.google")}
               </Text>
-            </Pressable>
+            </PressableScale>
 
             {isApple ? (
-              <Pressable
+              // <Pressable
+              //   onPress={onAppleLogin}
+              //   className={clsx(
+              //     "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
+              //     "bg-black dark:bg-white border-black dark:border-white",
+              //     "hover:bg-slate-900 dark:hover:bg-slate-100",
+              //   )}
+              // >
+              <PressableScale
                 onPress={onAppleLogin}
-                className={clsx(
-                  "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
-                  "bg-black dark:bg-white border-black dark:border-white",
-                  "hover:bg-slate-900 dark:hover:bg-slate-100",
-                )}
+                style={{
+                  flex: 1,
+                  padding: 16,
+                  borderRadius: 12,
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderWidth: 1,
+                  backgroundColor:
+                    colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                  borderColor: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                }}
+                activateOnHover
               >
                 <Ionicons
                   name="logo-apple"
@@ -408,7 +456,7 @@ const SignupScreen = () => {
                 <Text className="font-heading font-semibold text-white dark:text-black">
                   {t("auth.apple")}
                 </Text>
-              </Pressable>
+              </PressableScale>
             ) : null}
           </View>
         </ScrollView>

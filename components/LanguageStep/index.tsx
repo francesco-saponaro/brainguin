@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "nativewind";
+import { PressableScale } from "pressto";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import CountryFlag from "react-native-country-flag"; // 🆕 Import the flag library
 
 const LANGUAGES = [
@@ -18,6 +20,7 @@ interface Props {
 
 const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
   const { i18n, t } = useTranslation();
+  const { colorScheme } = useColorScheme();
 
   const handleSelect = (code: string) => {
     i18n.changeLanguage(code);
@@ -36,14 +39,40 @@ const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
 
       <View className="gap-4 max-w-[800px] self-center w-full">
         {LANGUAGES.map((lang) => (
-          <Pressable
+          // <Pressable
+          //   key={lang.code}
+          //   onPress={() => handleSelect(lang.code)}
+          //   className={`flex-row items-center p-5 rounded-2xl border-2 transition-all duration-200 active:scale-[0.98] ${
+          //     activeLanguage === lang.code
+          //       ? "border-action bg-action/5"
+          //       : "border-card-light dark:border-card-dark bg-card-light dark:bg-card-dark hover:border-action/50 hover:bg-slate-50 dark:hover:bg-slate-800"
+          //   }`}
+          // >
+          <PressableScale
             key={lang.code}
+            activateOnHover
             onPress={() => handleSelect(lang.code)}
-            className={`flex-row items-center p-5 rounded-2xl border-2 transition-all duration-200 active:scale-[0.98] ${
-              activeLanguage === lang.code
-                ? "border-action bg-action/5"
-                : "border-card-light dark:border-card-dark bg-card-light dark:bg-card-dark hover:border-action/50 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 20,
+              borderRadius: 16,
+              borderWidth: 2,
+              // Background Color Logic
+              backgroundColor:
+                activeLanguage === lang.code
+                  ? "#F973161A" // Action Orange with 10% opacity
+                  : colorScheme === "dark"
+                    ? "#334155"
+                    : "#FFFFFF",
+              // Border Color Logic
+              borderColor:
+                activeLanguage === lang.code
+                  ? "#F97316"
+                  : colorScheme === "dark"
+                    ? "#334155"
+                    : "#FFFFFF",
+            }}
           >
             {/* 🆕 Using the high-quality flag icon here */}
             <View className="mr-4 shadow-sm">
@@ -67,7 +96,7 @@ const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
             {activeLanguage === lang.code && (
               <Ionicons name="checkmark-circle" size={24} color="#F97316" />
             )}
-          </Pressable>
+          </PressableScale>
         ))}
       </View>
     </View>

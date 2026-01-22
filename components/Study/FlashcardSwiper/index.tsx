@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { PressableScale } from "pressto";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -240,75 +240,31 @@ const CardContent = React.memo(
                 {t("study.schedule_label")}
               </Text>
 
-              {Platform.OS === "web" ? (
-                <View style={styles.ratingRow}>
-                  {/* HARD */}
-                  <Pressable
-                    onPress={() => onRate("hard")}
-                    style={({ pressed, hovered }: any) => [
-                      styles.rateBtn,
-                      {
-                        backgroundColor:
-                          pressed || hovered ? "#FCA5A5" : "#FEE2E2", // Darker Red on Hover
-                        borderColor: "#EF4444",
-                        transform: [{ scale: pressed ? 0.95 : 1 }],
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.rateText, { color: "#EF4444" }]}>
-                      {t("study.hard")}
-                    </Text>
-                    <Text style={[styles.rateSubText, { color: "#EF4444" }]}>
-                      {t("study.time_short")} {/* Replaces "10m" */}
-                    </Text>
-                  </Pressable>
-
-                  {/* MEDIUM */}
-                  <Pressable
-                    onPress={() => onRate("medium")}
-                    style={({ pressed, hovered }: any) => [
-                      styles.rateBtn,
-                      {
-                        backgroundColor:
-                          pressed || hovered ? "#FDE047" : "#FEF9C3", // Darker Yellow on Hover
-                        borderColor: "#EAB308",
-                        transform: [{ scale: pressed ? 0.95 : 1 }],
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.rateText, { color: "#EAB308" }]}>
-                      {t("study.medium")}
-                    </Text>
-                    <Text style={[styles.rateSubText, { color: "#EAB308" }]}>
-                      {t("study.time_med")} {/* Replaces "24h" */}
-                    </Text>
-                  </Pressable>
-
-                  {/* EASY */}
-                  <Pressable
-                    onPress={() => onRate("easy")}
-                    style={({ pressed, hovered }: any) => [
-                      styles.rateBtn,
-                      {
-                        backgroundColor:
-                          pressed || hovered ? "#86EFAC" : "#DCFCE7", // Darker Green on Hover
-                        borderColor: "#22C55E",
-                        transform: [{ scale: pressed ? 0.95 : 1 }],
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.rateText, { color: "#22C55E" }]}>
-                      {t("study.easy")}
-                    </Text>
-                    <Text style={[styles.rateSubText, { color: "#22C55E" }]}>
-                      {t("study.time_long")} {/* Replaces "3d" */}
-                    </Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <View className="flex-row justify-between gap-2 w-full">
-                  {/* HARD (Red) */}
-                  <Pressable
+              <View className="flex-row justify-between gap-2 w-full">
+                <PressableScale
+                  onPress={() => onRate("hard")}
+                  // Pressto handles hover scaling if activateOnHover is passed
+                  activateOnHover
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: "center",
+                    borderWidth: 1,
+                    borderBottomWidth: 4,
+                    backgroundColor: "#FEE2E2",
+                    borderColor: "#EF4444",
+                  }}
+                >
+                  <Text style={[styles.rateText, { color: "#EF4444" }]}>
+                    {t("study.hard")}
+                  </Text>
+                  <Text style={[styles.rateSubText, { color: "#EF4444" }]}>
+                    {t("study.time_short")}
+                  </Text>
+                </PressableScale>
+                {/* HARD (Red) */}
+                {/* <Pressable
                     onPress={() => onRate("hard")}
                     className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-red-100 border-red-500 active:bg-red-300"
                   >
@@ -318,35 +274,64 @@ const CardContent = React.memo(
                     <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-red-500">
                       {t("study.time_short")}
                     </Text>
-                  </Pressable>
+                  </Pressable> */}
 
-                  {/* MEDIUM (Yellow) */}
-                  <Pressable
+                {/* MEDIUM (Yellow) */}
+                {/* <Pressable
                     onPress={() => onRate("medium")}
                     className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-yellow-100 border-yellow-500 active:bg-yellow-300"
-                  >
-                    <Text className="font-bold uppercase text-[11px] tracking-widest text-yellow-500">
-                      {t("study.medium")}
-                    </Text>
-                    <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-yellow-500">
-                      {t("study.time_med")}
-                    </Text>
-                  </Pressable>
+                  > */}
+                <PressableScale
+                  onPress={() => onRate("medium")}
+                  activateOnHover
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderBottomWidth: 4,
+                    backgroundColor: "#FEF9C3", // bg-yellow-100
+                    borderColor: "#EAB308", // border-yellow-500
+                  }}
+                >
+                  <Text className="font-bold uppercase text-[11px] tracking-widest text-yellow-500">
+                    {t("study.medium")}
+                  </Text>
+                  <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-yellow-500">
+                    {t("study.time_med")}
+                  </Text>
+                </PressableScale>
 
-                  {/* EASY (Green) */}
-                  <Pressable
+                {/* EASY (Green) */}
+                {/* <Pressable
                     onPress={() => onRate("easy")}
                     className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-green-100 border-green-500 active:bg-green-300"
-                  >
-                    <Text className="font-bold uppercase text-[11px] tracking-widest text-green-500">
-                      {t("study.easy")}
-                    </Text>
-                    <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-green-500">
-                      {t("study.time_long")}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
+                  > */}
+                <PressableScale
+                  onPress={() => onRate("easy")}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderBottomWidth: 4,
+                    backgroundColor: "#DCFCE7", // bg-green-100
+                    borderColor: "#22C55E", // border-green-500
+                  }}
+                  activateOnHover
+                >
+                  <Text className="font-bold uppercase text-[11px] tracking-widest text-green-500">
+                    {t("study.easy")}
+                  </Text>
+                  <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-green-500">
+                    {t("study.time_long")}
+                  </Text>
+                </PressableScale>
+              </View>
 
               {/* ✅ NEW: SWIPE INSTRUCTION TEXT */}
               <Text style={styles.swipeHint}>{t("study.swipe_hint_text")}</Text>
@@ -492,3 +477,67 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 });
+
+// {Platform.OS === "web" ? (
+//   <View style={styles.ratingRow}>
+//     <Pressable
+//       onPress={() => onRate("hard")}
+//       style={({ pressed, hovered }: any) => [
+//         styles.rateBtn,
+//         {
+//           backgroundColor:
+//             pressed || hovered ? "#FCA5A5" : "#FEE2E2", // Darker Red on Hover
+//           borderColor: "#EF4444",
+//           transform: [{ scale: pressed ? 0.95 : 1 }],
+//         },
+//       ]}
+//     >
+//       <Text style={[styles.rateText, { color: "#EF4444" }]}>
+//         {t("study.hard")}
+//       </Text>
+//       <Text style={[styles.rateSubText, { color: "#EF4444" }]}>
+//         {t("study.time_short")} {/* Replaces "10m" */}
+//       </Text>
+//     </Pressable>
+
+//     <Pressable
+//       onPress={() => onRate("medium")}
+//       style={({ pressed, hovered }: any) => [
+//         styles.rateBtn,
+//         {
+//           backgroundColor:
+//             pressed || hovered ? "#FDE047" : "#FEF9C3", // Darker Yellow on Hover
+//           borderColor: "#EAB308",
+//           transform: [{ scale: pressed ? 0.95 : 1 }],
+//         },
+//       ]}
+//     >
+//       <Text style={[styles.rateText, { color: "#EAB308" }]}>
+//         {t("study.medium")}
+//       </Text>
+//       <Text style={[styles.rateSubText, { color: "#EAB308" }]}>
+//         {t("study.time_med")} {/* Replaces "24h" */}
+//       </Text>
+//     </Pressable>
+
+//     <Pressable
+//       onPress={() => onRate("easy")}
+//       style={({ pressed, hovered }: any) => [
+//         styles.rateBtn,
+//         {
+//           backgroundColor:
+//             pressed || hovered ? "#86EFAC" : "#DCFCE7", // Darker Green on Hover
+//           borderColor: "#22C55E",
+//           transform: [{ scale: pressed ? 0.95 : 1 }],
+//         },
+//       ]}
+//     >
+//       <Text style={[styles.rateText, { color: "#22C55E" }]}>
+//         {t("study.easy")}
+//       </Text>
+//       <Text style={[styles.rateSubText, { color: "#22C55E" }]}>
+//         {t("study.time_long")} {/* Replaces "3d" */}
+//       </Text>
+//     </Pressable>
+//   </View>
+// ) : (

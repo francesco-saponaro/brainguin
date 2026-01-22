@@ -1,39 +1,52 @@
 /**
  * "Cardly" Theme Constants
- * Matches the Tailwind Config: Deep Blue, Orange, Snow White.
+ * Strictly mirrors the Tailwind/NativeWind configuration.
  */
 
-const tintColorLight = "#0F172A"; // Deep Slate for selected tabs in Light Mode
-const tintColorDark = "#F97316"; // Penguin Orange for selected tabs in Dark Mode
-
 export const Colors = {
-  light: {
-    text: "#0F172A", // text-text-main-light
-    background: "#F8FAFC", // bg-page-light
-    tint: tintColorLight,
-    icon: "#64748B", // text-text-muted-light
-    tabIconDefault: "#64748B",
-    tabIconSelected: tintColorLight,
+  // Constants (Brand colors that don't change based on mode)
+  brand: {
+    primary: "#0F172A",
+    action: "#F97316",
+    actionHover: "#EA580C",
+    accent: "#38BDF8",
+    wood: "#A16207",
   },
+
+  light: {
+    background: "#F8FAFC", // page.light
+    card: "#FFFFFF", // card.light
+    input: "#F1F5F9", // input.light
+    text: "#0F172A", // text.main.light
+    textMuted: "#64748B", // text.muted.light
+    tint: "#F97316", // Default action color
+    icon: "#64748B",
+    tabIconDefault: "#64748B",
+    tabIconSelected: "#0F172A", // Deep Slate for light mode active tabs
+  },
+
   dark: {
-    text: "#F8FAFC", // text-text-main-dark
-    background: "#1E293B", // bg-page-dark
-    tint: tintColorDark,
-    icon: "#94A3B8", // text-text-muted-dark
+    background: "#1E293B", // page.dark
+    card: "#334155", // card.dark
+    input: "#1E293B", // input.dark
+    text: "#F8FAFC", // text.main.dark
+    textMuted: "#94A3B8", // text.muted.dark
+    tint: "#F97316", // Orange for dark mode active tabs
+    icon: "#94A3B8",
     tabIconDefault: "#94A3B8",
-    tabIconSelected: tintColorDark,
+    tabIconSelected: "#F97316",
+  },
+
+  status: {
+    hard: "#EF4444",
+    medium: "#EAB308",
+    easy: "#22C55E",
   },
 };
 
-/**
- * Font Families
- * Use these reference names in your StyleSheet styles if not using Tailwind.
- */
 export const Fonts = {
   heading: "Poppins",
   body: "Inter",
-  // You can keep the platform logic if you want fallbacks,
-  // but since you are loading Google Fonts, simple strings work best:
   sans: "Inter",
   serif: "Poppins",
 };

@@ -1,7 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import clsx from "clsx";
+import { useColorScheme } from "nativewind";
+import { PressableScale } from "pressto";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -32,6 +32,7 @@ interface Props {
 
 const ForgotPasswordModal = ({ onClose }: Props) => {
   const { t } = useTranslation();
+  const { colorScheme } = useColorScheme();
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -93,16 +94,29 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
         }}
       >
         {/* Close Button */}
-        <Pressable
+        {/* <Pressable
           onPress={onClose}
           className={clsx(
             "absolute top-12 left-6 p-2 rounded-full z-10 transition-all duration-200 active:scale-90",
             "bg-slate-100 dark:bg-slate-800",
             "hover:bg-slate-200 dark:hover:bg-slate-700"
           )}
+        > */}
+        <PressableScale
+          onPress={onClose}
+          style={{
+            position: "absolute",
+            top: 48,
+            left: 24,
+            padding: 8,
+            borderRadius: 99,
+            zIndex: 10,
+            backgroundColor: colorScheme === "dark" ? "#1E293B" : "#F1F5F9",
+          }}
+          activateOnHover
         >
           <Ionicons name="close" size={24} color="#64748B" />
-        </Pressable>
+        </PressableScale>
 
         <View className="items-center max-w-md self-center w-full">
           {/* Icon */}
@@ -122,17 +136,33 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
 
           {isSuccess ? (
             // --- SUCCESS STATE ---
-            <Pressable
+            // <Pressable
+            //   onPress={onClose}
+            //   className={clsx(
+            //     "w-full p-4 rounded-xl items-center shadow-sm transition-all duration-200 active:scale-95",
+            //     "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
+            //   )}
+            // >
+            <PressableScale
               onPress={onClose}
-              className={clsx(
-                "w-full p-4 rounded-xl items-center shadow-sm transition-all duration-200 active:scale-95",
-                "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30"
-              )}
+              style={{
+                width: "100%",
+                padding: 16,
+                borderRadius: 12,
+                alignItems: "center",
+                backgroundColor: "#F97316",
+                shadowColor: "#F97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+              activateOnHover
             >
               <Text className="text-white font-heading text-lg font-bold">
                 {t("auth.back_to_login")}
               </Text>
-            </Pressable>
+            </PressableScale>
           ) : (
             // --- FORM STATE ---
             <View className="w-full">
@@ -167,15 +197,32 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
               </View>
 
               {/* Submit Button */}
-              <Pressable
+              {/* <Pressable
                 onPress={handleSubmit(onResetPassword)}
                 disabled={loading}
                 className={clsx(
                   "w-full p-4 rounded-xl items-center shadow-sm transition-all duration-200 active:scale-95",
                   loading
                     ? "bg-slate-400 opacity-50"
-                    : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30"
+                    : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
                 )}
+              > */}
+              <PressableScale
+                onPress={() => handleSubmit(onResetPassword)()}
+                style={{
+                  width: "100%",
+                  padding: 16,
+                  borderRadius: 12,
+                  alignItems: "center",
+                  backgroundColor: loading ? "#94A3B8" : "#F97316",
+                  opacity: loading ? 0.5 : 1,
+                  shadowColor: "#F97316",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: loading ? 0 : 0.2,
+                  shadowRadius: 8,
+                  elevation: loading ? 0 : 4,
+                }}
+                activateOnHover
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
@@ -184,7 +231,7 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
                     {t("auth.send_reset_link")}
                   </Text>
                 )}
-              </Pressable>
+              </PressableScale>
             </View>
           )}
         </View>

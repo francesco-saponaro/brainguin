@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,6 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
+import { PressableScale } from "pressto";
 
 export default function StudyScreen() {
   const { colorScheme } = useColorScheme();
@@ -161,7 +161,6 @@ export default function StudyScreen() {
   }
 
   // --- FINISHED STATE ---
-  // --- FINISHED STATE ---
   if (isFinished) {
     return (
       <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark">
@@ -217,26 +216,56 @@ export default function StudyScreen() {
             </View>
 
             {/* ACTIONS */}
-            <Pressable
+            {/* <Pressable
               onPress={() => router.replace("/(tabs)/library")}
               className="bg-action hover:bg-orange-600 w-full py-4 rounded-2xl items-center shadow-lg shadow-orange-500/20 active:scale-95 transition-all mb-4"
+            > */}
+            <PressableScale
+              onPress={() => router.replace("/(tabs)/library")}
+              style={{
+                backgroundColor: "#F97316",
+                width: "100%",
+                paddingVertical: 16,
+                borderRadius: 16,
+                alignItems: "center",
+                marginBottom: 16,
+                // Shadow matching shadow-orange-500/20
+                shadowColor: "#F97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+              activateOnHover
             >
               <Text className="text-white font-bold font-heading text-lg">
                 {t("study.finished_btn")}
               </Text>
-            </Pressable>
+            </PressableScale>
 
-            <Pressable
+            {/* <Pressable
               onPress={() => {
                 setSessionStats({ hard: 0, medium: 0, easy: 0 }); // Reset stats
                 setIsFinished(false);
               }}
               className="py-3 px-6 rounded-xl active:bg-black/5 dark:active:bg-white/5"
+            > */}
+            <PressableScale
+              onPress={() => {
+                setSessionStats({ hard: 0, medium: 0, easy: 0 });
+                setIsFinished(false);
+              }}
+              style={{
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                borderRadius: 12,
+              }}
+              activateOnHover
             >
               <Text className="text-text-muted-light dark:text-text-muted-dark font-semibold">
                 Review Again
               </Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -250,12 +279,27 @@ export default function StudyScreen() {
         className="flex-row items-center justify-between px-6 mb-4"
         style={{ paddingTop: Platform.OS === "web" ? 30 : 10 }}
       >
-        <Pressable
+        {/* <Pressable
           onPress={() => router.back()}
           className="w-10 h-10 bg-black/5 dark:bg-white/10 rounded-full items-center justify-center active:bg-black/10"
+        > */}
+        <PressableScale
+          onPress={() => router.back()}
+          activateOnHover
+          style={{
+            width: 40,
+            height: 40,
+            backgroundColor:
+              colorScheme === "dark"
+                ? "rgba(255,255,255,0.1)"
+                : "rgba(0,0,0,0.05)",
+            borderRadius: 20,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           <Ionicons name="close" size={24} color={deck ? "#64748B" : "#FFF"} />
-        </Pressable>
+        </PressableScale>
 
         <View className="items-center">
           <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
@@ -314,30 +358,54 @@ export default function StudyScreen() {
                   {t("study.hint_title")}
                 </Text>
               </View>
-              <Pressable
+              {/* <Pressable
                 onPress={() => setContextModalVisible(false)}
                 className="bg-black/5 dark:bg-white/10 p-2 rounded-full transition-all hover:bg-black/10 dark:hover:bg-white/20 active:scale-90 duration-250"
+              > */}
+              <PressableScale
+                onPress={() => setContextModalVisible(false)}
+                style={{
+                  backgroundColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.05)",
+                  padding: 8,
+                  borderRadius: 99,
+                }}
+                activateOnHover
               >
                 <Ionicons
                   name="close"
                   size={20}
                   color={isDark ? "#94A3B8" : "#64748B"} // Using muted colors from config
                 />
-              </Pressable>
+              </PressableScale>
             </View>
 
             <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed">
               {activeContext}
             </Text>
 
-            <Pressable
+            {/* <Pressable
               onPress={() => setContextModalVisible(false)}
               className="mt-10 bg-action hover:bg-orange-600 dark:hover:bg-orange-400 w-full py-4 rounded-2xl items-center transition-all duration-200"
+            > */}
+            <PressableScale
+              onPress={() => setContextModalVisible(false)}
+              style={{
+                marginTop: 40,
+                backgroundColor: "#F97316",
+                width: "100%",
+                paddingVertical: 16,
+                borderRadius: 16,
+                alignItems: "center",
+              }}
+              activateOnHover
             >
               <Text className="text-white font-bold text-lg">
                 {t("study.hint_btn")}
               </Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
       </Modal>

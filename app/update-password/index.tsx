@@ -4,6 +4,7 @@ import { useAuthStore } from "@/store/storeUser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router"; // Standard Hook
+import { PressableScale } from "pressto";
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -11,7 +12,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -200,10 +200,21 @@ const UpdatePasswordScreen = () => {
             />
           </View>
 
-          <Pressable
+          {/* <Pressable
             onPress={handleSubmit(onUpdate)}
             disabled={loading}
             className="bg-action p-4 rounded-xl items-center"
+          > */}
+          <PressableScale
+            onPress={() => handleSubmit(onUpdate)()}
+            style={{
+              backgroundColor: "#F97316",
+              padding: 16,
+              borderRadius: 12,
+              alignItems: "center",
+              opacity: loading ? 0.6 : 1,
+            }}
+            activateOnHover
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -212,7 +223,7 @@ const UpdatePasswordScreen = () => {
                 {t("auth.update_password_button")}
               </Text>
             )}
-          </Pressable>
+          </PressableScale>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
