@@ -29,8 +29,8 @@ import { SignupSchema, SignupSchemaType } from "@/zodSchemas";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const PENGUIN_LOGO = require("@/assets/images/greeter.png");
-const TEXT_LOGO = require("@/assets/images/icon-text-dark.png");
+import PENGUIN_LOGO from "@/assets/images/greeter.png";
+import TEXT_LOGO from "@/assets/images/icon-text-dark.png";
 
 const SignupScreen = () => {
   const { t } = useTranslation();
@@ -114,7 +114,7 @@ const SignupScreen = () => {
       if (Platform.OS !== "web" && data?.url) {
         const result = await WebBrowser.openAuthSessionAsync(
           data.url,
-          redirectUrl
+          redirectUrl,
         );
 
         if (result.type === "success" && result.url) {
@@ -336,7 +336,7 @@ const SignupScreen = () => {
               "p-4 rounded-xl items-center shadow-sm mb-6 transition-all duration-200 active:scale-95",
               loading || !isFormValid
                 ? "bg-slate-400 opacity-50"
-                : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30"
+                : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
             )}
           >
             {loading ? (
@@ -378,7 +378,7 @@ const SignupScreen = () => {
               className={clsx(
                 "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
                 "bg-white dark:bg-card-dark border-gray-200 dark:border-gray-700",
-                "hover:bg-slate-100 dark:hover:bg-slate-800"
+                "hover:bg-slate-100 dark:hover:bg-slate-800",
               )}
             >
               <Ionicons
@@ -397,7 +397,7 @@ const SignupScreen = () => {
                 className={clsx(
                   "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
                   "bg-black dark:bg-white border-black dark:border-white",
-                  "hover:bg-slate-900 dark:hover:bg-slate-100"
+                  "hover:bg-slate-900 dark:hover:bg-slate-100",
                 )}
               >
                 <Ionicons

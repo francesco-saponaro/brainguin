@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-const PROCESSOR_PENGUIN = require("@/assets/images/processor.png");
+import PROCESSOR_PENGUIN from "@/assets/images/processor.png";
 
 export default function ThinkingState() {
   const [messageIndex, setMessageIndex] = React.useState(0);
@@ -35,10 +35,10 @@ export default function ThinkingState() {
     scale.value = withRepeat(
       withSequence(
         withTiming(1.1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
       ),
       -1, // Infinite loop
-      true // Reverse
+      true, // Reverse
     );
 
     // 2. Subtle Jiggle (Rotation)
@@ -47,10 +47,10 @@ export default function ThinkingState() {
         withTiming(2, { duration: 150 }),
         withTiming(-2, { duration: 150 }),
         withTiming(0, { duration: 150 }),
-        withTiming(0, { duration: 2000 }) // Pause between jiggles
+        withTiming(0, { duration: 2000 }), // Pause between jiggles
       ),
       -1,
-      false
+      false,
     );
 
     // 3. Cycle Messages

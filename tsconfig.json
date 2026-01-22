@@ -12,6 +12,7 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "utils/i18n.js",
-    "nativewind-env.d.ts"
+    "nativewind-env.d.ts",
+    "images.d.ts"
   ]
 }

@@ -20,7 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const CELEBRATOR_PENGUIN = require("@/assets/images/celebrator.png");
+import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
 
 export default function StudyScreen() {
   const { colorScheme } = useColorScheme();

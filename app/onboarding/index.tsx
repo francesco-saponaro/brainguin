@@ -25,14 +25,14 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // --- Penguin Images ---
-const PENGUIN_LOGO = require("@/assets/images/main.png");
-const GREETER_PENGUIN = require("@/assets/images/greeter.png");
-const PDF_PENGUIN = require("@/assets/images/pdf.png");
-const PROCESSOR_PENGUIN = require("@/assets/images/processor.png");
-const CELEBRATOR_PENGUIN = require("@/assets/images/celebrator.png");
+import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
+import GREETER_PENGUIN from "@/assets/images/greeter.png";
+import PENGUIN_LOGO from "@/assets/images/main.png";
+import PDF_PENGUIN from "@/assets/images/pdf.png";
+import PROCESSOR_PENGUIN from "@/assets/images/processor.png";
 
-const TEXT_LOGO_LIGHT = require("@/assets/images/icon-text-dark.png");
-const TEXT_LOGO_DARK = require("@/assets/images/icon-text-light.png");
+import TEXT_LOGO_LIGHT from "@/assets/images/icon-text-dark.png";
+import TEXT_LOGO_DARK from "@/assets/images/icon-text-light.png";
 
 const onboardingContent = (t: any) => [
   {

@@ -1,3 +1,4 @@
+import PENGUIN_LOGO from "@/assets/images/main.png";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,7 +37,6 @@ const UpdatePasswordSchema = (t: any) =>
     });
 
 type UpdatePasswordType = z.infer<ReturnType<typeof UpdatePasswordSchema>>;
-const PENGUIN_LOGO = require("@/assets/images/main.png");
 
 const UpdatePasswordScreen = () => {
   const router = useRouter();

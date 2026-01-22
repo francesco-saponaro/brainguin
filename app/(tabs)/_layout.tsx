@@ -14,15 +14,16 @@ import {
   View,
 } from "react-native";
 
+import TEXT_LOGO_LIGHT from "@/assets/images/icon-text-dark.png";
+import TEXT_LOGO_DARK from "@/assets/images/icon-text-light.png";
+import PENGUIN_SIGN from "@/assets/images/main.png";
+
 // --- CUSTOM TAB BAR COMPONENT ---
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const { width } = useWindowDimensions();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const isDesktop = width > 1000;
-  const PENGUIN_SIGN = require("@/assets/images/main.png");
-  const TEXT_LOGO_LIGHT = require("@/assets/images/icon-text-dark.png");
-  const TEXT_LOGO_DARK = require("@/assets/images/icon-text-light.png");
 
   if (isDesktop) {
     // ... (Desktop Sidebar Code remains the same, but let's ensure background handles themes)

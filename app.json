@@ -13,6 +13,9 @@
       "usesAppleSignIn": true,
       "appleTeamId": "86BLA5VR2L",
       "bundleIdentifier": "com.brainguin.app",
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.brainguin.app"]
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "Allow access to photo library to upload images.",
