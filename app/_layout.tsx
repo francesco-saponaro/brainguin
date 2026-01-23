@@ -1,8 +1,5 @@
-import CreationModal from "@/components/Creation/CreationModal";
-import ThinkingState from "@/components/Creation/ThinkingState";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
-import useStoreLoader from "@/store/storeLoader";
 import { useAuthStore } from "@/store/storeUser";
 import "@/utils/i18n";
 import i18n from "@/utils/i18n";
@@ -24,7 +21,7 @@ import { StatusBar } from "expo-status-bar";
 import { PressablesConfig } from "pressto";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, Text, TextInput } from "react-native";
+import { Linking, Platform, Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -62,18 +59,10 @@ export default function RootLayout() {
     Inter: Inter_400Regular,
   });
   const { t } = useTranslation();
-  const {
-    session,
-    setSession,
-    isOnboarded,
-    isCreationModalOpen,
-    closeCreationModal,
-    creationInitialType,
-  } = useAuthStore();
+  const { session, setSession, isOnboarded } = useAuthStore();
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isI18nInitialized, setIsI18nInitialized] = useState(false);
   const [isLangSynced, setIsLangSynced] = useState(false);
-  const { isThinking } = useStoreLoader();
 
   // 1. THE AUTH INITIALIZER & LISTENER
   useEffect(() => {
@@ -260,13 +249,37 @@ export default function RootLayout() {
               {/* 3. If logged in AND onboarded: show Main App */}
               <Stack.Protected guard={!!session?.user && isOnboarded}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              </Stack.Protected>
-
-              <Stack.Protected guard={!!session?.user && isOnboarded}>
                 <Stack.Screen
                   name="study/[id]/index"
                   options={{ headerShown: false }}
                 />
+                {Platform.OS === "web" ? (
+                  <Stack.Screen
+                    name="creation-modal/index"
+                    options={{
+                      presentation: "transparentModal", // Native slide-up behavior
+                      animation: "fade",
+                      headerTitle: "Creation Modal",
+                      headerShown: false,
+                    }}
+                  />
+                ) : (
+                  <Stack.Screen
+                    name="creation-modal/index"
+                    options={{
+                      presentation: "formSheet", // Native slide-up behavior
+                      headerTitle: "Creation Modal",
+                      headerShown: false,
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      sheetAllowedDetents: "fitToContents",
+                      contentStyle: {
+                        backgroundColor:
+                          colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                      },
+                    }}
+                  />
+                )}
               </Stack.Protected>
 
               {/* 4. Update Password (Public/Recovery) */}
@@ -276,13 +289,6 @@ export default function RootLayout() {
               />
             </Stack>
 
-            <CreationModal
-              isVisible={isCreationModalOpen}
-              onClose={closeCreationModal}
-              initialType={creationInitialType}
-            />
-
-            {isThinking && <ThinkingState />}
             <Toast />
             <StatusBar style="auto" />
           </PressablesConfig>

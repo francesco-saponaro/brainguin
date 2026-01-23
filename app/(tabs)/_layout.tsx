@@ -5,11 +5,10 @@ import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
 import { useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 import React from "react";
 import {
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -27,6 +26,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   const isDark = colorScheme === "dark";
   const isDesktop = width > 1000;
   const theme = isDark ? Colors.dark : Colors.light;
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   if (isDesktop) {
     // ... (Desktop Sidebar Code remains the same, but let's ensure background handles themes)
@@ -59,7 +60,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               //     isFocused ? "bg-action/10" : "bg-transparent"
               //   }`}
               // >
-              <PressableScale
+              <PressableFinal
                 key={route.key}
                 activateOnHover
                 onPress={() => navigation.navigate(route.name)}
@@ -95,7 +96,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 >
                   {options.title}
                 </Text>
-              </PressableScale>
+              </PressableFinal>
             );
           })}
         </View>
@@ -128,10 +129,17 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;
           return (
-            <Pressable
+            <PressableFinal
               key={route.key}
+              activateOnHover
               onPress={() => navigation.navigate(route.name)}
-              className="items-center justify-center flex-1 h-full"
+              style={{
+                flexDirection: "column",
+                alignItems: "center",
+                flex: 1,
+                height: "100%",
+                justifyContent: "center",
+              }}
             >
               <Ionicons
                 name={
@@ -145,7 +153,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               {isFocused && (
                 <View className="w-1.5 h-1.5 bg-action rounded-full mt-1" />
               )}
-            </Pressable>
+            </PressableFinal>
           );
         })}
       </View>

@@ -5,8 +5,6 @@ type StoreLoader = {
   startLoading: () => void;
   stopLoading: () => void;
   reset: () => void;
-  isThinking: boolean;
-  setIsThinking: (val: boolean) => void;
 };
 
 const useStoreLoader = create<StoreLoader>((set) => ({
@@ -20,8 +18,6 @@ const useStoreLoader = create<StoreLoader>((set) => ({
       loadingCount: Math.max(0, state.loadingCount - 1),
     })),
   reset: () => set({ loadingCount: 0 }),
-  isThinking: false,
-  setIsThinking: (val) => set({ isThinking: val }),
 }));
 
 export default useStoreLoader;

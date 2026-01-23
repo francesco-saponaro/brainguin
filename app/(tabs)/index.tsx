@@ -11,10 +11,11 @@ import clsx from "clsx";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router"; // Added useFocusEffect
 import { useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 import React, { useCallback, useState } from "react"; // Added hooks
 import { useTranslation } from "react-i18next";
 import {
+  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -32,7 +33,7 @@ export default function HomeScreen() {
   const { colorScheme } = useColorScheme();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
-  const { session, openCreationModal } = useAuthStore();
+  const { session, signOut } = useAuthStore();
 
   const isDesktop = width > 1000;
   const isSmallMobile = width < 390;
@@ -49,6 +50,15 @@ export default function HomeScreen() {
     dueCards: 0,
     memorized: 0,
   });
+
+  const Pressable = Platform.OS === "web" ? PressableOpacity : PressableScale;
+
+  const openCreationModal = (type: string) => {
+    router.push({
+      pathname: "/creation-modal",
+      params: { type },
+    });
+  };
 
   // --- FETCH LOGIC ---
   const fetchHomeStats = async () => {
@@ -183,7 +193,8 @@ export default function HomeScreen() {
             label="PDF"
             sub="Auto-Flashcards"
             color="#38BDF8"
-            onPress={() => openCreationModal("pdf")}
+            // onPress={() => openCreationModal("pdf")}
+            onPress={signOut}
           />
           <ActionButton
             icon="link"
@@ -223,7 +234,7 @@ export default function HomeScreen() {
                 : "bg-green-600 shadow-green-600/30", // Dynamic BG Color
             )}
           > */}
-          <PressableScale
+          <Pressable
             onPress={() => {
               if (stats.dueCards > 0) {
                 router.push("/study/daily");
@@ -311,7 +322,7 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
-          </PressableScale>
+          </Pressable>
 
           {/* STATS / STREAK */}
           <View
@@ -381,6 +392,7 @@ function ActionButton({ icon, label, sub, color, onPress }: any) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const theme = isDark ? Colors.dark : Colors.light;
+  const Pressable = Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   return (
     // <Pressable
@@ -392,7 +404,7 @@ function ActionButton({ icon, label, sub, color, onPress }: any) {
     //     "dark:hover:bg-slate-800",
     //   )}
     // >
-    <PressableScale
+    <Pressable
       onPress={onPress}
       activateOnHover
       style={{
@@ -426,6 +438,6 @@ function ActionButton({ icon, label, sub, color, onPress }: any) {
           {sub}
         </Text>
       </View>
-    </PressableScale>
+    </Pressable>
   );
 }

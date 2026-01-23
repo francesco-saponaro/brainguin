@@ -33,7 +33,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 import TEXT_LOGO from "@/assets/images/icon-text-dark.png";
 import PENGUIN_LOGO from "@/assets/images/main.png";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 
 const LoginScreen = () => {
   const { t } = useTranslation();
@@ -41,6 +41,8 @@ const LoginScreen = () => {
   const { session, setSession, isOnboarded } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [recoverVisible, setRecoverVisible] = useState<boolean>(false);
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   const schema = LoginSchema(t);
   const {
@@ -302,7 +304,7 @@ const LoginScreen = () => {
             onPress={() => setRecoverVisible(true)}
             className="self-end mb-6"
           > */}
-          <PressableScale
+          <PressableFinal
             onPress={() => setRecoverVisible(true)}
             style={{ alignSelf: "flex-end", marginBottom: 24 }}
             activateOnHover
@@ -310,7 +312,7 @@ const LoginScreen = () => {
             <Text className="text-action font-body font-medium">
               {t("auth.forgot_password")}
             </Text>
-          </PressableScale>
+          </PressableFinal>
 
           {/* Main Login Button */}
           {/* <Pressable
@@ -323,8 +325,10 @@ const LoginScreen = () => {
                 : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
             )}
           > */}
-          <PressableScale
-            onPress={() => handleSubmit(onLogin)()}
+          <PressableFinal
+            onPress={() =>
+              loading || !isFormValid ? null : handleSubmit(onLogin)()
+            }
             // pointerEvents={loading || !isFormValid ? "none" : "auto"}
             style={{
               padding: 16,
@@ -348,7 +352,7 @@ const LoginScreen = () => {
                 {t("auth.login_button")}
               </Text>
             )}
-          </PressableScale>
+          </PressableFinal>
 
           <View className="flex-row justify-center mb-8">
             <Text className="font-body text-text-muted-light dark:text-text-muted-dark mr-1">
@@ -382,7 +386,7 @@ const LoginScreen = () => {
                 "hover:bg-slate-100 dark:hover:bg-slate-800",
               )}
             > */}
-            <PressableScale
+            <PressableFinal
               onPress={onGoogleLogin}
               activateOnHover
               style={{
@@ -405,7 +409,7 @@ const LoginScreen = () => {
               <Text className="font-heading font-semibold text-text-main-light dark:text-text-main-dark">
                 {t("auth.google")}
               </Text>
-            </PressableScale>
+            </PressableFinal>
 
             {isApple ? (
               // <Pressable
@@ -416,7 +420,7 @@ const LoginScreen = () => {
               //     "hover:bg-slate-900 dark:hover:bg-slate-100",
               //   )}
               // >
-              <PressableScale
+              <PressableFinal
                 onPress={onAppleLogin}
                 activateOnHover
                 style={{
@@ -440,7 +444,7 @@ const LoginScreen = () => {
                 <Text className="font-heading font-semibold text-white dark:text-black">
                   {t("auth.apple")}
                 </Text>
-              </PressableScale>
+              </PressableFinal>
             ) : null}
           </View>
         </ScrollView>

@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/storeUser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router"; // Standard Hook
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -54,6 +54,8 @@ const UpdatePasswordScreen = () => {
     resolver: zodResolver(schema),
     defaultValues: { password: "", confirmPassword: "" },
   });
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   // Automatically restore session when params arrive
   useEffect(() => {
@@ -205,8 +207,8 @@ const UpdatePasswordScreen = () => {
             disabled={loading}
             className="bg-action p-4 rounded-xl items-center"
           > */}
-          <PressableScale
-            onPress={() => handleSubmit(onUpdate)()}
+          <PressableFinal
+            onPress={() => (loading ? null : handleSubmit(onUpdate)())}
             style={{
               backgroundColor: "#F97316",
               padding: 16,
@@ -223,7 +225,7 @@ const UpdatePasswordScreen = () => {
                 {t("auth.update_password_button")}
               </Text>
             )}
-          </PressableScale>
+          </PressableFinal>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

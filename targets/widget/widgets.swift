@@ -90,7 +90,9 @@ struct WidgetEntryView : View {
             }
             .padding(16)
         }
-        // DEEP LINK: Opens app to specific route
+        .containerBackground(for: .widget) {
+            Color(entry.dueCards > 0 ? .systemOrange : .systemGreen)
+        }
         .widgetURL(URL(string: "brainguin://study/daily"))
     }
 }

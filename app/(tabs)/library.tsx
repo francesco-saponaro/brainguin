@@ -1,18 +1,17 @@
 import ConfirmModal from "@/components/ConfirmModal";
+import ThinkingState from "@/components/Creation/ThinkingState";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
-import useStoreLoader from "@/store/storeLoader";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  FlatList,
   Keyboard,
   Modal,
   Platform,
@@ -23,6 +22,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
@@ -43,7 +43,7 @@ export default function LibraryScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
-  const { setIsThinking } = useStoreLoader();
+  const [isThinking, setIsThinking] = useState(false);
   const { session } = useAuthStore();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -68,6 +68,9 @@ export default function LibraryScreen() {
   const isDesktop = width > 1000;
   const isSmallScreen = width < 600;
   const numColumns = isSmallScreen ? 1 : getNumColumns(width);
+
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   // --- 1. FETCH DECKS (DUMMY DATA UPDATED) ---
   const fetchDecks = useCallback(async () => {
@@ -283,7 +286,7 @@ export default function LibraryScreen() {
                 "dark:hover:bg-orange-400"
               )}
             > */}
-            <PressableScale
+            <PressableFinal
               onPress={() => router.push("/(tabs)")}
               activateOnHover
               style={{
@@ -302,8 +305,7 @@ export default function LibraryScreen() {
               }}
             >
               <Ionicons name="add" size={28} color="white" />
-              <Ionicons name="add" size={28} color="white" />
-            </PressableScale>
+            </PressableFinal>
           </View>
 
           {/* SEARCH & FILTER ROW */}
@@ -339,12 +341,12 @@ export default function LibraryScreen() {
                 }
               />
             </Pressable> */}
-            <PressableScale
+            <PressableFinal
               onPress={() => setIsFilterOpen(true)}
               activateOnHover
               style={{
-                width: 56,
-                height: 56,
+                width: Platform.OS === "web" ? 54 : 48,
+                height: Platform.OS === "web" ? 54 : 48,
                 borderRadius: 16,
                 alignItems: "center",
                 justifyContent: "center",
@@ -372,7 +374,7 @@ export default function LibraryScreen() {
                     : "#94A3B8"
                 }
               />
-            </PressableScale>
+            </PressableFinal>
           </View>
 
           {/* LIST */}
@@ -444,6 +446,8 @@ export default function LibraryScreen() {
           onConfirm={performDelete}
           onCancel={() => setIsDeleteModalVisible(false)}
         />
+
+        {isThinking ? <ThinkingState /> : null}
       </Pressable>
     </View>
   );
@@ -454,6 +458,8 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
   const isDark = colorScheme === "dark";
   const { t } = useTranslation();
   const count = item.flashcards?.[0]?.count || 0;
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   return (
     // <Pressable
@@ -465,7 +471,7 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
     //     "dark:hover:bg-slate-800/60 dark:hover:border-white/10",
     //   )}
     // >
-    <PressableScale
+    <PressableFinal
       onPress={onPress}
       activateOnHover
       style={{
@@ -529,7 +535,7 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
               <Ionicons name="trash" size={18} color="#EF4444" />
             </Pressable> */}
             {/* Sparkles Button */}
-            <PressableScale
+            <PressableFinal
               activateOnHover
               onPress={onGenerate}
               style={{
@@ -542,10 +548,10 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
               }}
             >
               <Ionicons name="sparkles" size={18} color={Colors.brand.action} />
-            </PressableScale>
+            </PressableFinal>
 
             {/* Trash Button */}
-            <PressableScale
+            <PressableFinal
               activateOnHover
               onPress={onDelete}
               style={{
@@ -558,7 +564,7 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
               }}
             >
               <Ionicons name="trash" size={18} color="#EF4444" />
-            </PressableScale>
+            </PressableFinal>
           </View>
         </View>
 
@@ -603,71 +609,71 @@ function DeckCard({ item, onPress, onDelete, onGenerate }: any) {
           </Text>
         </View>
       </View>
-    </PressableScale>
+    </PressableFinal>
   );
 }
 
 // --- HELPER COMPONENT TO PREVENT CRASH ---
-const FilterButton = ({ label, isActive, onPress, isDark }: any) => {
-  const [isHovered, setIsHovered] = useState(false);
+// const FilterButton = ({ label, isActive, onPress, isDark }: any) => {
+//   const [isHovered, setIsHovered] = useState(false);
 
-  // EXACT HEX CODES to match your NativeWind theme
-  const colors = {
-    active: {
-      base: "#F97316", // bg-action
-      hover: isDark ? "#FB923C" : "#EA580C", // orange-400 (dark) / orange-600 (light)
-    },
-    inactive: {
-      base: "transparent",
-      hover: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", // subtle grey
-      border: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-    },
-    text: {
-      active: "#FFFFFF",
-      inactive: isDark ? "#94A3B8" : "#64748B", // text-muted
-    },
-  };
+//   // EXACT HEX CODES to match your NativeWind theme
+//   const colors = {
+//     active: {
+//       base: "#F97316", // bg-action
+//       hover: isDark ? "#FB923C" : "#EA580C", // orange-400 (dark) / orange-600 (light)
+//     },
+//     inactive: {
+//       base: "transparent",
+//       hover: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", // subtle grey
+//       border: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+//     },
+//     text: {
+//       active: "#FFFFFF",
+//       inactive: isDark ? "#94A3B8" : "#64748B", // text-muted
+//     },
+//   };
 
-  return (
-    <Pressable
-      onPress={onPress}
-      onHoverIn={() => setIsHovered(true)}
-      onHoverOut={() => setIsHovered(false)}
-      // 1. Layout via Tailwind (Safe)
-      className="px-5 py-3 rounded-2xl border transition-all duration-200"
-      // 2. Color logic via Style (Prevents Crash)
-      style={({ pressed }) => {
-        const isInteracting = isHovered || pressed;
-        return {
-          backgroundColor: isActive
-            ? isInteracting
-              ? colors.active.hover
-              : colors.active.base
-            : isInteracting
-              ? colors.inactive.hover
-              : colors.inactive.base,
-          borderColor: isActive
-            ? isInteracting
-              ? colors.active.hover
-              : colors.active.base
-            : colors.inactive.border,
-          transform: [{ scale: pressed ? 0.95 : 1 }],
-        };
-      }}
-    >
-      <Text
-        style={{
-          fontFamily: "Nunito-Bold", // Ensure this matches your app font
-          fontWeight: "bold",
-          textTransform: label.length < 4 ? "uppercase" : "capitalize",
-          color: isActive ? colors.text.active : colors.text.inactive,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-};
+//   return (
+//     <Pressable
+//       onPress={onPress}
+//       onHoverIn={() => setIsHovered(true)}
+//       onHoverOut={() => setIsHovered(false)}
+//       // 1. Layout via Tailwind (Safe)
+//       className="px-5 py-3 rounded-2xl border transition-all duration-200"
+//       // 2. Color logic via Style (Prevents Crash)
+//       style={({ pressed }) => {
+//         const isInteracting = isHovered || pressed;
+//         return {
+//           backgroundColor: isActive
+//             ? isInteracting
+//               ? colors.active.hover
+//               : colors.active.base
+//             : isInteracting
+//               ? colors.inactive.hover
+//               : colors.inactive.base,
+//           borderColor: isActive
+//             ? isInteracting
+//               ? colors.active.hover
+//               : colors.active.base
+//             : colors.inactive.border,
+//           transform: [{ scale: pressed ? 0.95 : 1 }],
+//         };
+//       }}
+//     >
+//       <Text
+//         style={{
+//           fontFamily: "Nunito-Bold", // Ensure this matches your app font
+//           fontWeight: "bold",
+//           textTransform: label.length < 4 ? "uppercase" : "capitalize",
+//           color: isActive ? colors.text.active : colors.text.inactive,
+//         }}
+//       >
+//         {label}
+//       </Text>
+//     </Pressable>
+//   );
+// };
 
 // --- UPDATED SUB-COMPONENT: FILTER MODAL ---
 function FilterModal({
@@ -683,6 +689,8 @@ function FilterModal({
   const [tempType, setTempType] = useState(filterType);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   React.useEffect(() => {
     if (visible) {
@@ -698,20 +706,36 @@ function FilterModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      visible={visible}
+      transparent
+      presentationStyle="overFullScreen"
+      animationType="fade"
+    >
       <View className="flex-1 bg-black/60 items-center justify-center px-6">
         <View className="bg-page-light dark:bg-page-dark w-full max-w-md rounded-[40px] p-8 shadow-2xl">
           <View className="flex-row justify-between items-center mb-8">
             <Text className="text-text-main-light dark:text-text-main-dark font-heading text-2xl font-bold">
               {t("library.filter_title")}
             </Text>
-            <Pressable
+            <PressableFinal
               onPress={onClose}
-              // SUBTLE: White/Black shift depending on theme
-              className="bg-black/5 dark:bg-white/10 p-2 rounded-full transition-all hover:bg-black/10 dark:hover:bg-white/20 active:scale-90 duration-250"
+              style={{
+                backgroundColor:
+                  colorScheme === "dark"
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.05)",
+                padding: 8,
+                borderRadius: 99,
+              }}
+              activateOnHover
             >
-              <Ionicons name="close" size={24} color="#94A3B8" />
-            </Pressable>
+              <Ionicons
+                name="close"
+                size={20}
+                color={colorScheme === "dark" ? "#FFF" : "#64748B"}
+              />
+            </PressableFinal>
           </View>
 
           {/* SORT BY SECTION */}
@@ -780,7 +804,7 @@ function FilterModal({
               //     </Text>
               //   </Pressable>
               // ),
-              <PressableScale
+              <PressableFinal
                 key={opt}
                 activateOnHover
                 onPress={() => setTempSort(opt)}
@@ -809,7 +833,7 @@ function FilterModal({
                 >
                   {t(`library.sort_options.${opt}`)}
                 </Text>
-              </PressableScale>
+              </PressableFinal>
             ))}
           </View>
 
@@ -879,7 +903,7 @@ function FilterModal({
               //     </Text>
               //   </Pressable>
               // ),
-              <PressableScale
+              <PressableFinal
                 key={type}
                 activateOnHover
                 onPress={() => setTempType(type)}
@@ -908,7 +932,7 @@ function FilterModal({
                 >
                   {t(`library.source_types.${type}`)}
                 </Text>
-              </PressableScale>
+              </PressableFinal>
             ))}
           </View>
 
@@ -922,7 +946,7 @@ function FilterModal({
               {t("library.apply_filters")}
             </Text>
           </Pressable> */}
-          <PressableScale
+          <PressableFinal
             onPress={handleApply}
             activateOnHover
             style={{
@@ -941,7 +965,7 @@ function FilterModal({
             <Text className="text-white dark:text-black font-heading font-bold text-lg">
               {t("library.apply_filters")}
             </Text>
-          </PressableScale>
+          </PressableFinal>
         </View>
       </View>
     </Modal>

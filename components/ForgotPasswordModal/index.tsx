@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -35,6 +35,8 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
   const { colorScheme } = useColorScheme();
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   const schema = ForgotPasswordSchema(t); // Pass t to schema
   const {
@@ -102,7 +104,7 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
             "hover:bg-slate-200 dark:hover:bg-slate-700"
           )}
         > */}
-        <PressableScale
+        <PressableFinal
           onPress={onClose}
           style={{
             position: "absolute",
@@ -116,7 +118,7 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
           activateOnHover
         >
           <Ionicons name="close" size={24} color="#64748B" />
-        </PressableScale>
+        </PressableFinal>
 
         <View className="items-center max-w-md self-center w-full">
           {/* Icon */}
@@ -143,7 +145,7 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
             //     "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
             //   )}
             // >
-            <PressableScale
+            <PressableFinal
               onPress={onClose}
               style={{
                 width: "100%",
@@ -162,7 +164,7 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
               <Text className="text-white font-heading text-lg font-bold">
                 {t("auth.back_to_login")}
               </Text>
-            </PressableScale>
+            </PressableFinal>
           ) : (
             // --- FORM STATE ---
             <View className="w-full">
@@ -207,8 +209,10 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
                     : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
                 )}
               > */}
-              <PressableScale
-                onPress={() => handleSubmit(onResetPassword)()}
+              <PressableFinal
+                onPress={() =>
+                  loading ? null : handleSubmit(onResetPassword)()
+                }
                 style={{
                   width: "100%",
                   padding: 16,
@@ -231,7 +235,7 @@ const ForgotPasswordModal = ({ onClose }: Props) => {
                     {t("auth.send_reset_link")}
                   </Text>
                 )}
-              </PressableScale>
+              </PressableFinal>
             </View>
           )}
         </View>

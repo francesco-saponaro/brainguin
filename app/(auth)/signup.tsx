@@ -30,7 +30,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 import PENGUIN_LOGO from "@/assets/images/greeter.png";
 import TEXT_LOGO from "@/assets/images/icon-text-dark.png";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 
 const SignupScreen = () => {
   const { t } = useTranslation();
@@ -55,6 +55,9 @@ const SignupScreen = () => {
   // Logic: Enable button only if all fields have content
   const isFormValid =
     email?.trim() !== "" && pwd?.trim() !== "" && confirmPwd?.trim() !== "";
+
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   // --- 1. EMAIL SIGNUP ---
   const onSignup = async (data: SignupSchemaType) => {
@@ -339,8 +342,10 @@ const SignupScreen = () => {
                 : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
             )}
           > */}
-          <PressableScale
-            onPress={() => handleSubmit(onSignup)()}
+          <PressableFinal
+            onPress={() =>
+              loading || !isFormValid ? null : handleSubmit(onSignup)()
+            }
             activateOnHover
             style={{
               padding: 16,
@@ -363,7 +368,7 @@ const SignupScreen = () => {
                 {t("auth.create_account_button")}
               </Text>
             )}
-          </PressableScale>
+          </PressableFinal>
 
           {/* Login Link */}
           <View className="flex-row justify-center mb-8">
@@ -398,7 +403,7 @@ const SignupScreen = () => {
                 "hover:bg-slate-100 dark:hover:bg-slate-800",
               )}
             > */}
-            <PressableScale
+            <PressableFinal
               onPress={onGoogleLogin}
               style={{
                 flex: 1,
@@ -421,7 +426,7 @@ const SignupScreen = () => {
               <Text className="font-heading font-semibold text-text-main-light dark:text-text-main-dark">
                 {t("auth.google")}
               </Text>
-            </PressableScale>
+            </PressableFinal>
 
             {isApple ? (
               // <Pressable
@@ -432,7 +437,7 @@ const SignupScreen = () => {
               //     "hover:bg-slate-900 dark:hover:bg-slate-100",
               //   )}
               // >
-              <PressableScale
+              <PressableFinal
                 onPress={onAppleLogin}
                 style={{
                   flex: 1,
@@ -456,7 +461,7 @@ const SignupScreen = () => {
                 <Text className="font-heading font-semibold text-white dark:text-black">
                   {t("auth.apple")}
                 </Text>
-              </PressableScale>
+              </PressableFinal>
             ) : null}
           </View>
         </ScrollView>

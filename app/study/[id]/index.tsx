@@ -6,7 +6,7 @@ import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next"; // 1. Import hook
 import {
   ActivityIndicator,
@@ -21,9 +21,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
 import { PressableScale } from "pressto";
+import { Modalize } from "react-native-modalize";
 
 export default function StudyScreen() {
   const { colorScheme } = useColorScheme();
+  const modalizeRef = useRef<Modalize>(null);
   const isDark = colorScheme === "dark";
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -43,6 +45,11 @@ export default function StudyScreen() {
 
   const [contextModalVisible, setContextModalVisible] = useState(false);
   const [activeContext, setActiveContext] = useState("");
+
+  const onOpen = (ctx: string) => {
+    setActiveContext(ctx);
+    modalizeRef.current?.open();
+  };
 
   useEffect(() => {
     // const fetchDeckData = async () => {
@@ -323,10 +330,11 @@ export default function StudyScreen() {
             cards={cards}
             onFinish={handleSessionFinish}
             onRate={handleRateCard}
-            onShowContext={(ctx) => {
-              setActiveContext(ctx);
-              setContextModalVisible(true);
-            }}
+            // onShowContext={(ctx) => {
+            //   setActiveContext(ctx);
+            //   setContextModalVisible(true);
+            // }}
+            onShowContext={(ctx) => onOpen(ctx)}
           />
         ) : (
           <View className="flex-1 items-center justify-center">
@@ -336,6 +344,33 @@ export default function StudyScreen() {
           </View>
         )}
       </View>
+
+      <Modalize
+        ref={modalizeRef}
+        adjustToContentHeight // This makes it a "True" Bottom Sheet
+        handlePosition="inside"
+        modalStyle={{
+          backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+        }}
+        handleStyle={{ backgroundColor: isDark ? "#475569" : "#CBD5E1" }}
+        panGestureEnabled={true}
+        closeOnOverlayTap={true}
+      >
+        <View className="p-8 pb-20 min-h-[250px]">
+          <View className="flex-row items-center gap-2 mb-4">
+            <Ionicons name="bulb" size={24} color="#F97316" />
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-xl">
+              {t("study.hint_title")}
+            </Text>
+          </View>
+
+          <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed">
+            {activeContext}
+          </Text>
+        </View>
+      </Modalize>
 
       {/* --- CONTEXT MODAL (The Bulb Popup) --- */}
       <Modal
