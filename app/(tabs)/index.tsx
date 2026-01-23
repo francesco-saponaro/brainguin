@@ -100,6 +100,8 @@ export default function HomeScreen() {
       // Save as JSON string for the Swift widget to read
       storage.set("stats", JSON.stringify(stats));
 
+      const savedData = storage.get("stats");
+      console.log("✅ [DEBUG] Saved to Shared Group:", savedData);
       // This triggers the widget to refresh immediately
       ExtensionStorage.reloadWidget();
     } catch (e) {

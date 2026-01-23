@@ -1,24 +1,31 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
 
-struct Provider: TimelineProvider {
-    let storage = UserDefaults(suiteName: "group.com.brainguin.app")
+// This matches the ConfigurationAppIntent in the example
+struct ConfigurationAppIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "Configuration" }
+    @Parameter(title: "Show Streak", default: true)
+    var showStreak: Bool
+}
 
+struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
         SimpleEntry(date: Date(), dueCards: 5)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        completion(SimpleEntry(date: Date(), dueCards: getDueCount()))
+    func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
+        SimpleEntry(date: Date(), dueCards: getDueCount())
     }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
+    
+    func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
         let entry = SimpleEntry(date: Date(), dueCards: getDueCount())
-        completion(Timeline(entries: [entry], policy: .atEnd))
+        return Timeline(entries: [entry], policy: .atEnd)
     }
 
     private func getDueCount() -> Int {
-        guard let json = storage?.string(forKey: "stats"),
+        let defaults = UserDefaults(suiteName: "group.com.brainguin.app")
+        guard let json = defaults?.string(forKey: "stats"),
               let data = json.data(using: .utf8),
               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return 0 }
         return dict["dueCards"] as? Int ?? 0
@@ -32,79 +39,31 @@ struct SimpleEntry: TimelineEntry {
 
 struct WidgetEntryView : View {
     var entry: Provider.Entry
-
     var body: some View {
         ZStack {
-            // Background Color (Matches your clsx logic)
-            Color(entry.dueCards > 0 ? .systemOrange : .systemGreen)
-            
-            // Background Decor (The circle)
-            Circle()
-                .fill(Color.white.opacity(0.1))
-                .frame(width: 150, height: 150)
-                .offset(x: 80, y: 60)
-
-            VStack(alignment: .leading, spacing: 4) {
-                // Label
-                Text(entry.dueCards > 0 ? "DAILY MISSION" : "MISSION COMPLETE")
-                    .font(.system(size: 10, weight: .bold))
-                    .kerning(1.2)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(10)
-                    .foregroundColor(.white)
-
-                // Main Title
-                Text(entry.dueCards > 0 ? "\(entry.dueCards) Cards to Review" : "All Caught Up")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.top, 4)
-
+            Color(entry.dueCards > 0 ? .orange : .green)
+            VStack(alignment: .leading) {
+                Text(entry.dueCards > 0 ? "DAILY MISSION" : "COMPLETE")
+                    .font(.caption2).bold()
+                Text(entry.dueCards > 0 ? "\(entry.dueCards) Cards" : "All Caught Up")
+                    .font(.headline)
                 Spacer()
-
-                HStack(alignment: .bottom) {
-                    if entry.dueCards > 0 {
-                        Text("Start Session")
-                            .font(.system(size: 14, weight: .bold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.white)
-                            .foregroundColor(entry.dueCards > 0 ? .orange : .green)
-                            .cornerRadius(12)
-                    } else {
-                        Text("Great Job! 🎉")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    
-                    Spacer()
-                    
-                    // Mascot (Must be in Assets.xcassets)
-                    Image("PENGUIN_SIGN")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 70, height: 70)
-                        .offset(x: 20, y: 10)
-                }
+                Text("🐧").font(.largeTitle) // Placeholder to avoid image crashes
             }
-            .padding(16)
+            .padding()
+            .foregroundColor(.white)
         }
-        .containerBackground(for: .widget) {
-            Color(entry.dueCards > 0 ? .systemOrange : .systemGreen)
-        }
-        .widgetURL(URL(string: "brainguin://study/daily"))
     }
 }
 
 struct DailyWidget: Widget {
-    let kind: String = "DailyWidget"
+    let kind: String = "DailyWidget" // New version to force refresh
+
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
             WidgetEntryView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Daily Mission")
-        .description("Quick view of your cards to review.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
