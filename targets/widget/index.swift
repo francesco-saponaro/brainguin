@@ -4,6 +4,9 @@ import SwiftUI
 @main
 struct exportWidgets: WidgetBundle {
     var body: some Widget {
-        DailyWidget()
+        // Export widgets here
+        widget()
+        widgetControl()
+        WidgetLiveActivity()
     }
 }
