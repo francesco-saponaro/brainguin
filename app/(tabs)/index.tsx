@@ -60,7 +60,7 @@ export default function HomeScreen() {
     });
   };
 
-  // --- FETCH LOGIC ---
+  // --- FETCH LOGIC IN HOME PAGE ---
   const fetchHomeStats = async () => {
     try {
       if (!session?.user) return;
