@@ -11,7 +11,6 @@ struct Stats: Codable {
 // --- 2. PROVIDER (Data Fetcher) ---
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        // Default "Preview" state
         SimpleEntry(date: Date(), stats: Stats(streak: 5, dueCards: 10, memorized: 100))
     }
 
@@ -24,18 +23,16 @@ struct Provider: TimelineProvider {
         let stats = fetchStats()
         let entry = SimpleEntry(date: Date(), stats: stats)
         
-        // Refresh policy: Update 15 mins later or when app calls reloadWidget()
+        // Refresh every 15 minutes
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
         completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
     }
 
-    // Helper to read shared JSON
     private func fetchStats() -> Stats {
         let defaults = UserDefaults(suiteName: "group.com.brainguin.app")
         guard let json = defaults?.string(forKey: "stats"),
               let data = json.data(using: .utf8),
               let stats = try? JSONDecoder().decode(Stats.self, from: data) else {
-            // Fallback if no data found yet
             return Stats(streak: 0, dueCards: 0, memorized: 0)
         }
         return stats
@@ -50,18 +47,21 @@ struct SimpleEntry: TimelineEntry {
 
 // --- 4. VIEW (The UI) ---
 struct WidgetEntryView : View {
+    @Environment(\.widgetFamily) var family
     var entry: Provider.Entry
     
-    // Define your colors manually to match Tailwind
-    let colorPrimary = Color(hex: "0F172A") // Deep Slate
-    let colorGreen = Color(hex: "16a34a")   // Success Green
-    let colorAccent = Color(hex: "38BDF8")  // Blue Text
-    let colorAction = Color(hex: "F97316")  // Orange Button
+    // Colors
+    let colorPrimary = Color(hex: "0F172A")
+    let colorGreen = Color(hex: "16a34a")
+    let colorAccent = Color(hex: "38BDF8")
+    let colorAction = Color(hex: "F97316")
     let colorWhiteOp10 = Color.white.opacity(0.1)
     
     var body: some View {
         let hasDueCards = entry.stats.dueCards > 0
         let bgColor = hasDueCards ? colorPrimary : colorGreen
+        
+        let isSmall = family == .systemSmall
         
         GeometryReader { geo in
             ZStack {
@@ -71,39 +71,40 @@ struct WidgetEntryView : View {
                 // Background Decor (Circle)
                 Circle()
                     .fill(Color.white.opacity(0.05))
-                    .frame(width: 150, height: 150)
+                    .frame(width: isSmall ? 100 : 150, height: isSmall ? 100 : 150)
                     .position(x: geo.size.width - 10, y: geo.size.height - 10)
                 
                 HStack {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: isSmall ? 4 : 6) {
                         
-                        // Top Pill Label
+                        // 1. TOP PILL LABEL (Restored but Tiny)
                         Text(hasDueCards ? "DAILY MISSION" : "MISSION COMPLETE")
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(2) // Letter spacing
+                            .font(.system(size: isSmall ? 8 : 10, weight: .bold)) // Tiny font for small
+                            .tracking(isSmall ? 1 : 2)
                             .foregroundColor(colorAccent)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, isSmall ? 4 : 8) // Tighter padding
+                            .padding(.vertical, isSmall ? 2 : 4)   // Tighter padding
                             .background(colorWhiteOp10)
                             .clipShape(Capsule())
                         
-                        // Main Number Text
+                        // 2. MAIN TEXT
                         if hasDueCards {
                             Text("\(entry.stats.dueCards)")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(.system(size: isSmall ? 28 : 32, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                             + Text(" Cards")
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.white)
                         } else {
+                            // Small widget gets 14px font
                             Text("All Caught Up")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: isSmall ? 14 : 20, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         
                         Spacer()
                         
-                        // "Button" Look
+                        // 3. BUTTON / BADGE
                         if hasDueCards {
                             Text("Start Session")
                                 .font(.system(size: 12, weight: .bold))
@@ -124,24 +125,23 @@ struct WidgetEntryView : View {
                     }
                     Spacer()
                 }
-                .padding()
+                // TIGHTER OVERALL PADDING (10 for small, 16 for medium)
+                .padding(isSmall ? 10 : 16)
                 
-                // Penguin Image (Bottom Right)
+                // 4. PENGUIN IMAGE
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
-                        // Ensure your asset catalog has an image named "PENGUIN_SIGN"
                         Image("PENGUIN_SIGN")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(height: 80)
-                            .offset(x: 10, y: 10) // Nudge it into corner
+                            .frame(height: isSmall ? 60 : 80)
+                            .offset(x: isSmall ? 15 : 10, y: isSmall ? 15 : 10)
                     }
                 }
             }
         }
-        // DEEP LINK: Tapping widget opens specific screen
         .widgetURL(URL(string: hasDueCards ? "brainguin://study/daily" : "brainguin://home"))
         .containerBackground(for: .widget) {
             bgColor
@@ -152,7 +152,7 @@ struct WidgetEntryView : View {
 // --- 5. MAIN CONFIG ---
 @main
 struct DailyWidget: Widget {
-    let kind: String = "BrainGuinDaily"
+    let kind: String = "BrainGuinDaily" // Version bump
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
@@ -180,69 +180,3 @@ extension Color {
         self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: Double(a) / 255)
     }
 }
-
-// import WidgetKit
-// import SwiftUI
-
-// // 1. The Provider
-// struct Provider: TimelineProvider {
-//     func placeholder(in context: Context) -> SimpleEntry {
-//         SimpleEntry(date: Date())
-//     }
-
-//     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-//         completion(SimpleEntry(date: Date()))
-//     }
-
-//     func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
-//         let entry = SimpleEntry(date: Date())
-//         // Refresh every hour
-//         let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date())!
-//         completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
-//     }
-// }
-
-// // 2. The Entry
-// struct SimpleEntry: TimelineEntry {
-//     let date: Date
-// }
-
-// // 3. The View
-// struct WidgetEntryView : View {
-//     var entry: Provider.Entry
-
-//     var body: some View {
-//         ZStack {
-//             Color.white
-//             VStack {
-//                 Text("🐧")
-//                     .font(.system(size: 50))
-//                 Text("BrainGuin")
-//                     .font(.headline)
-//                     .foregroundColor(.black)
-//                 Text("It Works!")
-//                     .font(.caption)
-//                     .foregroundColor(.gray)
-//             }
-//         }
-//         // ESSENTIAL for iOS 17 container background
-//         .containerBackground(for: .widget) {
-//             Color.white
-//         }
-//     }
-// }
-
-// // 4. The Main Entry Point
-// @main
-// struct DailyWidget: Widget {
-//     let kind: String = "BrainGuinDebugWidget"
-
-//     var body: some WidgetConfiguration {
-//         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-//             WidgetEntryView(entry: entry)
-//         }
-//         .configurationDisplayName("BrainGuin")
-//         .description("Your daily study companion.")
-//         .supportedFamilies([.systemSmall, .systemMedium])
-//     }
-// }
