@@ -14,7 +14,9 @@
       "appleTeamId": "86BLA5VR2L",
       "bundleIdentifier": "com.brainguin.app",
       "entitlements": {
-        "com.apple.security.application-groups": ["group.com.brainguin.app"]
+        "com.apple.security.application-groups": [
+          "group.com.brainguin.app"
+        ]
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -36,7 +38,9 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "web": {
       "output": "static",
@@ -59,7 +63,8 @@
       "expo-font",
       "expo-localization",
       "expo-apple-authentication",
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "react-native-android-widget"
     ],
     "experiments": {
       "typedRoutes": true,
