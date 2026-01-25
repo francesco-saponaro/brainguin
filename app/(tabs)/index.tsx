@@ -95,6 +95,12 @@ export default function HomeScreen() {
         memorized: masteredCount || 0,
       };
 
+      //   const stats = {
+      //   streak: 10,
+      //   dueCards: 25,
+      //   memorized: 30,
+      // };
+
       setStats(stats);
 
       // Save as JSON string for the Swift widget to read

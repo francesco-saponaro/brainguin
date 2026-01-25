@@ -110,7 +110,7 @@ struct WidgetEntryView : View {
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
+                                .padding(.horizontal, isSmall ? 12 : 16)
                                 .background(colorAction)
                                 .cornerRadius(12)
                         } else {
@@ -118,7 +118,7 @@ struct WidgetEntryView : View {
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
+                                .padding(.horizontal, isSmall ? 12 : 16)
                                 .background(Color.white.opacity(0.2))
                                 .cornerRadius(12)
                         }
@@ -126,7 +126,7 @@ struct WidgetEntryView : View {
                     Spacer()
                 }
                 // TIGHTER OVERALL PADDING (10 for small, 16 for medium)
-                .padding(isSmall ? 10 : 16)
+                .padding(isSmall ? 6 : 16)
                 
                 // 4. PENGUIN IMAGE
                 VStack {
