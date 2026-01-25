@@ -80,7 +80,9 @@ struct WidgetEntryView : View {
                         // 1. TOP PILL LABEL (Restored but Tiny)
                         Text(hasDueCards ? "DAILY MISSION" : "MISSION COMPLETE")
                             .font(.system(size: isSmall ? 8 : 10, weight: .bold)) // Tiny font for small
-                            .tracking(isSmall ? 1 : 2)
+                            .tracking(isSmall ? 0 : 2)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                             .foregroundColor(colorAccent)
                             .padding(.horizontal, isSmall ? 4 : 8) // Tighter padding
                             .padding(.vertical, isSmall ? 2 : 4)   // Tighter padding
@@ -126,7 +128,7 @@ struct WidgetEntryView : View {
                     Spacer()
                 }
                 // TIGHTER OVERALL PADDING (10 for small, 16 for medium)
-                .padding(isSmall ? 6 : 16)
+                .padding(isSmall ? 2 : 16)
                 
                 // 4. PENGUIN IMAGE
                 VStack {
@@ -136,7 +138,7 @@ struct WidgetEntryView : View {
                         Image("PENGUIN_SIGN")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(height: isSmall ? 60 : 80)
+                            .frame(height: isSmall ? 50 : 80)
                             .offset(x: isSmall ? 15 : 10, y: isSmall ? 15 : 10)
                     }
                 }
