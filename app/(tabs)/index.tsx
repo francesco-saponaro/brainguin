@@ -5,6 +5,7 @@ import PENGUIN_SIGN from "@/assets/images/processor.png";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
+import { AndroidWidget } from "@/widget/AndroidWidget";
 import { ExtensionStorage } from "@bacons/apple-targets";
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
@@ -22,6 +23,10 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import {
+  requestWidgetUpdate,
+  WidgetPreview,
+} from "react-native-android-widget";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const APP_GROUP_ID = "group.com.brainguin.app";
@@ -103,13 +108,26 @@ export default function HomeScreen() {
 
       setStats(stats);
 
-      // Save as JSON string for the Swift widget to read
+      // 1. iOS UPDATE (Keep this)
       storage.set("stats", JSON.stringify(stats));
-
-      const savedData = storage.get("stats");
-      console.log("✅ [DEBUG] Saved to Shared Group:", savedData);
-      // This triggers the widget to refresh immediately
       ExtensionStorage.reloadWidget();
+
+      // 2. ANDROID UPDATE (Add this)
+      // We explicitly tell Android: "Render the widget named 'Android' with THESE props"
+      requestWidgetUpdate({
+        widgetName: "Android",
+        renderWidget: () => (
+          <AndroidWidget
+            dueCards={stats.dueCards}
+            streak={stats.streak}
+            memorized={stats.memorized}
+          />
+        ),
+        widgetNotFound: () => {
+          // Called if the user hasn't added the widget to their home screen yet
+          console.log("Android widget not active");
+        },
+      });
     } catch (e) {
       console.error("Error fetching home stats:", e);
     }
@@ -133,6 +151,17 @@ export default function HomeScreen() {
       className="flex-1 bg-page-light dark:bg-page-dark"
       style={{ paddingTop: insets.top }}
     >
+      <WidgetPreview
+        renderWidget={() => (
+          <AndroidWidget
+            dueCards={stats.dueCards}
+            streak={stats.streak}
+            memorized={stats.memorized}
+          />
+        )}
+        width={320}
+        height={160} // Adjusted height to match minHeight usually seen on Android
+      />
       <ScrollView
         className="flex-1"
         refreshControl={
@@ -531,3 +560,5 @@ function ActionButton({ icon, label, sub, color, onPress }: any) {
 //     SimpleEntry(date: .now, configuration: .smiley)
 //     SimpleEntry(date: .now, configuration: .starEyes)
 // }
+
+// "main": "expo-router/entry",
