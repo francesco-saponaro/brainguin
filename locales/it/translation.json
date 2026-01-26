@@ -180,5 +180,22 @@
   "cards_to_review": "Carte da ripassare",
   "all_caught_up": "Tutto in pari!",
   "daily_mission": "Missione quotidiana",
-  "mission_complete": "Missione completata"
+  "mission_complete": "Missione completata",
+  "paywall": {
+    "headerTitle": "Sblocca",
+    "headerHighlight": "Superpoteri Illimitati",
+    "feat1Title": "Generazioni Illimitate",
+    "feat1Desc": "Crea mazzi da qualsiasi PDF, link o argomento.",
+    "feat2Title": "Motore di Apprendimento Intelligente",
+    "feat2Desc": "Impara le carte 10 volte più velocemente con l'IA.",
+    "feat3Title": "Modalità Focus senza Pubblicità",
+    "feat3Desc": "Nessuna distrazione. Puro flusso di studio.",
+    "bestValue": "Miglior Prezzo",
+    "perYear": "/anno",
+    "monthlyBreakdown": "(Solo {{price}} / mese)",
+    "cta": "Sblocca l'Accesso Annuale",
+    "guarantee": "Pagamento sicuro. Annulla quando vuoi.",
+    "restore": "Ripristina",
+    "terms": "Termini e Privacy"
+  }
 }

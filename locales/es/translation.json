@@ -180,5 +180,22 @@
   "cards_to_review": "Tarjetas por revisar",
   "all_caught_up": "¡Todo al día!",
   "daily_mission": "Misión diaria",
-  "mission_complete": "Misión completada"
+  "mission_complete": "Misión completada",
+  "paywall": {
+    "headerTitle": "Desbloquea",
+    "headerHighlight": "Superpoderes Ilimitados",
+    "feat1Title": "Generaciones Ilimitadas",
+    "feat1Desc": "Crea mazos desde cualquier PDF, enlace o tema.",
+    "feat2Title": "Motor de Aprendizaje Inteligente",
+    "feat2Desc": "Domina tarjetas 10 veces más rápido con IA.",
+    "feat3Title": "Modo Enfoque sin Anuncios",
+    "feat3Desc": "Sin distracciones. Flujo de aprendizaje puro.",
+    "bestValue": "Mejor Valor",
+    "perYear": "/año",
+    "monthlyBreakdown": "(Solo {{price}} / mes)",
+    "cta": "Desbloquear Acceso Anual",
+    "guarantee": "Pago seguro. Cancela en cualquier momento.",
+    "restore": "Restaurar",
+    "terms": "Términos y Privacidad"
+  }
 }

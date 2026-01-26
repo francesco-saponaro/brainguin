@@ -180,5 +180,22 @@
   "cards_to_review": "Cards to Review",
   "all_caught_up": "All Caught Up!",
   "daily_mission": "Daily Mission",
-  "mission_complete": "Mission Complete"
+  "mission_complete": "Mission Complete",
+  "paywall": {
+    "headerTitle": "Unlock Unlimited",
+    "headerHighlight": "Superpowers",
+    "feat1Title": "Unlimited Generations",
+    "feat1Desc": "Create decks from any PDF, Link, or Topic.",
+    "feat2Title": "Smart Learning Engine",
+    "feat2Desc": "Master cards 10x faster with AI algorithm.",
+    "feat3Title": "Ad-Free Focus Mode",
+    "feat3Desc": "No distractions. Pure learning flow.",
+    "bestValue": "Best Value",
+    "perYear": "/year",
+    "monthlyBreakdown": "(Only {{price}} / month)",
+    "cta": "Unlock Yearly Access",
+    "guarantee": "Secured payment. Cancel anytime in settings.",
+    "restore": "Restore",
+    "terms": "Terms & Privacy"
+  }
 }

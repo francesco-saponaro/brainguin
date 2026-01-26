@@ -180,5 +180,22 @@
   "cards_to_review": "Cartes à réviser",
   "all_caught_up": "Tout est à jour !",
   "daily_mission": "Mission quotidienne",
-  "mission_complete": "Mission terminée"
+  "mission_complete": "Mission terminée",
+  "paywall": {
+    "headerTitle": "Débloquez des",
+    "headerHighlight": "Super-pouvoirs Illimités",
+    "feat1Title": "Générations Illimitées",
+    "feat1Desc": "Créez des decks à partir de PDF, liens ou sujets.",
+    "feat2Title": "Moteur d'Apprentissage Intelligent",
+    "feat2Desc": "Maîtrisez les cartes 10x plus vite avec l'IA.",
+    "feat3Title": "Mode Concentration sans Pub",
+    "feat3Desc": "Aucune distraction. Apprentissage pur.",
+    "bestValue": "Meilleure Offre",
+    "perYear": "/an",
+    "monthlyBreakdown": "(Seulement {{price}} / mois)",
+    "cta": "Débloquer l'Accès Annuel",
+    "guarantee": "Paiement sécurisé. Annulez à tout moment.",
+    "restore": "Restaurer",
+    "terms": "Conditions et Confidentialité"
+  }
 }
