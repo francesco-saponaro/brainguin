@@ -1,3 +1,5 @@
+const path = require("path");
+
 module.exports = function (api) {
   api.cache(true);
 
@@ -10,8 +12,6 @@ module.exports = function (api) {
         "babel-preset-expo",
         {
           jsxImportSource: "nativewind",
-        },
-        {
           "react-compiler": {
             sources: (filename) => {
               if (!filename) return true;

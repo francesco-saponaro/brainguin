@@ -97,7 +97,8 @@ export default function CreationModal() {
 
         // 4. Navigate to the Deck (We will build this route in Day 4)
         // router.push(`/study/${data.deck_id}`);
-        router.replace(`/study/10`);
+        // router.replace(`/study/10`);
+        router.replace(`/paywall`);
       }, 5000);
 
       // TODO: In Day 4, we will navigate to the Flashcard Screen with this data

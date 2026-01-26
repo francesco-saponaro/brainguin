@@ -280,6 +280,22 @@ export default function RootLayout() {
                     }}
                   />
                 )}
+
+                <Stack.Screen
+                  name="paywall/index"
+                  options={{
+                    presentation: "formSheet", // Native slide-up behavior
+                    headerTitle: "Paywall",
+                    headerShown: false,
+                    sheetGrabberVisible: true,
+                    sheetCornerRadius: 24,
+                    sheetAllowedDetents: "fitToContents",
+                    contentStyle: {
+                      backgroundColor:
+                        colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                    },
+                  }}
+                />
               </Stack.Protected>
 
               {/* 4. Update Password (Public/Recovery) */}
