@@ -139,7 +139,17 @@
       "success_added": "¡Nuevas tarjetas añadidas!",
       "delete_title": "Mazo Eliminado",
       "delete_desc": "\"{{title}}\" ha sido eliminado."
-    }
+    },
+    "status_active": "Activo",
+    "status_archived": "Archivado",
+    "status_all": "Todos",
+    "archive_deck_btn": "Archivar Mazo",
+    "restore_deck_btn": "Restaurar a Diario",
+    "toast_archived_title": "Mazo Archivado",
+    "toast_archived_desc": "Las tarjetas no aparecerán en el repaso diario.",
+    "toast_restored_title": "Mazo Restaurado",
+    "toast_restored_desc": "Las tarjetas vuelven al repaso diario.",
+    "toast_action_failed": "Acción fallida"
   },
   "study": {
     "header_small": "Estudiando",
@@ -163,7 +173,11 @@
     "swipe_hint_text": "Desliza Izq (Difícil) • Desliza Der (Fácil)",
 
     "hint_title": "Pista",
-    "hint_btn": "Entendido"
+    "hint_btn": "Entendido",
+    "quit_session_title": "¿Salir de la sesión?",
+    "quit_session_msg": "Las tarjetas calificadas se han guardado. El resto quedará pendiente.",
+    "quit_session_confirm": "Salir",
+    "review_again": "Repasar de nuevo"
   },
   "errors": {
     "fetch_failed": "Error al cargar",
@@ -196,6 +210,14 @@
     "cta": "Desbloquear Acceso Anual",
     "guarantee": "Pago seguro. Cancela en cualquier momento.",
     "restore": "Restaurar",
-    "terms": "Términos y Privacidad"
+    "terms": "Términos y Privacidad",
+    "purchase_success_title": "¡Compra Exitosa!",
+    "purchase_success_desc": "Bienvenido a BrainGuin Pro.",
+    "purchase_error_title": "Fallo en la Compra",
+    "restore_success_title": "¡Restauración Exitosa!",
+    "restore_success_desc": "Tu acceso Pro ha sido restaurado.",
+    "restore_no_purchase_title": "Sin Compras",
+    "restore_no_purchase_desc": "No encontramos suscripciones activas.",
+    "restore_error_title": "Error de Restauración"
   }
 }

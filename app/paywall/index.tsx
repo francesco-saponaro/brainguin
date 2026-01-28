@@ -1,11 +1,14 @@
+import PENGUINIMAGE from "@/assets/images/main.png";
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
 import { PressableOpacity, PressableScale } from "pressto";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next"; // Added i18n hook
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   Platform,
@@ -14,10 +17,17 @@ import {
   Text,
   View,
 } from "react-native";
+import Purchases, { PurchasesPackage } from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
-const PENGUIN_PRO = require("@/assets/images/main.png");
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+// 🔑 REPLACE WITH YOUR REAL KEY FROM REVENUECAT
+const API_KEY =
+  Platform.OS === "ios"
+    ? process.env.EXPO_PUBLIC_REVENUECAT_APPLE_PRODUCTION!
+    : "goog_YOUR_ANDROID_KEY";
 
 export default function PaywallScreen() {
   const { t } = useTranslation(); // Initialize translation
@@ -25,11 +35,96 @@ export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
 
+  const [pkg, setPkg] = useState<PurchasesPackage | null>(null);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+
   const PressableFinal =
     Platform.OS === "web" ? PressableOpacity : PressableScale;
 
-  const handlePurchase = () => console.log("Purchase: Yearly Plan");
-  const handleRestore = () => console.log("Restore Purchases");
+  // 1. INITIALIZE & FETCH PRODUCTS
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        await Purchases.configure({ apiKey: API_KEY });
+        const offerings = await Purchases.getOfferings();
+
+        // We want the 'current' offering (configured in RevenueCat dashboard)
+        if (
+          offerings.current !== null &&
+          offerings.current.availablePackages.length !== 0
+        ) {
+          setPkg(offerings.current.availablePackages[0]);
+        }
+      } catch (e) {
+        console.log("Error fetching offerings", e);
+      }
+    };
+    setup();
+  }, []);
+
+  // 2. PURCHASE HANDLER
+  const handlePurchase = async () => {
+    if (!pkg) return;
+    setIsPurchasing(true);
+
+    try {
+      const { customerInfo } = await Purchases.purchasePackage(pkg);
+
+      // Check if they unlocked 'pro' entitlement
+      if (customerInfo.entitlements.active["pro"]) {
+        // 'pro' must match RevenueCat Entitlement ID
+        // ✅ SUCCESS! Update Supabase
+        await supabase.rpc("upgrade_user_to_pro");
+
+        Toast.show({
+          type: "success",
+          text1: t("paywall.purchaseSuccessTitle"),
+          text2: t("paywall.purchaseSuccessDesc"),
+        });
+      }
+    } catch (e: any) {
+      if (!e.userCancelled) {
+        Toast.show({
+          type: "error",
+          text1: t("paywall.purchaseErrorTitle"),
+          text2: e.message,
+        });
+      }
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
+  // 3. RESTORE HANDLER
+  const handleRestore = async () => {
+    setIsPurchasing(true);
+    try {
+      const customerInfo = await Purchases.restorePurchases();
+      if (customerInfo.entitlements.active["pro"]) {
+        await supabase.rpc("upgrade_user_to_pro");
+        Toast.show({
+          type: "success",
+          text1: t("paywall.restoreSuccessTitle"),
+          text2: t("paywall.restoreSuccessDesc"),
+        });
+        router.back();
+      } else {
+        Toast.show({
+          type: "info",
+          text1: t("paywall.restoreNoPurchaseTitle"),
+          text2: t("paywall.restoreNoPurchaseDesc"),
+        });
+      }
+    } catch (e: any) {
+      Toast.show({
+        type: "error",
+        text1: t("paywall.restoreErrorTitle"),
+        text2: e.message,
+      });
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
 
   return (
     <ScrollView
@@ -68,7 +163,7 @@ export default function PaywallScreen() {
         <View className="relative mt-4">
           <View className="absolute -inset-4 bg-orange-500/10 rounded-full blur-2xl" />
           <Image
-            source={PENGUIN_PRO}
+            source={PENGUINIMAGE}
             style={{ width: 100, height: 100 }}
             resizeMode="contain"
           />
@@ -127,7 +222,8 @@ export default function PaywallScreen() {
 
           <View className="flex-row items-baseline mb-1">
             <Text className="text-white font-heading text-4xl font-bold">
-              €29.99
+              {/* ✅ REAL PRICE FROM STORE */}
+              {pkg ? pkg.product.priceString : "€29.99"}
             </Text>
             <Text className="text-white/90 font-body text-base ml-1">
               {t("paywall.perYear")}
@@ -135,11 +231,13 @@ export default function PaywallScreen() {
           </View>
 
           <Text className="text-white/80 font-body text-xs mb-5">
-            {t("paywall.monthlyBreakdown", { price: "€2.50" })}
+            {t("paywall.monthlyBreakdown", {
+              price: `${pkg ? (pkg.product.price / 12).toFixed(2) : "2.50"} ${pkg?.product.currencyCode || "€"}`,
+            })}
           </Text>
 
           <PressableFinal
-            onPress={handlePurchase}
+            onPress={isPurchasing ? undefined : handlePurchase}
             activateOnHover
             style={{
               backgroundColor: "white",
@@ -152,11 +250,16 @@ export default function PaywallScreen() {
               shadowOpacity: 0.05,
               shadowRadius: 2,
               elevation: 2,
+              opacity: isPurchasing ? 0.7 : 1,
             }}
           >
-            <Text className="text-orange-600 font-bold text-lg">
-              {t("paywall.cta")}
-            </Text>
+            {isPurchasing ? (
+              <ActivityIndicator color="#EA580C" />
+            ) : (
+              <Text className="text-orange-600 font-bold text-lg">
+                {t("paywall.cta")}
+              </Text>
+            )}
           </PressableFinal>
 
           <Text className="text-white/60 text-[10px] text-center mt-3 font-medium">

@@ -1,5 +1,7 @@
 import ThinkingState from "@/components/Creation/ThinkingState";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -26,6 +28,7 @@ export default function CreationModal() {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { session } = useAuthStore();
   const colorScheme = useColorScheme();
   const [isThinking, setIsThinking] = useState(false);
 
@@ -34,92 +37,107 @@ export default function CreationModal() {
   const [selectedFile, setSelectedFile] = useState<any>(null);
 
   const handleCreateSubmit = async (
-    type: "pdf" | "url" | "topic",
+    inputType: "pdf" | "url" | "topic",
     inputData: any,
   ) => {
-    setIsThinking(true); // Open Thinking Penguin
+    if (!session?.user) {
+      Toast.show({ type: "error", text1: "Please log in first." });
+      return;
+    }
 
     try {
-      // let payload = inputData;
+      // 🛑 STEP 1: CHECK LIMITS (The Gatekeeper)
+      const { data: limitData, error: limitError } = await supabase.rpc(
+        "check_user_limit",
+        { user_uuid: session.user.id },
+      );
 
-      // // 1. If PDF, convert file to Base64 so AI can read it
-      // if (type === "pdf" && inputData.uri) {
-      //   try {
-      //     // 1. Fetch the local file URI as a blob
-      //     const response = await fetch(inputData.uri);
-      //     const blob = await response.blob();
+      if (limitError) throw limitError;
 
-      //     // 2. Convert Blob to Base64
-      //     // We use a Promise with FileReader (Standard Web API)
-      //     const base64: string = await new Promise((resolve, reject) => {
-      //       const reader = new FileReader();
-      //       reader.onload = () => {
-      //         // reader.result looks like: "data:application/pdf;base64,JVBER..."
-      //         // We split to get only the base64 content for the AI
-      //         const base64String = (reader.result as string).split(",")[1];
-      //         resolve(base64String);
-      //       };
-      //       reader.onerror = reject;
-      //       reader.readAsDataURL(blob);
-      //     });
+      // 🛑 STEP 2: IF LIMIT REACHED -> SHOW PAYWALL
+      if (limitData.limit_reached) {
+        router.replace("/paywall");
+        return;
+      }
 
-      //     payload = base64;
-      //   } catch (fileError) {
-      //     console.error("Failed to process file with modern API:", fileError);
-      //     throw new Error("Could not read the PDF file.");
-      //   }
-      // }
+      // ✅ STEP 3: LIMIT OK -> PROCEED
+      setIsThinking(true);
 
-      // // 2. Call the AI
-      // console.log(`🚀 Sending ${type} to AI...`);
+      let payloadData = inputData;
 
-      // // Make sure we pass userId!
-      // if (!session?.user?.id) {
-      //   throw new Error("User not logged in");
-      // }
+      // --- HANDLE PDF CONVERSION (Web Standard) ---
+      if (inputType === "pdf" && inputData.uri) {
+        try {
+          // 1. Fetch the local blob from the browser
+          const response = await fetch(inputData.uri);
+          const blob = await response.blob();
 
-      // const { data, error } = await supabase.functions.invoke(
-      //   "generate-cards",
-      //   {
-      //     body: { inputType: type, data: payload, userId: session.user.id },
-      //   }
-      // );
+          // 2. Convert Blob to Base64 using FileReader
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              // Result: "data:application/pdf;base64,JVBER..."
+              const base64String = (reader.result as string).split(",")[1];
+              resolve(base64String);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
 
-      // if (error) throw error;
-      // if (data.error) throw new Error(data.error);
+          payloadData = base64;
+        } catch (fileError) {
+          console.error("PDF Processing Error:", fileError);
+          throw new Error("Could not process the PDF file.");
+        }
+      }
 
-      // console.log("✅ Deck Created ID:", data.deck_id);
+      // ✅ STEP 4: CALL EDGE FUNCTION
+      console.log(`🚀 Sending ${inputType} to BrainGuin AI...`);
 
-      setTimeout(() => {
-        // TODO: In Day 4, we will navigate to the Flashcard Screen with this data
-        Toast.show({
-          type: "success",
-          text1: "Success!",
-          // text2: `Generated ${data.flashcards?.length || 0} cards.`,
-        });
+      const { data, error } = await supabase.functions.invoke(
+        "generate-cards",
+        {
+          body: {
+            inputType: inputType,
+            data: payloadData,
+            userId: session.user.id,
+          },
+        },
+      );
 
-        // 4. Navigate to the Deck (We will build this route in Day 4)
-        // router.push(`/study/${data.deck_id}`);
-        // router.replace(`/study/10`);
-        router.replace(`/paywall`);
-      }, 5000);
+      if (error) {
+        console.error("Edge Function Error:", error);
+        throw new Error(error.message || "AI Generation Failed");
+      }
 
-      // TODO: In Day 4, we will navigate to the Flashcard Screen with this data
-      // Toast.show({
-      //   type: "success",
-      //   text1: "Success!",
-      //   // text2: `Generated ${data.flashcards?.length || 0} cards.`,
-      // });
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-      // // 4. Navigate to the Deck (We will build this route in Day 4)
-      // // router.push(`/study/${data.deck_id}`);
-      // router.push(`/study/10`);
+      console.log("✅ Deck Created ID:", data.deck_id);
+
+      // ✅ STEP 5: INCREMENT COUNT
+      await supabase.rpc("increment_generation_count", {
+        user_uuid: session.user.id,
+      });
+
+      setIsThinking(false);
+
+      Toast.show({
+        type: "success",
+        text1: "Success!",
+        text2: `Generated ${data.card_count} cards.`,
+      });
+
+      // Navigate to the new deck
+      router.replace(`/study/${data.deck_id}`);
     } catch (e: any) {
+      setIsThinking(false);
       console.error(e);
       Toast.show({
         type: "error",
         text1: t("errors.generic"),
-        text2: e.message,
+        text2: e.message || "Something went wrong",
       });
     }
   };
@@ -128,10 +146,11 @@ export default function CreationModal() {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "application/pdf",
+        // CopyToCache is ignored on web, but harmless to keep
         copyToCacheDirectory: true,
       });
 
-      if (result.assets && result.assets.length > 0) {
+      if (!result.canceled && result.assets && result.assets.length > 0) {
         setSelectedFile(result.assets[0]);
       }
     } catch (err) {
@@ -172,10 +191,6 @@ export default function CreationModal() {
           <Text className="text-text-main-light dark:text-text-main-dark font-heading text-xl font-bold">
             {t("creation.new_creation_sprint")}
           </Text>
-          {/* <Pressable
-              onPress={onClose}
-              className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
-            > */}
           <PressableOpacity
             onPress={() => router.back()}
             style={{
@@ -185,13 +200,14 @@ export default function CreationModal() {
                   : "rgba(0,0,0,0.05)",
               padding: 8,
               borderRadius: 99,
+              cursor: "pointer", // Web cursor
             }}
             activateOnHover
           >
             <Ionicons
               name="close"
               size={20}
-              color={Platform.OS === "ios" ? undefined : "#FFF"}
+              color={colorScheme === "dark" ? "#FFF" : "#000"}
             />
           </PressableOpacity>
         </View>
@@ -203,19 +219,6 @@ export default function CreationModal() {
             { id: "url", label: "URL", icon: "link" },
             { id: "topic", label: "Topic", icon: "bulb" },
           ].map((item) => (
-            // <Pressable
-            //   key={item.id}
-            //   onPress={() => {
-            //     setActiveType(item.id as InputType);
-            //     setInputText("");
-            //     setSelectedFile(null);
-            //   }}
-            //   className={`flex-1 flex-row items-center justify-center p-3 rounded-xl border transition-all ${
-            //     activeType === item.id
-            //       ? "bg-action border-action"
-            //       : "bg-transparent border-black/10 dark:border-white/10"
-            //   }`}
-            // >
             <PressableOpacity
               key={item.id}
               activateOnHover
@@ -240,6 +243,7 @@ export default function CreationModal() {
                     : colorScheme === "dark"
                       ? "rgba(255,255,255,0.1)"
                       : "rgba(0,0,0,0.1)",
+                cursor: "pointer",
               }}
             >
               <Ionicons
@@ -265,10 +269,6 @@ export default function CreationModal() {
           {/* 1. PDF INPUT */}
           {activeType === "pdf" && (
             <View className="items-center">
-              {/* <Pressable
-                  onPress={handleFilePick}
-                  className="w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-3xl items-center justify-center bg-black/5 dark:bg-white/5 mb-4 active:bg-action/5"
-                > */}
               <PressableOpacity
                 onPress={handleFilePick}
                 style={{
@@ -285,6 +285,7 @@ export default function CreationModal() {
                       ? "rgba(255,255,255,0.05)"
                       : "rgba(0,0,0,0.05)",
                   marginBottom: 16,
+                  cursor: "pointer",
                 }}
               >
                 {selectedFile ? (
@@ -367,17 +368,6 @@ export default function CreationModal() {
               : "auto"
           }
         >
-          {/* <Pressable
-              onPress={handleSubmit}
-              disabled={
-                activeType === "pdf" ? !selectedFile : inputText.length < 3
-              }
-              className={`w-full py-4 rounded-xl items-center shadow-lg ${
-                (activeType === "pdf" ? !selectedFile : inputText.length < 3)
-                  ? "bg-slate-300 dark:bg-slate-700 opacity-50"
-                  : "bg-action active:bg-action-hover shadow-action/30"
-              }`}
-            > */}
           <PressableOpacity
             onPress={handleSubmit}
             style={{
@@ -397,7 +387,6 @@ export default function CreationModal() {
               )
                 ? 0.5
                 : 1,
-              // Shadow logic
               shadowColor: "#F97316",
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: (
@@ -411,6 +400,7 @@ export default function CreationModal() {
               )
                 ? 0
                 : 4,
+              cursor: "pointer",
             }}
           >
             <Text className="text-white font-heading font-bold text-lg">
@@ -424,11 +414,423 @@ export default function CreationModal() {
         visible={isThinking}
         transparent={true}
         animationType="fade"
-        statusBarTranslucent={true} // Ensures it covers the status bar area too
+        statusBarTranslucent={true}
       >
-        {/* Your Penguin component now floats over the ENTIRE screen */}
         <ThinkingState />
       </Modal>
     </View>
   );
 }
+
+// import ThinkingState from "@/components/Creation/ThinkingState";
+// import { useColorScheme } from "@/hooks/use-color-scheme";
+// import { supabase } from "@/lib/supabase";
+// import { useAuthStore } from "@/store/storeUser";
+// import { Ionicons } from "@expo/vector-icons";
+// import * as DocumentPicker from "expo-document-picker";
+// import { useLocalSearchParams, useRouter } from "expo-router";
+// import { PressableOpacity } from "pressto";
+// import React, { useEffect, useState } from "react";
+// import { useTranslation } from "react-i18next";
+// import {
+//   Modal,
+//   Platform,
+//   Pressable,
+//   Text,
+//   TextInput,
+//   useWindowDimensions,
+//   View,
+// } from "react-native";
+// import { useSafeAreaInsets } from "react-native-safe-area-context";
+// import Toast from "react-native-toast-message";
+
+// type InputType = "pdf" | "url" | "topic";
+
+// export default function CreationModal() {
+//   const { type } = useLocalSearchParams<{ type: InputType }>();
+//   const router = useRouter();
+//   const { height } = useWindowDimensions();
+//   const insets = useSafeAreaInsets();
+//   const { t } = useTranslation();
+//   const { session } = useAuthStore();
+//   const colorScheme = useColorScheme();
+//   const [isThinking, setIsThinking] = useState(false);
+
+//   const [activeType, setActiveType] = useState<InputType>(type || "pdf");
+//   const [inputText, setInputText] = useState("");
+//   const [selectedFile, setSelectedFile] = useState<any>(null);
+
+//   const handleCreateSubmit = async (
+//     inputType: "pdf" | "url" | "topic",
+//     inputData: any,
+//   ) => {
+//     if (!session?.user) {
+//       Toast.show({ type: "error", text1: "Please log in first." });
+//       return;
+//     }
+
+//     try {
+//       // 🛑 STEP 1: CHECK LIMITS (The Gatekeeper)
+//       const { data: limitData, error: limitError } = await supabase.rpc(
+//         "check_user_limit",
+//         { user_uuid: session.user.id },
+//       );
+
+//       if (limitError) throw limitError;
+
+//       // 🛑 STEP 2: IF LIMIT REACHED -> SHOW PAYWALL
+//       if (limitData.limit_reached) {
+//         // Close modal first
+//         router.back();
+//         // Small delay to allow modal to close smoothly before pushing paywall
+//         setTimeout(() => {
+//           router.push("/paywall");
+//         }, 300);
+//         return;
+//       }
+
+//       // ✅ STEP 3: LIMIT OK -> PROCEED
+//       setIsThinking(true);
+
+//       // ---------------------------------------------------------
+//       // TODO: Here is where you will call your Edge Function later.
+
+//       // ---------------------------------------------------------
+
+//       // Simulate API delay
+//       await new Promise((resolve) => setTimeout(resolve, 3000));
+
+//       // ✅ STEP 4: INCREMENT COUNT (Only if AI call didn't fail)
+//       await supabase.rpc("increment_generation_count", {
+//         user_uuid: session.user.id,
+//       });
+
+//       setIsThinking(false);
+
+//       Toast.show({
+//         type: "success",
+//         text1: "Success!",
+//         text2: "Your deck is ready.",
+//       });
+
+//       // Navigate to your mock deck for now
+//       router.replace(`/study/10`);
+//     } catch (e: any) {
+//       setIsThinking(false);
+//       console.error(e);
+//       Toast.show({
+//         type: "error",
+//         text1: t("errors.generic"),
+//         text2: e.message,
+//       });
+//     }
+//   };
+
+//   const handleFilePick = async () => {
+//     try {
+//       const result = await DocumentPicker.getDocumentAsync({
+//         type: "application/pdf",
+//         copyToCacheDirectory: true,
+//       });
+
+//       if (result.assets && result.assets.length > 0) {
+//         setSelectedFile(result.assets[0]);
+//       }
+//     } catch (err) {
+//       console.log("Unknown Error: ", err);
+//     }
+//   };
+
+//   const handleSubmit = () => {
+//     if (activeType === "pdf" && selectedFile) {
+//       handleCreateSubmit("pdf", selectedFile);
+//     } else if (
+//       (activeType === "url" || activeType === "topic") &&
+//       inputText.length > 3
+//     ) {
+//       handleCreateSubmit(activeType, inputText);
+//     }
+//   };
+
+//   useEffect(() => {
+//     setActiveType(type || "pdf");
+//   }, [type]);
+
+//   return (
+//     <View className="flex-1 justify-end lg:justify-center items-center">
+//       {/* Backdrop (Tap to close) */}
+//       <Pressable
+//         onPress={() => router.back()}
+//         className="absolute inset-0 bg-black/60"
+//       />
+
+//       {/* Modal Container */}
+//       <View
+//         className="w-full lg:w-[600px] bg-page-light dark:bg-page-dark lg:rounded-[32px] rounded-t-[32px] overflow-hidden shadow-2xl"
+//         style={{ maxHeight: height * 0.85 }}
+//       >
+//         {/* Header */}
+//         <View className="p-6 border-b border-black/5 dark:border-white/5 flex-row justify-between items-center bg-card-light dark:bg-card-dark">
+//           <Text className="text-text-main-light dark:text-text-main-dark font-heading text-xl font-bold">
+//             {t("creation.new_creation_sprint")}
+//           </Text>
+//           {/* <Pressable
+//               onPress={onClose}
+//               className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
+//             > */}
+//           <PressableOpacity
+//             onPress={() => router.back()}
+//             style={{
+//               backgroundColor:
+//                 colorScheme === "dark"
+//                   ? "rgba(255,255,255,0.1)"
+//                   : "rgba(0,0,0,0.05)",
+//               padding: 8,
+//               borderRadius: 99,
+//             }}
+//             activateOnHover
+//           >
+//             <Ionicons
+//               name="close"
+//               size={20}
+//               color={Platform.OS === "ios" ? undefined : "#FFF"}
+//             />
+//           </PressableOpacity>
+//         </View>
+
+//         {/* Type Selector (Tabs) */}
+//         <View className="flex-row p-4 gap-2 bg-page-light dark:bg-page-dark">
+//           {[
+//             { id: "pdf", label: "PDF", icon: "document-text" },
+//             { id: "url", label: "URL", icon: "link" },
+//             { id: "topic", label: "Topic", icon: "bulb" },
+//           ].map((item) => (
+//             // <Pressable
+//             //   key={item.id}
+//             //   onPress={() => {
+//             //     setActiveType(item.id as InputType);
+//             //     setInputText("");
+//             //     setSelectedFile(null);
+//             //   }}
+//             //   className={`flex-1 flex-row items-center justify-center p-3 rounded-xl border transition-all ${
+//             //     activeType === item.id
+//             //       ? "bg-action border-action"
+//             //       : "bg-transparent border-black/10 dark:border-white/10"
+//             //   }`}
+//             // >
+//             <PressableOpacity
+//               key={item.id}
+//               activateOnHover
+//               onPress={() => {
+//                 setActiveType(item.id as InputType);
+//                 setInputText("");
+//                 setSelectedFile(null);
+//               }}
+//               style={{
+//                 flex: 1,
+//                 flexDirection: "row",
+//                 alignItems: "center",
+//                 justifyContent: "center",
+//                 padding: 12,
+//                 borderRadius: 12,
+//                 borderWidth: 1,
+//                 backgroundColor:
+//                   activeType === item.id ? "#F97316" : "transparent",
+//                 borderColor:
+//                   activeType === item.id
+//                     ? "#F97316"
+//                     : colorScheme === "dark"
+//                       ? "rgba(255,255,255,0.1)"
+//                       : "rgba(0,0,0,0.1)",
+//               }}
+//             >
+//               <Ionicons
+//                 name={item.icon as any}
+//                 size={18}
+//                 color={activeType === item.id ? "white" : "#94A3B8"}
+//               />
+//               <Text
+//                 className={`ml-2 font-heading font-bold ${
+//                   activeType === item.id
+//                     ? "text-white"
+//                     : "text-text-muted-light dark:text-text-muted-dark"
+//                 }`}
+//               >
+//                 {item.label}
+//               </Text>
+//             </PressableOpacity>
+//           ))}
+//         </View>
+
+//         {/* Input Content Area */}
+//         <View className="p-6 min-h-[250px] justify-center">
+//           {/* 1. PDF INPUT */}
+//           {activeType === "pdf" && (
+//             <View className="items-center">
+//               {/* <Pressable
+//                   onPress={handleFilePick}
+//                   className="w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-3xl items-center justify-center bg-black/5 dark:bg-white/5 mb-4 active:bg-action/5"
+//                 > */}
+//               <PressableOpacity
+//                 onPress={handleFilePick}
+//                 style={{
+//                   width: "100%",
+//                   height: 240,
+//                   borderWidth: 2,
+//                   borderStyle: "dashed",
+//                   borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+//                   borderRadius: 24,
+//                   alignItems: "center",
+//                   justifyContent: "center",
+//                   backgroundColor:
+//                     colorScheme === "dark"
+//                       ? "rgba(255,255,255,0.05)"
+//                       : "rgba(0,0,0,0.05)",
+//                   marginBottom: 16,
+//                 }}
+//               >
+//                 {selectedFile ? (
+//                   <>
+//                     <Ionicons name="document" size={48} color="#F97316" />
+//                     <Text
+//                       className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
+//                       numberOfLines={1}
+//                     >
+//                       {selectedFile.name}
+//                     </Text>
+//                     <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
+//                       {t("creation.tap_to_change_file")}
+//                     </Text>
+//                   </>
+//                 ) : (
+//                   <>
+//                     <Ionicons
+//                       name="cloud-upload-outline"
+//                       size={48}
+//                       color="#94A3B8"
+//                     />
+//                     <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+//                       {t("creation.tap_to_select_pdf")}
+//                     </Text>
+//                   </>
+//                 )}
+//               </PressableOpacity>
+//             </View>
+//           )}
+
+//           {/* 2. URL INPUT */}
+//           {activeType === "url" && (
+//             <View>
+//               <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+//                 {t("creation.paste_link")}
+//               </Text>
+//               <TextInput
+//                 className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action border border-card-light dark:border-card-dark"
+//                 placeholder="https://wikipedia.org/wiki/Penguin"
+//                 placeholderTextColor="#94A3B8"
+//                 value={inputText}
+//                 onChangeText={setInputText}
+//                 autoCapitalize="none"
+//                 keyboardType="url"
+//               />
+//             </View>
+//           )}
+
+//           {/* 3. TOPIC INPUT */}
+//           {activeType === "topic" && (
+//             <View>
+//               <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+//                 {t("creation.what_do_you_want_to_learn")}
+//               </Text>
+//               <TextInput
+//                 className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action min-h-[120px] border border-card-light dark:border-card-dark"
+//                 placeholder={t(
+//                   "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
+//                 )}
+//                 placeholderTextColor="#94A3B8"
+//                 value={inputText}
+//                 onChangeText={setInputText}
+//                 multiline
+//                 textAlignVertical="top"
+//               />
+//             </View>
+//           )}
+//         </View>
+
+//         {/* Footer Action */}
+//         <View
+//           className="p-6 bg-page-light dark:bg-page-dark"
+//           style={{
+//             paddingBottom: Platform.OS === "ios" ? insets.bottom + 20 : 24,
+//           }}
+//           pointerEvents={
+//             (activeType === "pdf" ? !selectedFile : inputText.length < 3)
+//               ? "none"
+//               : "auto"
+//           }
+//         >
+//           {/* <Pressable
+//               onPress={handleSubmit}
+//               disabled={
+//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
+//               }
+//               className={`w-full py-4 rounded-xl items-center shadow-lg ${
+//                 (activeType === "pdf" ? !selectedFile : inputText.length < 3)
+//                   ? "bg-slate-300 dark:bg-slate-700 opacity-50"
+//                   : "bg-action active:bg-action-hover shadow-action/30"
+//               }`}
+//             > */}
+//           <PressableOpacity
+//             onPress={handleSubmit}
+//             style={{
+//               width: "100%",
+//               paddingVertical: 16,
+//               borderRadius: 12,
+//               alignItems: "center",
+//               backgroundColor: (
+//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
+//               )
+//                 ? colorScheme === "dark"
+//                   ? "#334155"
+//                   : "#CBD5E1"
+//                 : "#F97316",
+//               opacity: (
+//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
+//               )
+//                 ? 0.5
+//                 : 1,
+//               // Shadow logic
+//               shadowColor: "#F97316",
+//               shadowOffset: { width: 0, height: 4 },
+//               shadowOpacity: (
+//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
+//               )
+//                 ? 0
+//                 : 0.2,
+//               shadowRadius: 8,
+//               elevation: (
+//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
+//               )
+//                 ? 0
+//                 : 4,
+//             }}
+//           >
+//             <Text className="text-white font-heading font-bold text-lg">
+//               {t("creation.generate_flashcards")} ⚡
+//             </Text>
+//           </PressableOpacity>
+//         </View>
+//       </View>
+
+//       <Modal
+//         visible={isThinking}
+//         transparent={true}
+//         animationType="fade"
+//         statusBarTranslucent={true} // Ensures it covers the status bar area too
+//       >
+//         {/* Your Penguin component now floats over the ENTIRE screen */}
+//         <ThinkingState />
+//       </Modal>
+//     </View>
+//   );
+// }

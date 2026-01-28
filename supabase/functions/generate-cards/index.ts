@@ -1,10 +1,33 @@
 // @ts-ignore
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { Buffer } from "node:buffer"; // Required for handling file data
-import { convert } from "npm:html-to-text"; // We need a way to strip HTML tags for the URL feature
-import pdf from "npm:pdf-parse@1.1.1"; // The Text Extractor Library
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { Buffer } from "node:buffer";
+import { convert } from "npm:html-to-text";
+import pdf from "npm:pdf-parse@1.1.1";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+// --- RETRY HELPER (Resilience) ---
+async function fetchWithRetry(url: string, options: any, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      // If rate limited (429) or server error (5xx), wait and retry
+      if (response.status === 429 || response.status >= 500) {
+        console.warn(`Attempt ${i + 1} failed. Retrying...`);
+        await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoffish
+        continue;
+      }
+      return response; // Return 4xx errors immediately (client fault)
+    } catch (e) {
+      if (i === retries - 1) throw e;
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
 
 Deno.serve(async (req) => {
   const corsHeaders = {
@@ -18,125 +41,153 @@ Deno.serve(async (req) => {
     const { inputType, data, userId, deckId } = await req.json();
 
     if (!OPENAI_API_KEY) throw new Error("Missing OpenAI API Key");
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Missing Database Keys");
     if (!userId) throw new Error("Missing User ID");
 
     console.log(`🐧 BrainGuin Processing: ${inputType}`);
 
-    // --- 1. ROBUST TEXT EXTRACTION ---
-    let cleanText = ""; // Initialize empty
+    // --- 1. ROBUST TEXT EXTRACTION (With Specific Errors) ---
+    let cleanText = "";
 
-    // HANDLE PDF
-    if (inputType === 'pdf') {
-      console.log("📄 Extracting text from PDF...");
-      const dataBuffer = Buffer.from(data, 'base64');
-      const pdfData = await pdf(dataBuffer);
-      cleanText = pdfData.text;
-    } 
-    // HANDLE URL (New Feature Fix)
-    else if (inputType === 'url') {
-       console.log("🌐 Scraping URL...");
-       const urlResponse = await fetch(data); // 'data' is the URL string
-       const html = await urlResponse.text();
-       // Convert HTML to plain text to save tokens and reduce noise
-       cleanText = convert(html, { wordwrap: 130 });
-    } 
-    // HANDLE RAW TEXT / TOPIC
-    else {
-      cleanText = data;
+    try {
+      if (inputType === 'pdf') {
+        console.log("📄 Extracting PDF...");
+        const dataBuffer = Buffer.from(data, 'base64');
+        const pdfData = await pdf(dataBuffer);
+        cleanText = pdfData.text;
+        if (!cleanText || cleanText.length < 50) throw new Error("PDF text is empty or unreadable.");
+      } 
+      else if (inputType === 'url') {
+         console.log("🌐 Scraping URL...");
+         const urlResponse = await fetch(data);
+         if (!urlResponse.ok) throw new Error(`Failed to access URL: ${urlResponse.statusText}`);
+         const html = await urlResponse.text();
+         cleanText = convert(html, { 
+             wordwrap: 130, 
+             selectors: [ 
+                 { selector: 'img', format: 'skip' },
+                 { selector: 'a', options: { ignoreHref: true } }
+             ] 
+         });
+         if (!cleanText || cleanText.length < 100) throw new Error("Website content is too short or blocked.");
+      } 
+      else {
+        cleanText = data;
+      }
+    } catch (extractError: any) {
+      console.error("Extraction Failed:", extractError);
+      return new Response(JSON.stringify({ error: `Content Error: ${extractError.message}` }), { 
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
-    // --- SAFETY TRUNCATION ---
-    // gpt-4o-mini has a 128k context window, but let's keep it efficient.
-    const MAX_CHARS = 60000; 
+    // --- 2. TRUNCATION ---
+    const MAX_CHARS = 50000; // Safe limit for gpt-4o-mini output buffer
     if (cleanText.length > MAX_CHARS) {
-      console.log(`✂️ Truncating content from ${cleanText.length} to ${MAX_CHARS}`);
+      console.log(`✂️ Truncating content from ${cleanText.length} chars`);
       cleanText = cleanText.substring(0, MAX_CHARS) + "... [Truncated]";
     }
 
-    // --- 3. CALL OPENAI ---
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // --- 3. CALL OPENAI (With Retry & Better Prompt) ---
+    console.log("🧠 Calling AI...");
+    const prompt = `
+      You are BrainGuin, an elite Spaced Repetition architect.
+      
+      YOUR GOAL:
+      Analyze the SOURCE MATERIAL and convert *every* key concept into an "Atomic Flashcard".
+      Do NOT limit the number of cards. Create as many as necessary to comprehensively cover the material (up to 50 max).
+
+      CRITICAL RULES:
+      1. **Atomic Principle**: One card = One specific fact. Do not merge multiple concepts.
+      2. **Active Recall**: Front must be a direct question. No "True/False" or multiple choice.
+      3. **Brevity**: Answers must be extremely concise (under 2 sentences).
+      4. **Extraction**: Ignore artifacts like page numbers, headers, footers, or citations. Focus only on the core educational content.
+      5. **Comprehensive Coverage**: Generate as many cards as needed to fully cover the material (up to 50 max).
+
+      CONTEXT HINTS:
+      Provide a short, helpful hint for the "context" field to orient the user.
+      - Good: "Relates to the year 1066" or "Type of sorting algorithm"
+      - Bad: "Starts with B" (Don't give the answer away)
+
+      OUTPUT FORMAT (JSON ONLY):
+      {
+        "title": "A short, catchy title for this deck (max 5 words)",
+        "summary": "A brief summary of what this deck covers.",
+        "flashcards": [
+           { 
+             "question": "What is the powerhouse of the cell?", 
+             "answer": "Mitochondria",
+             "context": "Cell Biology - Organelle Function"
+           }
+        ]
+      }
+    `;
+
+    const response = await fetchWithRetry('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // gpt-4o is fast and good at formatting JSON
+        model: 'gpt-4o-mini', 
         messages: [
-          {
-            role: 'system',
-            content: `You are BrainGuin, an elite Spaced Repetition architect.
-            
-            YOUR GOAL:
-            Convert the provided SOURCE MATERIAL into high-impact "Atomic Flashcards".
-            
-            RULES FOR FLASHCARDS:
-            1. **Atomic Principle**: One card = One concept.
-            2. **Active Recall**: Use direct questions. No "True/False".
-            3. **Brevity**: Answers must be concise (under 2 sentences).
-            4. **Extraction**: If the text is messy (from a PDF), ignore headers/footers and focus on the core knowledge.
-            5. **Quantity**: Generate 5 cards.
-            
-            OUTPUT FORMAT:
-            Return ONLY valid JSON with this structure:
-            {
-              "title": "Short Deck Title",
-              "summary": "A concise bullet-point summary (markdown supported).",
-              "flashcards": [{ "front": "Q", "back": "A" }]
-            }`
-          },
+          { role: 'system', content: prompt },
           { role: 'user', content: `SOURCE MATERIAL:\n\n${cleanText}` }
         ],
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        temperature: 0.3 // Lower temp = stricter adherence to facts
       })
     });
 
     const aiData = await response.json();
+    if (aiData.error) throw new Error(`OpenAI Error: ${aiData.error.message}`);
     
-    if (aiData.error) throw new Error(aiData.error.message);
-
     const content = JSON.parse(aiData.choices[0].message.content);
 
-    // --- 4. SAVE TO DATABASE (The New Part) ---
-    console.log("💾 Saving to Supabase...");
-    
     // --- 4. SAVE TO DATABASE ---
-    const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    console.log(`💾 Saving ${content.flashcards.length} cards to Supabase...`);
+    
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     let targetDeckId = deckId;
 
+    // A. Create Deck if needed
     if (!targetDeckId) {
-      // FLOW A: Create a New Deck
       const { data: newDeck, error: deckError } = await supabaseAdmin
         .from('decks')
         .insert({
           user_id: userId,
-          title: content.title || "New Deck",
+          title: content.title || "New Study Deck",
           source_type: inputType,
-          source_content: cleanText
+          // Store a snippet of source content, not the whole thing if massive
+          source_content: cleanText.substring(0, 1000) 
         })
         .select().single();
       
-      if (deckError) throw new Error(`Deck Creation Failed: ${deckError.message}`);
+      if (deckError) throw new Error(`DB Deck Error: ${deckError.message}`);
       targetDeckId = newDeck.id;
     }
 
-   // FLOW B: Append Cards (Works for both New and Existing Decks)
+    // B. Insert Cards (Using 'question', 'answer', 'context' to match DB)
     const cardsToInsert = content.flashcards.map((card: any) => ({
       deck_id: targetDeckId,
       user_id: userId,
-      front: card.front,
-      back: card.back,
-      is_mastered: false
+      question: card.question, // Matches DB column
+      answer: card.answer,     // Matches DB column
+      context: card.context,   // Matches DB column
+      status: 'new',
+      interval_days: 0,
+      ease_factor: 2.5,
+      repetition_count: 0
     }));
 
     const { error: cardsError } = await supabaseAdmin
       .from('flashcards')
       .insert(cardsToInsert);
 
-    if (cardsError) throw new Error(`Cards Save Failed: ${cardsError.message}`);
+    if (cardsError) throw new Error(`DB Cards Error: ${cardsError.message}`);
 
-   // --- 5. SUCCESS RESPONSE ---
-    // We return success: true, the deck_id, and the count of NEW cards added
+    // --- 5. SUCCESS ---
     return new Response(JSON.stringify({ 
       success: true, 
       deck_id: targetDeckId, 
@@ -146,10 +197,11 @@ Deno.serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error("Server Error:", error.message);
+    console.error("🔥 Fatal Edge Function Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+

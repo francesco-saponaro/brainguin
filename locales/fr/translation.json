@@ -139,7 +139,17 @@
       "success_added": "Nouvelles cartes ajoutées !",
       "delete_title": "Paquet supprimé",
       "delete_desc": "\"{{title}}\" a été supprimé."
-    }
+    },
+    "status_active": "Actif",
+    "status_archived": "Archivé",
+    "status_all": "Tous",
+    "archive_deck_btn": "Archiver le paquet",
+    "restore_deck_btn": "Restaurer au quotidien",
+    "toast_archived_title": "Paquet Archivé",
+    "toast_archived_desc": "Les cartes n'apparaîtront plus dans la révision quotidienne.",
+    "toast_restored_title": "Paquet Restauré",
+    "toast_restored_desc": "Les cartes sont de retour dans la révision quotidienne.",
+    "toast_action_failed": "Action échouée"
   },
   "study": {
     "header_small": "Étude",
@@ -163,7 +173,11 @@
     "swipe_hint_text": "Glisser à G (Difficile) • Glisser à D (Facile)",
 
     "hint_title": "Indice",
-    "hint_btn": "Compris"
+    "hint_btn": "Compris",
+    "quit_session_title": "Quitter la session ?",
+    "quit_session_msg": "Les cartes évaluées sont sauvegardées. Le reste restera en attente.",
+    "quit_session_confirm": "Quitter",
+    "review_again": "Réviser à nouveau"
   },
   "errors": {
     "fetch_failed": "Échec du chargement",
@@ -196,6 +210,14 @@
     "cta": "Débloquer l'Accès Annuel",
     "guarantee": "Paiement sécurisé. Annulez à tout moment.",
     "restore": "Restaurer",
-    "terms": "Conditions et Confidentialité"
+    "terms": "Conditions et Confidentialité",
+    "purchase_success_title": "Achat Réussi !",
+    "purchase_success_desc": "Bienvenue sur BrainGuin Pro.",
+    "purchase_error_title": "Échec de l'Achat",
+    "restore_success_title": "Restauration Réussie !",
+    "restore_success_desc": "Votre accès Pro a été restauré.",
+    "restore_no_purchase_title": "Aucun Achat Trouvé",
+    "restore_no_purchase_desc": "Nous n'avons trouvé aucun abonnement actif.",
+    "restore_error_title": "Erreur de Restauration"
   }
 }

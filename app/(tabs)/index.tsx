@@ -255,22 +255,6 @@ export default function HomeScreen() {
           pointerEvents={stats.dueCards === 0 ? "none" : "auto"}
         >
           {/* --- AI STUDY PLAN (DAILY MISSION) --- */}
-          {/* If there are due cards, show the Blue/Orange card. If 0, show Green 'Done' card. */}
-          {/* <Pressable
-            onPress={() => {
-              if (stats.dueCards > 0) {
-                router.push("/study/daily"); // ✅ Correct Route for Daily
-              }
-            }}
-            disabled={stats.dueCards === 0}
-            className={clsx(
-              "flex-[2] relative overflow-hidden shadow-2xl min-h-[240px] justify-center",
-              isSmallMobile ? "py-3 px-4 rounded-[32px]" : "p-8 rounded-[48px]",
-              stats.dueCards > 0
-                ? "bg-primary shadow-primary/30"
-                : "bg-green-600 shadow-green-600/30", // Dynamic BG Color
-            )}
-          > */}
           <Pressable
             onPress={() => {
               if (stats.dueCards > 0) {

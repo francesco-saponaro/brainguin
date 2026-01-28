@@ -139,7 +139,17 @@
       "success_added": "Added new cards!",
       "delete_title": "Deck Deleted",
       "delete_desc": "\"{{title}}\" has been removed."
-    }
+    },
+    "status_active": "Active",
+    "status_archived": "Archived",
+    "status_all": "All",
+    "archive_deck_btn": "Archive Deck",
+    "restore_deck_btn": "Restore to Daily",
+    "toast_archived_title": "Deck Archived",
+    "toast_archived_desc": "Cards won't appear in daily review.",
+    "toast_restored_title": "Deck Restored",
+    "toast_restored_desc": "Cards are back in daily review.",
+    "toast_action_failed": "Action failed"
   },
   "study": {
     "header_small": "Studying",
@@ -163,7 +173,11 @@
     "swipe_hint_text": "Swipe Left (Hard) • Swipe Right (Easy)",
 
     "hint_title": "Hint",
-    "hint_btn": "Got it"
+    "hint_btn": "Got it",
+    "quit_session_title": "Quit Session?",
+    "quit_session_msg": "Cards you've already rated are saved. The rest will remain pending.",
+    "quit_session_confirm": "Quit",
+    "review_again": "Review Again"
   },
   "errors": {
     "fetch_failed": "Fetch Failed",
@@ -196,6 +210,14 @@
     "cta": "Unlock Yearly Access",
     "guarantee": "Secured payment. Cancel anytime in settings.",
     "restore": "Restore",
-    "terms": "Terms & Privacy"
+    "terms": "Terms & Privacy",
+    "purchase_success_title": "Purchase Successful!",
+    "purchase_success_desc": "Welcome to BrainGuin Pro.",
+    "purchase_error_title": "Purchase Failed",
+    "restore_success_title": "Restore Successful!",
+    "restore_success_desc": "Your Pro access has been restored.",
+    "restore_no_purchase_title": "No Purchases Found",
+    "restore_no_purchase_desc": "We couldn't find any active subscriptions.",
+    "restore_error_title": "Restore Error"
   }
 }

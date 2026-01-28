@@ -139,7 +139,17 @@
       "success_added": "Nuove carte aggiunte!",
       "delete_title": "Mazzo Eliminato",
       "delete_desc": "\"{{title}}\" è stato rimosso."
-    }
+    },
+    "status_active": "Attivo",
+    "status_archived": "Archiviato",
+    "status_all": "Tutti",
+    "archive_deck_btn": "Archivia Mazzo",
+    "restore_deck_btn": "Ripristina nel Quotidiano",
+    "toast_archived_title": "Mazzo Archiviato",
+    "toast_archived_desc": "Le carte non appariranno nel ripasso quotidiano.",
+    "toast_restored_title": "Mazzo Ripristinato",
+    "toast_restored_desc": "Le carte sono tornate nel ripasso quotidiano.",
+    "toast_action_failed": "Azione fallita"
   },
   "study": {
     "header_small": "Studio in corso",
@@ -163,7 +173,11 @@
     "swipe_hint_text": "Scorri a Sx (Difficile) • Scorri a Dx (Facile)",
 
     "hint_title": "Suggerimento",
-    "hint_btn": "Ho capito"
+    "hint_btn": "Ho capito",
+    "quit_session_title": "Uscire dalla sessione?",
+    "quit_session_msg": "Le carte valutate sono salvate. Il resto rimarrà in sospeso.",
+    "quit_session_confirm": "Esci",
+    "review_again": "Ripassa di nuovo"
   },
   "errors": {
     "fetch_failed": "Caricamento fallito",
@@ -196,6 +210,14 @@
     "cta": "Sblocca l'Accesso Annuale",
     "guarantee": "Pagamento sicuro. Annulla quando vuoi.",
     "restore": "Ripristina",
-    "terms": "Termini e Privacy"
+    "terms": "Termini e Privacy",
+    "purchase_success_title": "Acquisto Riuscito!",
+    "purchase_success_desc": "Benvenuto in BrainGuin Pro.",
+    "purchase_error_title": "Acquisto Fallito",
+    "restore_success_title": "Ripristino Riuscito!",
+    "restore_success_desc": "Il tuo accesso Pro è stato ripristinato.",
+    "restore_no_purchase_title": "Nessun Acquisto Trovato",
+    "restore_no_purchase_desc": "Non abbiamo trovato abbonamenti attivi.",
+    "restore_error_title": "Errore di Ripristino"
   }
 }

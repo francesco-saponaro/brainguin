@@ -284,8 +284,8 @@ export default function RootLayout() {
                 <Stack.Screen
                   name="paywall/index"
                   options={{
-                    presentation: "formSheet", // Native slide-up behavior
-                    headerTitle: "Paywall",
+                    presentation: "modal", // Native slide-up behavior
+                    animation: "slide_from_bottom",
                     headerShown: false,
                     sheetGrabberVisible: true,
                     sheetCornerRadius: 24,
@@ -313,3 +313,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+// eas build --platform ios --profile development
