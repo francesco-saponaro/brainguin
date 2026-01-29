@@ -96,7 +96,10 @@
     "paste_link": "Paste Link",
     "what_do_you_want_to_learn": "What do you want to learn?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. The history of the Samurai, Quantum Mechanics 101...",
-    "generate_flashcards": "Generate Flashcards"
+    "generate_flashcards": "Generate Flashcards",
+    "upload_your_pdf": "Upload your PDF",
+    "paste_topic_description": "Enter a topic you'd like to explore, or simply paste your study notes here.",
+    "invalid_pdf": "Invalid PDF file. Please select a valid PDF."
   },
   "common": {
     "cancel": "Cancel",
@@ -182,7 +185,14 @@
   "errors": {
     "fetch_failed": "Fetch Failed",
     "expansion_failed": "Expansion failed",
-    "delete_failed": "Delete failed"
+    "delete_failed": "Delete failed",
+    "login_required": "Please log in first.",
+    "pdf_processing": "Could not process the PDF file.",
+    "ai_failure": "AI Generation Failed.",
+    "pdf_empty": "PDF text is empty or unreadable.",
+    "url_access_error": "Failed to access URL.",
+    "url_content_error": "Website content is too short or blocked.",
+    "timeout_error": "Max retries exceeded. Please try again."
   },
   "web_articles": "Web Articles",
   "ai_generation": "AI Generation",
@@ -219,5 +229,12 @@
     "restore_no_purchase_title": "No Purchases Found",
     "restore_no_purchase_desc": "We couldn't find any active subscriptions.",
     "restore_error_title": "Restore Error"
-  }
+  },
+  "login_required": "Please log in first.",
+  "pdf_processing": "Could not process the PDF file.",
+  "ai_generation": "AI Generation Failed.",
+  "pdf_unreadable": "PDF text is empty or unreadable.",
+  "url_access": "Failed to access URL.",
+  "url_blocked": "Website content is too short or blocked.",
+  "timeout": "Max retries exceeded. Please try again."
 }

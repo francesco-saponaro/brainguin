@@ -267,8 +267,8 @@ export default function RootLayout() {
                   <Stack.Screen
                     name="creation-modal/index"
                     options={{
-                      presentation: "formSheet", // Native slide-up behavior
-                      headerTitle: "Creation Modal",
+                      presentation: "modal", // Native slide-up behavior
+                      animation: "slide_from_bottom",
                       headerShown: false,
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,

@@ -253,7 +253,7 @@ const LoginScreen = () => {
                 <TextInput
                   className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
                     errors.email ? "border-status-hard" : "border-transparent"
-                  } focus:border-action`}
+                  } focus:border-action outline-none`}
                   placeholder={t("auth.email_placeholder")}
                   placeholderTextColor="#94A3B8"
                   onBlur={onBlur}
@@ -283,7 +283,7 @@ const LoginScreen = () => {
                 <TextInput
                   className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
                     errors.pwd ? "border-status-hard" : ""
-                  } focus:border-action`}
+                  } focus:border-action outline-none`}
                   placeholder="••••••••"
                   placeholderTextColor="#94A3B8"
                   secureTextEntry

@@ -238,7 +238,7 @@ export default function HomeScreen() {
             label="URL"
             sub={t("web_articles")}
             color="#F97316"
-            onPress={() => openCreationModal("url")}
+            onPress={() => router.push("/paywall")}
           />
           <ActionButton
             icon="bulb"

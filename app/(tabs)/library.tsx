@@ -208,10 +208,12 @@ export default function LibraryScreen() {
 
       Toast.show({
         type: "success",
-        text1: newStatus ? "Deck Archived" : "Deck Restored",
+        text1: newStatus
+          ? t("library.toast_archived_title")
+          : t("library.toast_restored_title"),
         text2: newStatus
-          ? "Cards won't appear in daily review."
-          : "Cards are back in daily review.",
+          ? t("library.toast_archived_desc")
+          : t("library.toast_restored_desc"),
         visibilityTime: 2000,
       });
     } catch (e: any) {
@@ -221,7 +223,7 @@ export default function LibraryScreen() {
           d.id === item.id ? { ...d, isArchived: !item.isArchived } : d,
         ),
       );
-      Toast.show({ type: "error", text1: "Action failed" });
+      Toast.show({ type: "error", text1: t("library.toast_action_failed") });
     }
   };
 
@@ -605,11 +607,13 @@ function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
           <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase opacity-60">
             {isArchived ? (
               <Text>
-                <Ionicons name="refresh" size={10} /> Restore to Daily
+                <Ionicons name="refresh" size={10} />{" "}
+                {t("library.restore_deck_btn")}
               </Text>
             ) : (
               <Text>
-                <Ionicons name="file-tray-full" size={10} /> Archive Deck
+                <Ionicons name="file-tray-full" size={10} />{" "}
+                {t("library.archive_deck_btn")}
               </Text>
             )}
           </Text>
@@ -694,9 +698,9 @@ function FilterModal({
           </Text>
           <View className="flex-row flex-wrap gap-2 mb-8">
             {[
-              { id: "active", label: "Active" },
-              { id: "archived", label: "Archived" },
-              { id: "all", label: "All" },
+              { id: "active", label: t("library.status_active") },
+              { id: "archived", label: t("library.status_archived") },
+              { id: "all", label: t("library.status_all") },
             ].map((opt) => (
               <PressableFinal
                 key={opt.id}

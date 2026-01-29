@@ -58,7 +58,16 @@
     "passwordsDoNotMatch": "Las contraseñas no coinciden"
   },
   "errors": {
-    "generic": "Algo salió mal. Por favor, inténtalo de nuevo."
+    "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "expansion_failed": "Error de expansión",
+    "delete_failed": "Error al eliminar",
+    "login_required": "Por favor, inicia sesión primero.",
+    "pdf_processing": "No se pudo procesar el archivo PDF.",
+    "ai_failure": "Fallo en la generación por IA.",
+    "pdf_empty": "El texto del PDF está vacío o es ilegible.",
+    "url_access_error": "Fallo al acceder a la URL.",
+    "url_content_error": "El contenido del sitio es demasiado corto o está bloqueado.",
+    "timeout_error": "Se excedió el número máximo de reintentos."
   },
   "onboarding": {
     "skip": "Saltar",
@@ -219,5 +228,12 @@
     "restore_no_purchase_title": "Sin Compras",
     "restore_no_purchase_desc": "No encontramos suscripciones activas.",
     "restore_error_title": "Error de Restauración"
-  }
+  },
+  "login_required": "Por favor, inicia sesión primero.",
+  "pdf_processing": "No se pudo procesar el archivo PDF.",
+  "ai_generation": "Fallo en la generación por IA.",
+  "pdf_unreadable": "El texto del PDF está vacío o es ilegible.",
+  "url_access": "Fallo al acceder a la URL.",
+  "url_blocked": "El contenido del sitio es demasiado corto o está bloqueado.",
+  "timeout": "Se excedió el número máximo de reintentos."
 }

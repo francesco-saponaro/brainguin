@@ -182,7 +182,14 @@
   "errors": {
     "fetch_failed": "Échec du chargement",
     "expansion_failed": "Échec de l'extension",
-    "delete_failed": "Échec de la suppression"
+    "delete_failed": "Échec de la suppression",
+    "login_required": "Veuillez d'abord vous connecter.",
+    "pdf_processing": "Impossible de traiter le fichier PDF.",
+    "ai_failure": "Échec de la génération par IA.",
+    "pdf_empty": "Le texte du PDF est vide ou illisible.",
+    "url_access_error": "Échec de l'accès à l'URL.",
+    "url_content_error": "Le contenu du site est trop court ou bloqué.",
+    "timeout_error": "Nombre maximal de tentatives dépassé."
   },
   "web_articles": "Articles Web",
   "ai_generation": "Génération par IA",
@@ -219,5 +226,12 @@
     "restore_no_purchase_title": "Aucun Achat Trouvé",
     "restore_no_purchase_desc": "Nous n'avons trouvé aucun abonnement actif.",
     "restore_error_title": "Erreur de Restauration"
-  }
+  },
+  "login_required": "Veuillez d'abord vous connecter.",
+  "pdf_processing": "Impossible de traiter le fichier PDF.",
+  "ai_generation": "Échec de la génération par IA.",
+  "pdf_unreadable": "Le texte du PDF est vide ou illisible.",
+  "url_access": "Échec de l'accès à l'URL.",
+  "url_blocked": "Le contenu du site est trop court ou bloqué.",
+  "timeout": "Nombre maximal de tentatives dépassé."
 }

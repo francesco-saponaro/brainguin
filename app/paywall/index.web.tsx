@@ -85,19 +85,16 @@ export default function PaywallScreen() {
 
         Toast.show({
           type: "success",
-          text1: t("paywall.purchaseSuccessTitle"),
-          text2: t("paywall.purchaseSuccessDesc"),
+          text1: t("paywall.purchase_success_title"),
+          text2: t("paywall.purchase_success_desc"),
         });
-
-        setTimeout(() => router.back(), 1500);
       }
     } catch (e: any) {
       if (!e.userCancelled) {
-        console.error(e);
         Toast.show({
           type: "error",
-          text1: t("paywall.purchaseErrorTitle"),
-          text2: "Payment failed or was cancelled.",
+          text1: t("paywall.purchase_error_title"),
+          text2: e.message,
         });
       }
     } finally {
@@ -117,22 +114,21 @@ export default function PaywallScreen() {
         await supabase.rpc("upgrade_user_to_pro");
         Toast.show({
           type: "success",
-          text1: t("paywall.restoreSuccessTitle"),
-          text2: t("paywall.restoreSuccessDesc"),
+          text1: t("paywall.restore_success_title"),
+          text2: t("paywall.restore_success_desc"),
         });
         router.back();
       } else {
         Toast.show({
           type: "info",
-          text1: t("paywall.restoreNoPurchaseTitle"),
-          text2: t("paywall.restoreNoPurchaseDesc"),
+          text1: t("paywall.restore_no_purchase_title"),
+          text2: t("paywall.restore_no_purchase_desc"),
         });
       }
     } catch (e: any) {
-      console.error(e);
       Toast.show({
         type: "error",
-        text1: t("paywall.restoreErrorTitle"),
+        text1: t("paywall.restore_error_title"),
         text2: e.message,
       });
     } finally {
@@ -156,8 +152,30 @@ export default function PaywallScreen() {
     >
       {/* 1. TOP SECTION */}
       <View className="items-center">
-        <View className="flex-row justify-end w-full">
+        <View className="flex-row justify-between items-center w-full">
+          <View className="relative">
+            <View className="absolute -inset-4 bg-orange-500/10 rounded-full blur-2xl" />
+            <Image
+              source={PENGUINIMAGE}
+              style={{ width: 100, height: 100 }}
+              resizeMode="contain"
+            />
+            <View className="absolute -right-2 -top-2 bg-white rounded-full p-1 shadow-sm">
+              <Ionicons name="star" size={20} color="#F59E0B" />
+            </View>
+          </View>
+
+          <View className="flex-1 mr-6">
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading text-3xl font-bold text-center leading-tight">
+              {t("paywall.headerTitle")}
+              {"\n"}
+              <Text className="text-orange-500">
+                {t("paywall.headerHighlight")}
+              </Text>
+            </Text>
+          </View>
           <PressableOpacity
+            activateOnHover
             onPress={() => router.back()}
             style={{
               width: 40,
@@ -175,26 +193,6 @@ export default function PaywallScreen() {
             <Ionicons name="close" size={24} color="#64748B" />
           </PressableOpacity>
         </View>
-
-        <View className="relative mt-4">
-          <View className="absolute -inset-4 bg-orange-500/10 rounded-full blur-2xl" />
-          <Image
-            source={PENGUINIMAGE}
-            style={{ width: 100, height: 100 }}
-            resizeMode="contain"
-          />
-          <View className="absolute -right-2 -top-2 bg-white rounded-full p-1 shadow-sm">
-            <Ionicons name="star" size={20} color="#F59E0B" />
-          </View>
-        </View>
-
-        <Text className="text-text-main-light dark:text-text-main-dark font-heading text-3xl font-bold text-center leading-tight mt-4">
-          {t("paywall.headerTitle")}
-          {"\n"}
-          <Text className="text-orange-500">
-            {t("paywall.headerHighlight")}
-          </Text>
-        </Text>
       </View>
 
       {/* 2. MIDDLE SECTION */}

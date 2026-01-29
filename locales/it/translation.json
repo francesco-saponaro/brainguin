@@ -182,7 +182,14 @@
   "errors": {
     "fetch_failed": "Caricamento fallito",
     "expansion_failed": "Espansione fallita",
-    "delete_failed": "Eliminazione fallita"
+    "delete_failed": "Eliminazione fallita",
+    "login_required": "Per favore, accedi prima.",
+    "pdf_processing": "Impossibile elaborare il file PDF.",
+    "ai_failure": "Generazione IA fallita.",
+    "pdf_empty": "Il testo del PDF è vuoto o illeggibile.",
+    "url_access_error": "Impossibile accedere all'URL.",
+    "url_content_error": "Il contenuto del sito è troppo breve o bloccato.",
+    "timeout_error": "Numero massimo di tentativi superato."
   },
   "web_articles": "Articoli Web",
   "ai_generation": "Generazione AI",
@@ -219,5 +226,12 @@
     "restore_no_purchase_title": "Nessun Acquisto Trovato",
     "restore_no_purchase_desc": "Non abbiamo trovato abbonamenti attivi.",
     "restore_error_title": "Errore di Ripristino"
-  }
+  },
+  "login_required": "Per favore, accedi prima.",
+  "pdf_processing": "Impossibile elaborare il file PDF.",
+  "ai_generation": "Generazione IA fallita.",
+  "pdf_unreadable": "Il testo del PDF è vuoto o illeggibile.",
+  "url_access": "Impossibile accedere all'URL.",
+  "url_blocked": "Il contenuto del sito è troppo breve o bloccato.",
+  "timeout": "Numero massimo di tentativi superato."
 }

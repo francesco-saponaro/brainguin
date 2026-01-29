@@ -97,6 +97,12 @@ Deno.serve(async (req) => {
       Analyze the SOURCE MATERIAL and convert *every* key concept into an "Atomic Flashcard".
       Do NOT limit the number of cards. Create as many as necessary to comprehensively cover the material (up to 50 max).
 
+      LANGUAGE RULE (CRITICAL):
+      **Detect the language of the SOURCE MATERIAL.** You MUST generate the Title, Summary, Questions, Answers, and Context hints in that **EXACT SAME LANGUAGE**. 
+      - If the source is in Spanish, the output JSON must be in Spanish.
+      - If the source is in French, the output JSON must be in French.
+      - Do NOT translate unless the source material explicitly teaches a language (e.g., "Spanish 101").
+
       CRITICAL RULES:
       1. **Atomic Principle**: One card = One specific fact. Do not merge multiple concepts.
       2. **Active Recall**: Front must be a direct question. No "True/False" or multiple choice.
@@ -111,13 +117,13 @@ Deno.serve(async (req) => {
 
       OUTPUT FORMAT (JSON ONLY):
       {
-        "title": "A short, catchy title for this deck (max 5 words)",
-        "summary": "A brief summary of what this deck covers.",
+        "title": "A short, catchy title for this deck (max 5 words) in SOURCE LANGUAGE",
+        "summary": "A brief summary of what this deck covers. in SOURCE LANGUAGE",
         "flashcards": [
            { 
-             "question": "What is the powerhouse of the cell?", 
-             "answer": "Mitochondria",
-             "context": "Cell Biology - Organelle Function"
+             "question": "What is the powerhouse of the cell? in SOURCE LANGUAGE", 
+             "answer": "Mitochondria in SOURCE LANGUAGE",
+             "context": "Cell Biology - Organelle Function in SOURCE LANGUAGE"
            }
         ]
       }

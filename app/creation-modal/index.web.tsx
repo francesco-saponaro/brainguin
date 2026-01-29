@@ -10,8 +10,8 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Modal,
-  Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   useWindowDimensions,
@@ -41,7 +41,7 @@ export default function CreationModal() {
     inputData: any,
   ) => {
     if (!session?.user) {
-      Toast.show({ type: "error", text1: "Please log in first." });
+      Toast.show({ type: "error", text1: t("login_required") });
       return;
     }
 
@@ -87,7 +87,7 @@ export default function CreationModal() {
           payloadData = base64;
         } catch (fileError) {
           console.error("PDF Processing Error:", fileError);
-          throw new Error("Could not process the PDF file.");
+          throw new Error(t("pdf_processing"));
         }
       }
 
@@ -107,7 +107,7 @@ export default function CreationModal() {
 
       if (error) {
         console.error("Edge Function Error:", error);
-        throw new Error(error.message || "AI Generation Failed");
+        throw new Error(error.message || t("ai_generation"));
       }
 
       if (data?.error) {
@@ -134,10 +134,29 @@ export default function CreationModal() {
     } catch (e: any) {
       setIsThinking(false);
       console.error(e);
+
+      // 🔄 ERROR MAPPING LOGIC
+      let errorText = t("errors.generic"); // Default fallback
+      const rawMsg = e.message || "";
+
+      if (rawMsg.includes("PDF text is empty")) {
+        errorText = t("errors.pdf_empty");
+      } else if (rawMsg.includes("Failed to access URL")) {
+        errorText = t("errors.url_access_error");
+      } else if (rawMsg.includes("Website content is too short")) {
+        errorText = t("errors.url_content_error");
+      } else if (rawMsg.includes("Max retries exceeded")) {
+        errorText = t("errors.timeout_error");
+      } else if (rawMsg === "PDF_PROCESSING_ERROR") {
+        errorText = t("errors.pdf_processing");
+      } else if (rawMsg === "AI_FAILURE") {
+        errorText = t("errors.ai_failure");
+      }
+
       Toast.show({
         type: "error",
-        text1: t("errors.generic"),
-        text2: e.message || "Something went wrong",
+        text1: t("errors.generic"), // "Something went wrong" header
+        text2: errorText, // The specific localized message
       });
     }
   };
@@ -154,7 +173,10 @@ export default function CreationModal() {
         setSelectedFile(result.assets[0]);
       }
     } catch (err) {
-      console.log("Unknown Error: ", err);
+      Toast.show({
+        type: "error",
+        text1: t("creation.invalid_pdf"),
+      });
     }
   };
 
@@ -174,8 +196,8 @@ export default function CreationModal() {
   }, [type]);
 
   return (
-    <View className="flex-1 justify-end lg:justify-center items-center">
-      {/* Backdrop (Tap to close) */}
+    <View className="flex-1 justify-center items-center p-[20px]">
+      {/* Backdrop */}
       <Pressable
         onPress={() => router.back()}
         className="absolute inset-0 bg-black/60"
@@ -183,16 +205,21 @@ export default function CreationModal() {
 
       {/* Modal Container */}
       <View
-        className="w-full lg:w-[600px] bg-page-light dark:bg-page-dark lg:rounded-[32px] rounded-t-[32px] overflow-hidden shadow-2xl"
-        style={{ maxHeight: height * 0.85 }}
+        className="w-full lg:w-[600px] bg-page-light dark:bg-page-dark rounded-[32px] shadow-2xl overflow-hidden"
+        style={{
+          height: height * 0.85,
+          display: "flex",
+          flexDirection: "column", // Ensures children respect flex rules
+        }}
       >
-        {/* Header */}
+        {/* 1. Header (Static) */}
         <View className="p-6 border-b border-black/5 dark:border-white/5 flex-row justify-between items-center bg-card-light dark:bg-card-dark">
           <Text className="text-text-main-light dark:text-text-main-dark font-heading text-xl font-bold">
             {t("creation.new_creation_sprint")}
           </Text>
           <PressableOpacity
             onPress={() => router.back()}
+            activateOnHover
             style={{
               backgroundColor:
                 colorScheme === "dark"
@@ -200,9 +227,7 @@ export default function CreationModal() {
                   : "rgba(0,0,0,0.05)",
               padding: 8,
               borderRadius: 99,
-              cursor: "pointer", // Web cursor
             }}
-            activateOnHover
           >
             <Ionicons
               name="close"
@@ -212,164 +237,162 @@ export default function CreationModal() {
           </PressableOpacity>
         </View>
 
-        {/* Type Selector (Tabs) */}
-        <View className="flex-row p-4 gap-2 bg-page-light dark:bg-page-dark">
-          {[
-            { id: "pdf", label: "PDF", icon: "document-text" },
-            { id: "url", label: "URL", icon: "link" },
-            { id: "topic", label: "Topic", icon: "bulb" },
-          ].map((item) => (
-            <PressableOpacity
-              key={item.id}
-              activateOnHover
-              onPress={() => {
-                setActiveType(item.id as InputType);
-                setInputText("");
-                setSelectedFile(null);
-              }}
-              style={{
-                flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 12,
-                borderRadius: 12,
-                borderWidth: 1,
-                backgroundColor:
-                  activeType === item.id ? "#F97316" : "transparent",
-                borderColor:
-                  activeType === item.id
-                    ? "#F97316"
-                    : colorScheme === "dark"
-                      ? "rgba(255,255,255,0.1)"
-                      : "rgba(0,0,0,0.1)",
-                cursor: "pointer",
-              }}
-            >
-              <Ionicons
-                name={item.icon as any}
-                size={18}
-                color={activeType === item.id ? "white" : "#94A3B8"}
-              />
-              <Text
-                className={`ml-2 font-heading font-bold ${
-                  activeType === item.id
-                    ? "text-white"
-                    : "text-text-muted-light dark:text-text-muted-dark"
-                }`}
-              >
-                {item.label}
-              </Text>
-            </PressableOpacity>
-          ))}
-        </View>
-
-        {/* Input Content Area */}
-        <View className="p-6 min-h-[250px] justify-center">
-          {/* 1. PDF INPUT */}
-          {activeType === "pdf" && (
-            <View className="items-center">
-              <PressableOpacity
-                onPress={handleFilePick}
-                style={{
-                  width: "100%",
-                  height: 240,
-                  borderWidth: 2,
-                  borderStyle: "dashed",
-                  borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
-                  borderRadius: 24,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor:
-                    colorScheme === "dark"
-                      ? "rgba(255,255,255,0.05)"
-                      : "rgba(0,0,0,0.05)",
-                  marginBottom: 16,
-                  cursor: "pointer",
-                }}
-              >
-                {selectedFile ? (
-                  <>
-                    <Ionicons name="document" size={48} color="#F97316" />
-                    <Text
-                      className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
-                      numberOfLines={1}
-                    >
-                      {selectedFile.name}
-                    </Text>
-                    <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
-                      {t("creation.tap_to_change_file")}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={48}
-                      color="#94A3B8"
-                    />
-                    <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-                      {t("creation.tap_to_select_pdf")}
-                    </Text>
-                  </>
-                )}
-              </PressableOpacity>
-            </View>
-          )}
-
-          {/* 2. URL INPUT */}
-          {activeType === "url" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.paste_link")}
-              </Text>
-              <TextInput
-                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action border border-card-light dark:border-card-dark"
-                placeholder="https://wikipedia.org/wiki/Penguin"
-                placeholderTextColor="#94A3B8"
-                value={inputText}
-                onChangeText={setInputText}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
-          )}
-
-          {/* 3. TOPIC INPUT */}
-          {activeType === "topic" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.what_do_you_want_to_learn")}
-              </Text>
-              <TextInput
-                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action min-h-[120px] border border-card-light dark:border-card-dark"
-                placeholder={t(
-                  "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
-                )}
-                placeholderTextColor="#94A3B8"
-                value={inputText}
-                onChangeText={setInputText}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Footer Action */}
-        <View
-          className="p-6 bg-page-light dark:bg-page-dark"
-          style={{
-            paddingBottom: Platform.OS === "ios" ? insets.bottom + 20 : 24,
-          }}
-          pointerEvents={
-            (activeType === "pdf" ? !selectedFile : inputText.length < 3)
-              ? "none"
-              : "auto"
-          }
+        {/* 2. Scrollable Content (Flex-1) */}
+        <ScrollView
+          // @ts-ignore - Web specific prop
+          className="flex-1"
+          style={{ flex: 1 }} // Explicit flex for Web engine
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={true}
         >
+          <View className="p-4">
+            {/* Type Selector (Tabs) */}
+            <View className="flex-row gap-2 mb-6">
+              {[
+                { id: "pdf", label: "PDF", icon: "document-text" },
+                { id: "url", label: "URL", icon: "link" },
+                { id: "topic", label: "Topic", icon: "bulb" },
+              ].map((item) => (
+                <PressableOpacity
+                  activateOnHover
+                  key={item.id}
+                  onPress={() => {
+                    setActiveType(item.id as InputType);
+                    setInputText("");
+                    setSelectedFile(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 12,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    backgroundColor:
+                      activeType === item.id ? "#F97316" : "transparent",
+                    borderColor:
+                      activeType === item.id
+                        ? "#F97316"
+                        : colorScheme === "dark"
+                          ? "rgba(255,255,255,0.1)"
+                          : "rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <Ionicons
+                    name={item.icon as any}
+                    size={18}
+                    color={activeType === item.id ? "white" : "#94A3B8"}
+                  />
+                  <Text
+                    className={`ml-2 font-heading font-bold ${activeType === item.id ? "text-white" : "text-text-muted-light dark:text-text-muted-dark"}`}
+                  >
+                    {item.label}
+                  </Text>
+                </PressableOpacity>
+              ))}
+            </View>
+
+            {/* Input Area */}
+            <View>
+              {activeType === "pdf" && (
+                <View>
+                  <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                    {t("creation.upload_your_pdf")}
+                  </Text>
+                  <PressableOpacity
+                    activateOnHover
+                    onPress={handleFilePick}
+                    style={{
+                      width: "100%",
+                      height: 240,
+                      borderWidth: 2,
+                      borderStyle: "dashed",
+                      borderColor:
+                        colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                      borderRadius: 24,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor:
+                        colorScheme === "dark"
+                          ? "rgba(255,255,255,0.05)"
+                          : "rgba(0,0,0,0.05)",
+                    }}
+                  >
+                    {selectedFile ? (
+                      <>
+                        <Ionicons name="document" size={48} color="#F97316" />
+                        <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2">
+                          {selectedFile.name}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="cloud-upload-outline"
+                          size={48}
+                          color="#94A3B8"
+                        />
+                        <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                          {t("creation.tap_to_select_pdf")}
+                        </Text>
+                      </>
+                    )}
+                  </PressableOpacity>
+                </View>
+              )}
+
+              {activeType === "url" && (
+                <View>
+                  <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                    {t("creation.paste_link")}
+                  </Text>
+                  <TextInput
+                    className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action border border-card-light dark:border-card-dark"
+                    // @ts-ignore - Web specific
+                    style={{ outlineStyle: "none" }}
+                    placeholder="https://wikipedia.org/wiki/Penguin"
+                    placeholderTextColor="#94A3B8"
+                    value={inputText}
+                    onChangeText={setInputText}
+                  />
+                </View>
+              )}
+
+              {activeType === "topic" && (
+                <View>
+                  <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                    {t("creation.paste_topic_description")}
+                  </Text>
+                  <TextInput
+                    className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action border border-card-light dark:border-card-dark"
+                    multiline
+                    numberOfLines={10}
+                    // @ts-ignore - Web specific
+                    style={{
+                      height: 240,
+                      outlineStyle: "none",
+                      textAlignVertical: "top",
+                    }}
+                    placeholder={t(
+                      "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
+                    )}
+                    placeholderTextColor="#94A3B8"
+                    value={inputText}
+                    onChangeText={setInputText}
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* 3. Footer (Static) */}
+        <View className="p-6 border-t border-black/5 dark:border-white/5 bg-page-light dark:bg-page-dark">
           <PressableOpacity
+            activateOnHover
             onPress={handleSubmit}
+            // disabled={(activeType === "pdf" ? !selectedFile : inputText.length < 3)}
             style={{
               width: "100%",
               paddingVertical: 16,
@@ -387,20 +410,6 @@ export default function CreationModal() {
               )
                 ? 0.5
                 : 1,
-              shadowColor: "#F97316",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: (
-                activeType === "pdf" ? !selectedFile : inputText.length < 3
-              )
-                ? 0
-                : 0.2,
-              shadowRadius: 8,
-              elevation: (
-                activeType === "pdf" ? !selectedFile : inputText.length < 3
-              )
-                ? 0
-                : 4,
-              cursor: "pointer",
             }}
           >
             <Text className="text-white font-heading font-bold text-lg">
@@ -410,427 +419,9 @@ export default function CreationModal() {
         </View>
       </View>
 
-      <Modal
-        visible={isThinking}
-        transparent={true}
-        animationType="fade"
-        statusBarTranslucent={true}
-      >
+      <Modal visible={isThinking} transparent={true} animationType="fade">
         <ThinkingState />
       </Modal>
     </View>
   );
 }
-
-// import ThinkingState from "@/components/Creation/ThinkingState";
-// import { useColorScheme } from "@/hooks/use-color-scheme";
-// import { supabase } from "@/lib/supabase";
-// import { useAuthStore } from "@/store/storeUser";
-// import { Ionicons } from "@expo/vector-icons";
-// import * as DocumentPicker from "expo-document-picker";
-// import { useLocalSearchParams, useRouter } from "expo-router";
-// import { PressableOpacity } from "pressto";
-// import React, { useEffect, useState } from "react";
-// import { useTranslation } from "react-i18next";
-// import {
-//   Modal,
-//   Platform,
-//   Pressable,
-//   Text,
-//   TextInput,
-//   useWindowDimensions,
-//   View,
-// } from "react-native";
-// import { useSafeAreaInsets } from "react-native-safe-area-context";
-// import Toast from "react-native-toast-message";
-
-// type InputType = "pdf" | "url" | "topic";
-
-// export default function CreationModal() {
-//   const { type } = useLocalSearchParams<{ type: InputType }>();
-//   const router = useRouter();
-//   const { height } = useWindowDimensions();
-//   const insets = useSafeAreaInsets();
-//   const { t } = useTranslation();
-//   const { session } = useAuthStore();
-//   const colorScheme = useColorScheme();
-//   const [isThinking, setIsThinking] = useState(false);
-
-//   const [activeType, setActiveType] = useState<InputType>(type || "pdf");
-//   const [inputText, setInputText] = useState("");
-//   const [selectedFile, setSelectedFile] = useState<any>(null);
-
-//   const handleCreateSubmit = async (
-//     inputType: "pdf" | "url" | "topic",
-//     inputData: any,
-//   ) => {
-//     if (!session?.user) {
-//       Toast.show({ type: "error", text1: "Please log in first." });
-//       return;
-//     }
-
-//     try {
-//       // 🛑 STEP 1: CHECK LIMITS (The Gatekeeper)
-//       const { data: limitData, error: limitError } = await supabase.rpc(
-//         "check_user_limit",
-//         { user_uuid: session.user.id },
-//       );
-
-//       if (limitError) throw limitError;
-
-//       // 🛑 STEP 2: IF LIMIT REACHED -> SHOW PAYWALL
-//       if (limitData.limit_reached) {
-//         // Close modal first
-//         router.back();
-//         // Small delay to allow modal to close smoothly before pushing paywall
-//         setTimeout(() => {
-//           router.push("/paywall");
-//         }, 300);
-//         return;
-//       }
-
-//       // ✅ STEP 3: LIMIT OK -> PROCEED
-//       setIsThinking(true);
-
-//       // ---------------------------------------------------------
-//       // TODO: Here is where you will call your Edge Function later.
-
-//       // ---------------------------------------------------------
-
-//       // Simulate API delay
-//       await new Promise((resolve) => setTimeout(resolve, 3000));
-
-//       // ✅ STEP 4: INCREMENT COUNT (Only if AI call didn't fail)
-//       await supabase.rpc("increment_generation_count", {
-//         user_uuid: session.user.id,
-//       });
-
-//       setIsThinking(false);
-
-//       Toast.show({
-//         type: "success",
-//         text1: "Success!",
-//         text2: "Your deck is ready.",
-//       });
-
-//       // Navigate to your mock deck for now
-//       router.replace(`/study/10`);
-//     } catch (e: any) {
-//       setIsThinking(false);
-//       console.error(e);
-//       Toast.show({
-//         type: "error",
-//         text1: t("errors.generic"),
-//         text2: e.message,
-//       });
-//     }
-//   };
-
-//   const handleFilePick = async () => {
-//     try {
-//       const result = await DocumentPicker.getDocumentAsync({
-//         type: "application/pdf",
-//         copyToCacheDirectory: true,
-//       });
-
-//       if (result.assets && result.assets.length > 0) {
-//         setSelectedFile(result.assets[0]);
-//       }
-//     } catch (err) {
-//       console.log("Unknown Error: ", err);
-//     }
-//   };
-
-//   const handleSubmit = () => {
-//     if (activeType === "pdf" && selectedFile) {
-//       handleCreateSubmit("pdf", selectedFile);
-//     } else if (
-//       (activeType === "url" || activeType === "topic") &&
-//       inputText.length > 3
-//     ) {
-//       handleCreateSubmit(activeType, inputText);
-//     }
-//   };
-
-//   useEffect(() => {
-//     setActiveType(type || "pdf");
-//   }, [type]);
-
-//   return (
-//     <View className="flex-1 justify-end lg:justify-center items-center">
-//       {/* Backdrop (Tap to close) */}
-//       <Pressable
-//         onPress={() => router.back()}
-//         className="absolute inset-0 bg-black/60"
-//       />
-
-//       {/* Modal Container */}
-//       <View
-//         className="w-full lg:w-[600px] bg-page-light dark:bg-page-dark lg:rounded-[32px] rounded-t-[32px] overflow-hidden shadow-2xl"
-//         style={{ maxHeight: height * 0.85 }}
-//       >
-//         {/* Header */}
-//         <View className="p-6 border-b border-black/5 dark:border-white/5 flex-row justify-between items-center bg-card-light dark:bg-card-dark">
-//           <Text className="text-text-main-light dark:text-text-main-dark font-heading text-xl font-bold">
-//             {t("creation.new_creation_sprint")}
-//           </Text>
-//           {/* <Pressable
-//               onPress={onClose}
-//               className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
-//             > */}
-//           <PressableOpacity
-//             onPress={() => router.back()}
-//             style={{
-//               backgroundColor:
-//                 colorScheme === "dark"
-//                   ? "rgba(255,255,255,0.1)"
-//                   : "rgba(0,0,0,0.05)",
-//               padding: 8,
-//               borderRadius: 99,
-//             }}
-//             activateOnHover
-//           >
-//             <Ionicons
-//               name="close"
-//               size={20}
-//               color={Platform.OS === "ios" ? undefined : "#FFF"}
-//             />
-//           </PressableOpacity>
-//         </View>
-
-//         {/* Type Selector (Tabs) */}
-//         <View className="flex-row p-4 gap-2 bg-page-light dark:bg-page-dark">
-//           {[
-//             { id: "pdf", label: "PDF", icon: "document-text" },
-//             { id: "url", label: "URL", icon: "link" },
-//             { id: "topic", label: "Topic", icon: "bulb" },
-//           ].map((item) => (
-//             // <Pressable
-//             //   key={item.id}
-//             //   onPress={() => {
-//             //     setActiveType(item.id as InputType);
-//             //     setInputText("");
-//             //     setSelectedFile(null);
-//             //   }}
-//             //   className={`flex-1 flex-row items-center justify-center p-3 rounded-xl border transition-all ${
-//             //     activeType === item.id
-//             //       ? "bg-action border-action"
-//             //       : "bg-transparent border-black/10 dark:border-white/10"
-//             //   }`}
-//             // >
-//             <PressableOpacity
-//               key={item.id}
-//               activateOnHover
-//               onPress={() => {
-//                 setActiveType(item.id as InputType);
-//                 setInputText("");
-//                 setSelectedFile(null);
-//               }}
-//               style={{
-//                 flex: 1,
-//                 flexDirection: "row",
-//                 alignItems: "center",
-//                 justifyContent: "center",
-//                 padding: 12,
-//                 borderRadius: 12,
-//                 borderWidth: 1,
-//                 backgroundColor:
-//                   activeType === item.id ? "#F97316" : "transparent",
-//                 borderColor:
-//                   activeType === item.id
-//                     ? "#F97316"
-//                     : colorScheme === "dark"
-//                       ? "rgba(255,255,255,0.1)"
-//                       : "rgba(0,0,0,0.1)",
-//               }}
-//             >
-//               <Ionicons
-//                 name={item.icon as any}
-//                 size={18}
-//                 color={activeType === item.id ? "white" : "#94A3B8"}
-//               />
-//               <Text
-//                 className={`ml-2 font-heading font-bold ${
-//                   activeType === item.id
-//                     ? "text-white"
-//                     : "text-text-muted-light dark:text-text-muted-dark"
-//                 }`}
-//               >
-//                 {item.label}
-//               </Text>
-//             </PressableOpacity>
-//           ))}
-//         </View>
-
-//         {/* Input Content Area */}
-//         <View className="p-6 min-h-[250px] justify-center">
-//           {/* 1. PDF INPUT */}
-//           {activeType === "pdf" && (
-//             <View className="items-center">
-//               {/* <Pressable
-//                   onPress={handleFilePick}
-//                   className="w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-3xl items-center justify-center bg-black/5 dark:bg-white/5 mb-4 active:bg-action/5"
-//                 > */}
-//               <PressableOpacity
-//                 onPress={handleFilePick}
-//                 style={{
-//                   width: "100%",
-//                   height: 240,
-//                   borderWidth: 2,
-//                   borderStyle: "dashed",
-//                   borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
-//                   borderRadius: 24,
-//                   alignItems: "center",
-//                   justifyContent: "center",
-//                   backgroundColor:
-//                     colorScheme === "dark"
-//                       ? "rgba(255,255,255,0.05)"
-//                       : "rgba(0,0,0,0.05)",
-//                   marginBottom: 16,
-//                 }}
-//               >
-//                 {selectedFile ? (
-//                   <>
-//                     <Ionicons name="document" size={48} color="#F97316" />
-//                     <Text
-//                       className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
-//                       numberOfLines={1}
-//                     >
-//                       {selectedFile.name}
-//                     </Text>
-//                     <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
-//                       {t("creation.tap_to_change_file")}
-//                     </Text>
-//                   </>
-//                 ) : (
-//                   <>
-//                     <Ionicons
-//                       name="cloud-upload-outline"
-//                       size={48}
-//                       color="#94A3B8"
-//                     />
-//                     <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-//                       {t("creation.tap_to_select_pdf")}
-//                     </Text>
-//                   </>
-//                 )}
-//               </PressableOpacity>
-//             </View>
-//           )}
-
-//           {/* 2. URL INPUT */}
-//           {activeType === "url" && (
-//             <View>
-//               <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-//                 {t("creation.paste_link")}
-//               </Text>
-//               <TextInput
-//                 className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action border border-card-light dark:border-card-dark"
-//                 placeholder="https://wikipedia.org/wiki/Penguin"
-//                 placeholderTextColor="#94A3B8"
-//                 value={inputText}
-//                 onChangeText={setInputText}
-//                 autoCapitalize="none"
-//                 keyboardType="url"
-//               />
-//             </View>
-//           )}
-
-//           {/* 3. TOPIC INPUT */}
-//           {activeType === "topic" && (
-//             <View>
-//               <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-//                 {t("creation.what_do_you_want_to_learn")}
-//               </Text>
-//               <TextInput
-//                 className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action min-h-[120px] border border-card-light dark:border-card-dark"
-//                 placeholder={t(
-//                   "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
-//                 )}
-//                 placeholderTextColor="#94A3B8"
-//                 value={inputText}
-//                 onChangeText={setInputText}
-//                 multiline
-//                 textAlignVertical="top"
-//               />
-//             </View>
-//           )}
-//         </View>
-
-//         {/* Footer Action */}
-//         <View
-//           className="p-6 bg-page-light dark:bg-page-dark"
-//           style={{
-//             paddingBottom: Platform.OS === "ios" ? insets.bottom + 20 : 24,
-//           }}
-//           pointerEvents={
-//             (activeType === "pdf" ? !selectedFile : inputText.length < 3)
-//               ? "none"
-//               : "auto"
-//           }
-//         >
-//           {/* <Pressable
-//               onPress={handleSubmit}
-//               disabled={
-//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
-//               }
-//               className={`w-full py-4 rounded-xl items-center shadow-lg ${
-//                 (activeType === "pdf" ? !selectedFile : inputText.length < 3)
-//                   ? "bg-slate-300 dark:bg-slate-700 opacity-50"
-//                   : "bg-action active:bg-action-hover shadow-action/30"
-//               }`}
-//             > */}
-//           <PressableOpacity
-//             onPress={handleSubmit}
-//             style={{
-//               width: "100%",
-//               paddingVertical: 16,
-//               borderRadius: 12,
-//               alignItems: "center",
-//               backgroundColor: (
-//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
-//               )
-//                 ? colorScheme === "dark"
-//                   ? "#334155"
-//                   : "#CBD5E1"
-//                 : "#F97316",
-//               opacity: (
-//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
-//               )
-//                 ? 0.5
-//                 : 1,
-//               // Shadow logic
-//               shadowColor: "#F97316",
-//               shadowOffset: { width: 0, height: 4 },
-//               shadowOpacity: (
-//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
-//               )
-//                 ? 0
-//                 : 0.2,
-//               shadowRadius: 8,
-//               elevation: (
-//                 activeType === "pdf" ? !selectedFile : inputText.length < 3
-//               )
-//                 ? 0
-//                 : 4,
-//             }}
-//           >
-//             <Text className="text-white font-heading font-bold text-lg">
-//               {t("creation.generate_flashcards")} ⚡
-//             </Text>
-//           </PressableOpacity>
-//         </View>
-//       </View>
-
-//       <Modal
-//         visible={isThinking}
-//         transparent={true}
-//         animationType="fade"
-//         statusBarTranslucent={true} // Ensures it covers the status bar area too
-//       >
-//         {/* Your Penguin component now floats over the ENTIRE screen */}
-//         <ThinkingState />
-//       </Modal>
-//     </View>
-//   );
-// }

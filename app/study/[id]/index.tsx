@@ -242,18 +242,20 @@ export default function StudyScreen() {
     if (progress > 0 && !isFinished) {
       if (Platform.OS === "web") {
         if (
-          confirm("Quit session? Your progress on reviewed cards is saved.")
+          confirm(
+            t("study.quit_session_title") + "\n" + t("study.quit_session_msg"),
+          )
         ) {
           router.back();
         }
       } else {
         Alert.alert(
-          "Quit Session?",
-          "Cards you've already rated are saved. The rest will remain pending.",
+          t("study.quit_session_title"),
+          t("study.quit_session_msg"),
           [
-            { text: "Cancel", style: "cancel" },
+            { text: t("common.cancel"), style: "cancel" },
             {
-              text: "Quit",
+              text: t("study.quit_session_confirm"),
               style: "destructive",
               onPress: () => router.back(),
             },
@@ -364,7 +366,7 @@ export default function StudyScreen() {
               activateOnHover
             >
               <Text className="text-text-muted-light dark:text-text-muted-dark font-semibold">
-                Review Again
+                {t("study.review_again")}
               </Text>
             </PressableScale>
           </View>
