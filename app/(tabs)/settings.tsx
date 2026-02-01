@@ -173,6 +173,13 @@ export default function SettingsScreen() {
     updateProfile({ preferences: { ...profile?.preferences, language: lang } });
   };
 
+  const TERMS_URL =
+    "https://gist.github.com/francesco-saponaro/d344c6bdaf1b47fe045772874ee35807";
+  const PRIVACY_URL =
+    "https://gist.github.com/francesco-saponaro/aeb8f04b6fd0b80a809fdb7119158fe5";
+
+  const openLegal = (url: string) => Linking.openURL(url);
+
   const SectionHeader = ({ title }: { title: string }) => (
     <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-3 mt-6 ml-4">
       {title}
@@ -455,6 +462,21 @@ export default function SettingsScreen() {
               onPress={() => setShowTimePicker(true)}
             />
           )}
+        </View>
+
+        {/* E. LEGAL */}
+        <SectionHeader title="Legal" />
+        <View className="mx-4 rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
+          <SettingRow
+            icon="document-text"
+            label={t("privacy_policy")}
+            onPress={() => openLegal(PRIVACY_URL)}
+          />
+          <SettingRow
+            icon="book"
+            label={t("terms_of_service")}
+            onPress={() => openLegal(TERMS_URL)}
+          />
         </View>
 
         {/* E. DANGER ZONE */}

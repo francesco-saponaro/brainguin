@@ -17,7 +17,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 type InputType = "pdf" | "url" | "topic";
@@ -26,7 +25,6 @@ export default function CreationModal() {
   const { type } = useLocalSearchParams<{ type: InputType }>();
   const router = useRouter();
   const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { session } = useAuthStore();
   const colorScheme = useColorScheme();

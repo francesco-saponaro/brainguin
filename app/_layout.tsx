@@ -281,21 +281,33 @@ export default function RootLayout() {
                   />
                 )}
 
-                <Stack.Screen
-                  name="paywall/index"
-                  options={{
-                    presentation: "modal", // Native slide-up behavior
-                    animation: "slide_from_bottom",
-                    headerShown: false,
-                    sheetGrabberVisible: true,
-                    sheetCornerRadius: 24,
-                    sheetAllowedDetents: "fitToContents",
-                    contentStyle: {
-                      backgroundColor:
-                        colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
-                    },
-                  }}
-                />
+                {Platform.OS === "web" ? (
+                  <Stack.Screen
+                    name="paywall/index"
+                    options={{
+                      presentation: "transparentModal", // Native slide-up behavior
+                      animation: "fade",
+                      headerTitle: "Paywall",
+                      headerShown: false,
+                    }}
+                  />
+                ) : (
+                  <Stack.Screen
+                    name="paywall/index"
+                    options={{
+                      presentation: "modal", // Native slide-up behavior
+                      animation: "slide_from_bottom",
+                      headerShown: false,
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      sheetAllowedDetents: "fitToContents",
+                      contentStyle: {
+                        backgroundColor:
+                          colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                      },
+                    }}
+                  />
+                )}
               </Stack.Protected>
 
               {/* 4. Update Password (Public/Recovery) */}

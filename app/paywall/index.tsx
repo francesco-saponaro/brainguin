@@ -9,8 +9,8 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next"; // Added i18n hook
 import {
   ActivityIndicator,
-  Dimensions,
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -20,8 +20,6 @@ import {
 import Purchases, { PurchasesPackage } from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // 🔑 REPLACE WITH YOUR REAL KEY FROM REVENUECAT
 const API_KEY =
@@ -126,6 +124,13 @@ export default function PaywallScreen() {
     }
   };
 
+  const TERMS_URL =
+    "https://gist.github.com/francesco-saponaro/d344c6bdaf1b47fe045772874ee35807";
+  const PRIVACY_URL =
+    "https://gist.github.com/francesco-saponaro/aeb8f04b6fd0b80a809fdb7119158fe5";
+
+  const openLegal = (url: string) => Linking.openURL(url);
+
   return (
     <View className="flex-1 bg-page-light dark:bg-page-dark">
       {/* 1. FIXED HEADER (Outside ScrollView) */}
@@ -161,7 +166,7 @@ export default function PaywallScreen() {
         bounces={true}
       >
         {/* PENGUIN SECTION */}
-        <View className="flex-row justify-center items-center gap-[30px] mb-[10px]">
+        <View className="flex-row justify-center items-center gap-[30px] my-[10px]">
           <View className="relative">
             <View className="absolute -inset-4 bg-orange-500/10 rounded-full blur-2xl" />
             <Image
@@ -184,7 +189,7 @@ export default function PaywallScreen() {
         </View>
 
         {/* FEATURES SECTION */}
-        <View className="my-8 space-y-3 gap-3 max-w-[800px] mx-auto w-full">
+        <View className="mt-6 mb-4 space-y-2 gap-2 w-full">
           <FeatureRow
             icon="infinite"
             title={t("paywall.feat1Title")}
@@ -209,7 +214,12 @@ export default function PaywallScreen() {
         <View className="max-w-[800px] mx-auto w-full">
           <LinearGradient
             colors={["#F97316", "#EA580C"]}
-            style={{ borderRadius: 24, padding: 24 }}
+            style={{
+              borderRadius: 24,
+              paddingHorizontal: 24,
+              paddingTop: 24,
+              paddingBottom: 20,
+            }}
           >
             <View className="flex-row justify-between items-center mb-4">
               <View className="bg-white/20 px-3 py-1 rounded-lg">
@@ -266,18 +276,32 @@ export default function PaywallScreen() {
             <Text className="text-white/60 text-[10px] text-center mt-3 font-medium">
               {t("paywall.guarantee")}
             </Text>
-          </LinearGradient>
 
-          {/* RESTORE & TERMS */}
-          <View className="flex-row justify-center gap-6 mt-6 opacity-60">
-            <Pressable onPress={handleRestore}>
-              <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
+            <Pressable
+              onPress={handleRestore}
+              className="cursor-pointer w-fit mt-2 self-center"
+            >
+              <Text className="text-text-main-light text-white/60 text-[11px] font-medium underline">
                 {t("paywall.restore")}
               </Text>
             </Pressable>
-            <Pressable onPress={() => {}}>
+          </LinearGradient>
+
+          <View className="flex-row justify-center gap-6 mt-6 opacity-60">
+            <Pressable
+              onPress={() => openLegal(PRIVACY_URL)}
+              className="cursor-pointer"
+            >
               <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
-                {t("paywall.terms")}
+                {t("privacy")}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => openLegal(TERMS_URL)}
+              className="cursor-pointer"
+            >
+              <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
+                {t("terms")}
               </Text>
             </Pressable>
           </View>
@@ -286,164 +310,6 @@ export default function PaywallScreen() {
     </View>
   );
 }
-
-//   return (
-//     <ScrollView
-//       className="bg-page-light dark:bg-page-dark"
-//       contentContainerStyle={{
-//         paddingHorizontal: 24,
-//         paddingTop: 20,
-//         paddingBottom: insets.bottom + 40,
-//         minHeight: SCREEN_HEIGHT * 0.8,
-//       }}
-//       showsVerticalScrollIndicator={false}
-//       bounces={false}
-//     >
-//       {/* 1. TOP SECTION */}
-//       <View className="items-center">
-//         <View className="flex-row justify-end w-full">
-//           <PressableFinal
-//             onPress={() => router.back()}
-//             activateOnHover
-//             style={{
-//               width: 40,
-//               height: 40,
-//               backgroundColor:
-//                 colorScheme === "dark"
-//                   ? "rgba(255,255,255,0.1)"
-//                   : "rgba(0,0,0,0.05)",
-//               borderRadius: 20,
-//               alignItems: "center",
-//               justifyContent: "center",
-//             }}
-//           >
-//             <Ionicons name="close" size={24} color="#64748B" />
-//           </PressableFinal>
-//         </View>
-
-//         <View className="relative mt-4">
-//           <View className="absolute -inset-4 bg-orange-500/10 rounded-full blur-2xl" />
-//           <Image
-//             source={PENGUINIMAGE}
-//             style={{ width: 100, height: 100 }}
-//             resizeMode="contain"
-//           />
-//           <View className="absolute -right-2 -top-2 bg-white rounded-full p-1 shadow-sm">
-//             <Ionicons name="star" size={20} color="#F59E0B" />
-//           </View>
-//         </View>
-
-//         <Text className="text-text-main-light dark:text-text-main-dark font-heading text-3xl font-bold text-center leading-tight mt-4">
-//           {t("paywall.headerTitle")}
-//           {"\n"}
-//           <Text className="text-orange-500">
-//             {t("paywall.headerHighlight")}
-//           </Text>
-//         </Text>
-//       </View>
-
-//       {/* 2. MIDDLE SECTION */}
-//       <View className="my-8 space-y-3 gap-3 max-w-[800px] mx-auto w-full">
-//         <FeatureRow
-//           icon="infinite"
-//           title={t("paywall.feat1Title")}
-//           desc={t("paywall.feat1Desc")}
-//           color="#38BDF8"
-//         />
-//         <FeatureRow
-//           icon="brain"
-//           title={t("paywall.feat2Title")}
-//           desc={t("paywall.feat2Desc")}
-//           color="#F97316"
-//         />
-//         <FeatureRow
-//           icon="shield-checkmark"
-//           title={t("paywall.feat3Title")}
-//           desc={t("paywall.feat3Desc")}
-//           color="#22C55E"
-//         />
-//       </View>
-
-//       {/* 3. BOTTOM SECTION */}
-//       <View className="mt-auto max-w-[800px] mx-auto w-full">
-//         <LinearGradient
-//           colors={["#F97316", "#EA580C"]}
-//           style={{ borderRadius: 24, padding: 24 }}
-//         >
-//           <View className="flex-row justify-between items-center mb-4">
-//             <View className="bg-white/20 px-3 py-1 rounded-lg">
-//               <Text className="text-white font-bold text-[10px] uppercase tracking-widest">
-//                 {t("paywall.bestValue")}
-//               </Text>
-//             </View>
-//             <Text className="text-white/70 text-xs font-bold line-through">
-//               €59.99
-//             </Text>
-//           </View>
-
-//           <View className="flex-row items-baseline mb-1">
-//             <Text className="text-white font-heading text-4xl font-bold">
-//               {/* ✅ REAL PRICE FROM STORE */}
-//               {pkg ? pkg.product.priceString : "€29.99"}
-//             </Text>
-//             <Text className="text-white/90 font-body text-base ml-1">
-//               {t("paywall.perYear")}
-//             </Text>
-//           </View>
-
-//           <Text className="text-white/80 font-body text-xs mb-5">
-//             {t("paywall.monthlyBreakdown", {
-//               price: `${pkg ? (pkg.product.price / 12).toFixed(2) : "2.50"} ${pkg?.product.currencyCode || "€"}`,
-//             })}
-//           </Text>
-
-//           <PressableFinal
-//             onPress={isPurchasing ? undefined : handlePurchase}
-//             activateOnHover
-//             style={{
-//               backgroundColor: "white",
-//               width: "100%",
-//               paddingVertical: 16,
-//               borderRadius: 12,
-//               alignItems: "center",
-//               shadowColor: "#000",
-//               shadowOffset: { width: 0, height: 1 },
-//               shadowOpacity: 0.05,
-//               shadowRadius: 2,
-//               elevation: 2,
-//               opacity: isPurchasing ? 0.7 : 1,
-//             }}
-//           >
-//             {isPurchasing ? (
-//               <ActivityIndicator color="#EA580C" />
-//             ) : (
-//               <Text className="text-orange-600 font-bold text-lg">
-//                 {t("paywall.cta")}
-//               </Text>
-//             )}
-//           </PressableFinal>
-
-//           <Text className="text-white/60 text-[10px] text-center mt-3 font-medium">
-//             {t("paywall.guarantee")}
-//           </Text>
-//         </LinearGradient>
-
-//         <View className="flex-row justify-center gap-6 mt-6 opacity-60">
-//           <Pressable onPress={handleRestore}>
-//             <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
-//               {t("paywall.restore")}
-//             </Text>
-//           </Pressable>
-//           <Pressable onPress={() => {}}>
-//             <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
-//               {t("paywall.terms")}
-//             </Text>
-//           </Pressable>
-//         </View>
-//       </View>
-//     </ScrollView>
-//   );
-// }
 
 function FeatureRow({ icon, title, desc, color }: any) {
   return (

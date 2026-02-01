@@ -116,7 +116,7 @@
     "delete_deck_confirm": "Eliminar Todo"
   },
   "library": {
-    "header_small": "Tu Laboratorio",
+    "header_small": "Laboratorio",
     "header_title": "Biblioteca",
     "search_placeholder": "Buscar mazos...",
     "empty_title": "No se encontraron mazos",
@@ -209,7 +209,7 @@
     "headerHighlight": "Superpoderes Ilimitados",
     "feat1Title": "Generaciones Ilimitadas",
     "feat1Desc": "Crea mazos desde cualquier PDF, enlace o tema.",
-    "feat2Title": "Motor de Aprendizaje Inteligente",
+    "feat2Title": "Motor de Aprendizaje Smart",
     "feat2Desc": "Domina tarjetas 10 veces más rápido con IA.",
     "feat3Title": "Modo Enfoque sin Anuncios",
     "feat3Desc": "Sin distracciones. Flujo de aprendizaje puro.",
@@ -235,7 +235,7 @@
   "pdf_unreadable": "El texto del PDF está vacío o es ilegible.",
   "url_access": "Fallo al acceder a la URL.",
   "url_blocked": "El contenido del sitio es demasiado corto o está bloqueado.",
-  "timeout": "Se excedió el número máximo de reintentos.",
+  "timeout": "Tiempo de espera agotado.",
   "header_title": "Ajustes",
   "signed_in_as": "Sesión iniciada como",
   "section_membership": "Membresía",
@@ -261,5 +261,9 @@
   "delete_alert_msg": "Esta acción no se puede deshacer. Todos tus mazos y progresos se perderán para siempre.",
   "notification_permission_title": "Permiso requerido",
   "notification_permission_msg": "Por favor, activa las notificaciones en los ajustes de tu teléfono.",
-  "name_updated_toast": "¡Nombre actualizado!"
+  "name_updated_toast": "¡Nombre actualizado!",
+  "privacy_policy": "Política de Privacidad",
+  "terms_of_service": "Términos de Servicio",
+  "privacy": "Privacidad",
+  "terms": "Términos"
 }

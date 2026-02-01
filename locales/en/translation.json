@@ -262,5 +262,9 @@
   "delete_alert_msg": "This action cannot be undone. All your decks and progress will be lost forever.",
   "notification_permission_title": "Permission Required",
   "notification_permission_msg": "Please enable notifications in your phone settings.",
-  "name_updated_toast": "Name updated!"
+  "name_updated_toast": "Name updated!",
+  "privacy_policy": "Privacy Policy",
+  "terms_of_service": "Terms of Service",
+  "privacy": "Privacy",
+  "terms": "Terms"
 }

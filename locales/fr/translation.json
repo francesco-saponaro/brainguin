@@ -184,7 +184,7 @@
     "expansion_failed": "Échec de l'extension",
     "delete_failed": "Échec de la suppression",
     "login_required": "Veuillez d'abord vous connecter.",
-    "pdf_processing": "Impossible de traiter le fichier PDF.",
+    "pdf_processing": "Erreur traitement PDF.",
     "ai_failure": "Échec de la génération par IA.",
     "pdf_empty": "Le texte du PDF est vide ou illisible.",
     "url_access_error": "Échec de l'accès à l'URL.",
@@ -207,7 +207,7 @@
     "headerHighlight": "Super-pouvoirs Illimités",
     "feat1Title": "Générations Illimitées",
     "feat1Desc": "Créez des decks à partir de PDF, liens ou sujets.",
-    "feat2Title": "Moteur d'Apprentissage Intelligent",
+    "feat2Title": "Apprentissage Smart",
     "feat2Desc": "Maîtrisez les cartes 10x plus vite avec l'IA.",
     "feat3Title": "Mode Concentration sans Pub",
     "feat3Desc": "Aucune distraction. Apprentissage pur.",
@@ -259,5 +259,9 @@
   "delete_alert_msg": "Cette action est irréversible. Tous vos paquets et votre progression seront perdus.",
   "notification_permission_title": "Permission requise",
   "notification_permission_msg": "Veuillez activer les notifications dans les paramètres de votre téléphone.",
-  "name_updated_toast": "Nom mis à jour !"
+  "name_updated_toast": "Nom mis à jour !",
+  "privacy_policy": "Politique de Confidentialité",
+  "terms_of_service": "Conditions d'Utilisation",
+  "privacy": "Confidentialité",
+  "terms": "Conditions"
 }
