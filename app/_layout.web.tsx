@@ -15,14 +15,12 @@ import {
 } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { Stack, useRootNavigationState, useRouter } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "nativewind";
 import { PressablesConfig } from "pressto";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, Platform, Text, TextInput } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Linking, Platform, View } from "react-native";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -31,20 +29,6 @@ import "../global.css";
 export const unstable_settings = {
   anchor: "(tabs)",
 };
-
-// --- 💡 START GLOBAL FONT SCALING OVERRIDE (TypeScript Fix) 💡 ---
-// Fix 1: Use 'as any' to tell TypeScript to treat Text as a type that allows defaultProps
-(Text as any).defaultProps = (Text as any).defaultProps || {};
-(Text as any).defaultProps.allowFontScaling = false;
-
-// Fix 2: Use 'as any' for TextInput as well
-(TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
-(TextInput as any).defaultProps.allowFontScaling = false;
-
-SplashScreen.preventAutoHideAsync();
-SplashScreen.setOptions({
-  fade: true, // ✅ Fade enabled, uses default 400ms
-});
 
 export default function RootLayout() {
   const navigationState = useRootNavigationState();
@@ -63,7 +47,7 @@ export default function RootLayout() {
   const { session, setSession, isOnboarded } = useAuthStore();
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isI18nInitialized, setIsI18nInitialized] = useState(false);
-  const [isPreferencesSynced, setIsPreferencesSynced] = useState(false); // Renamed for clarity
+  const [isPreferencesSynced, setIsPreferencesSynced] = useState(false);
 
   // 1. THE AUTH INITIALIZER & LISTENER
   useEffect(() => {
@@ -214,19 +198,12 @@ export default function RootLayout() {
     isPreferencesSynced &&
     navigationState?.key;
 
-  const onLayoutRootView = useCallback(async () => {
-    if (appIsReady) {
-      // This tells the splash screen to hide immediately!
-      await SplashScreen.hideAsync();
-    }
-  }, [appIsReady]);
-
   if (!appIsReady) {
     return null;
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
@@ -330,7 +307,7 @@ export default function RootLayout() {
           </PressablesConfig>
         </ThemeProvider>
       </SafeAreaProvider>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 

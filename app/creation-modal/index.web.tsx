@@ -1,10 +1,10 @@
 import ThinkingState from "@/components/Creation/ThinkingState";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useColorScheme } from "nativewind";
 import { PressableOpacity } from "pressto";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,7 +27,7 @@ export default function CreationModal() {
   const { height } = useWindowDimensions();
   const { t } = useTranslation();
   const { session } = useAuthStore();
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useColorScheme();
   const [isThinking, setIsThinking] = useState(false);
 
   const [activeType, setActiveType] = useState<InputType>(type || "pdf");

@@ -4,19 +4,21 @@
     "slug": "brainguin",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "brainguin",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "notification": {
+      "icon": "./assets/images/logo.png",
+      "color": "#F8FAFC"
+    },
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
       "appleTeamId": "86BLA5VR2L",
       "bundleIdentifier": "com.brainguin.app",
       "entitlements": {
-        "com.apple.security.application-groups": [
-          "group.com.brainguin.app"
-        ]
+        "com.apple.security.application-groups": ["group.com.brainguin.app"]
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -26,21 +28,19 @@
         "CFBundleDisplayName": "BrainGuin"
       },
       "icon": {
-        "dark": "./assets/images/main.png",
-        "light": "./assets/images/main.png"
+        "dark": "./assets/images/logo.png",
+        "light": "./assets/images/logo.png"
       }
     },
     "android": {
       "package": "com.brainguin.app",
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFC",
-        "foregroundImage": "./assets/images/main.png"
+        "foregroundImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "CAMERA"
-      ]
+      "permissions": ["CAMERA"]
     },
     "web": {
       "output": "static",
@@ -64,6 +64,7 @@
       "expo-localization",
       "expo-apple-authentication",
       "@bacons/apple-targets",
+      "./plugins/withWidgetFix.js",
       [
         "react-native-android-widget",
         {

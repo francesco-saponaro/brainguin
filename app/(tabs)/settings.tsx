@@ -1,3 +1,4 @@
+import ConfirmModal from "@/components/ConfirmModal";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
@@ -8,7 +9,7 @@ import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,8 +20,10 @@ import {
   Switch,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
+import Purchases from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
@@ -29,8 +32,10 @@ export default function SettingsScreen() {
   const { session, signOut } = useAuthStore();
   const { colorScheme, setColorScheme } = useColorScheme();
   const { t, i18n } = useTranslation();
+  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isDark = colorScheme === "dark";
+  const isDesktop = width > 1000;
 
   // --- STATE ---
   const [profile, setProfile] = useState<any>(null);
@@ -40,6 +45,10 @@ export default function SettingsScreen() {
   const [notificationTime, setNotificationTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+
+  const PressableFinal =
+    Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   // --- 1. FETCH USER SETTINGS ---
   useEffect(() => {
@@ -63,6 +72,10 @@ export default function SettingsScreen() {
           const date = new Date();
           date.setHours(parseInt(hours), parseInt(minutes));
           setNotificationTime(date);
+        }
+
+        if (data.preferences?.theme) {
+          setColorScheme(data.preferences.theme);
         }
       }
     };
@@ -89,30 +102,146 @@ export default function SettingsScreen() {
   };
 
   const handleSaveName = async () => {
-    await updateProfile({ full_name: tempName });
-    setIsEditingName(false);
-    Toast.show({ type: "success", text1: t("settings.name_updated_toast") });
+    try {
+      // 1. Update the Public Table (your existing updateProfile logic)
+      await updateProfile({ full_name: tempName });
+
+      // 2. Update Supabase Auth Metadata (CRITICAL for persistence on reload)
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: tempName },
+      });
+
+      if (authError) throw authError;
+
+      // 3. Close modal and show success
+      setIsEditingName(false);
+      Toast.show({ type: "success", text1: t("settings.name_updated_toast") });
+    } catch (e: any) {
+      Toast.show({
+        type: "error",
+        text1: "Error saving name",
+        text2: e.message,
+      });
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    // 1. WEB GUARD: Stop immediately if on web
+    if (Platform.OS === "web") {
+      // Web users likely paid via Stripe/PayPal on your site
+      // Send them to your web billing portal
+      Linking.openURL("https://brainguin.app/billing");
+      return;
+    }
+
+    // 2. NATIVE LOGIC: Now safe to use RevenueCat
+    try {
+      // Double check initialization just in case
+      if (!(await Purchases.isConfigured())) {
+        // Fallback if SDK isn't ready
+        if (Platform.OS === "ios")
+          Linking.openURL("https://apps.apple.com/account/subscriptions");
+        else
+          Linking.openURL(
+            "https://play.google.com/store/account/subscriptions",
+          );
+        return;
+      }
+
+      const customerInfo = await Purchases.getCustomerInfo();
+      const entitlement = customerInfo.entitlements.active["pro"]; // Replace 'pro' with your entitlement ID
+
+      if (!entitlement) {
+        router.push("/paywall");
+        return;
+      }
+
+      // 3. Smart Redirect based on Store
+      if (entitlement.store === "APP_STORE") {
+        Linking.openURL("https://apps.apple.com/account/subscriptions");
+      } else if (entitlement.store === "PLAY_STORE") {
+        Linking.openURL("https://play.google.com/store/account/subscriptions");
+      } else if (entitlement.store === "STRIPE") {
+        Linking.openURL("https://brainguin.app/billing");
+      } else {
+        Alert.alert(
+          "Manage Subscription",
+          "Please manage your subscription via the platform you purchased it on.",
+        );
+      }
+    } catch (e) {
+      console.error(e);
+      // Fallback to store settings if determining source fails
+      if (Platform.OS === "ios")
+        Linking.openURL("https://apps.apple.com/account/subscriptions");
+      else
+        Linking.openURL("https://play.google.com/store/account/subscriptions");
+    }
+  };
+
+  const handleThemeChange = (themeKey: "light" | "dark" | "system") => {
+    // 1. Update UI Immediately
+    setColorScheme(themeKey);
+
+    // 2. Persist to Database
+    updateProfile({
+      preferences: {
+        ...profile?.preferences,
+        theme: themeKey,
+      },
+    });
   };
 
   const toggleNotifications = async (value: boolean) => {
-    setNotificationsEnabled(value);
-
-    if (value) {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          t("settings.notification_permission_title"),
-          t("settings.notification_permission_msg"),
-        );
-        setNotificationsEnabled(false);
-        return;
-      }
-      await scheduleNotification(notificationTime);
-    } else {
+    // 1. If turning OFF: Easy, just cancel and save.
+    if (!value) {
+      setNotificationsEnabled(false);
       await Notifications.cancelAllScheduledNotificationsAsync();
+      updateProfile({ is_notifications_enabled: false });
+      return;
     }
 
-    updateProfile({ is_notifications_enabled: value });
+    // 2. If turning ON: Check status explicitly first
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    // 3. If we don't have permission yet (undetermined) or it was denied before...
+    if (existingStatus !== "granted") {
+      // Try to ask for it
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    // 4. If STILL not granted, it means they denied it (possibly permanently)
+    if (finalStatus !== "granted") {
+      setNotificationsEnabled(false);
+
+      Alert.alert(
+        t("settings.notification_permission_title"),
+        t("settings.notification_permission_msg"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            // Add "Open Settings" to your locale or hardcode "Settings" for now
+            text: "Settings",
+            onPress: () => {
+              if (Platform.OS === "ios") {
+                Linking.openURL("app-settings:");
+              } else {
+                Linking.openSettings();
+              }
+            },
+          },
+        ],
+      );
+      return;
+    }
+
+    // 5. Success! Enable switch, Schedule, and Save
+    setNotificationsEnabled(true);
+    await scheduleNotification(notificationTime);
+    updateProfile({ is_notifications_enabled: true });
   };
 
   const handleTimeChange = async (event: any, selectedDate?: Date) => {
@@ -120,9 +249,17 @@ export default function SettingsScreen() {
 
     if (selectedDate) {
       setNotificationTime(selectedDate);
-      const timeString = selectedDate.toTimeString().split(" ")[0];
+
+      // Save string to DB "HH:MM"
+      const timeString = selectedDate.toLocaleTimeString([], {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
       await updateProfile({ notification_time: timeString });
 
+      // Only reschedule if the switch is ON
       if (notificationsEnabled) {
         await scheduleNotification(selectedDate);
       }
@@ -131,10 +268,13 @@ export default function SettingsScreen() {
 
   const scheduleNotification = async (date: Date) => {
     await Notifications.cancelAllScheduledNotificationsAsync();
+
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Time to Study! 🐧",
-        body: "Your daily cards are ready for review.",
+        // 👇 CUSTOMIZE THIS PART
+        title: t("settings.notification_scheduled_title"),
+        body: t("settings.notification_scheduled_body"),
+        sound: true, // Plays default sound
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
@@ -145,27 +285,28 @@ export default function SettingsScreen() {
     });
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      t("settings.delete_alert_title"),
-      t("settings.delete_alert_msg"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const { error } = await supabase.rpc("delete_user");
-              if (error) throw error;
-              signOut();
-            } catch (e: any) {
-              Alert.alert("Error", e.message);
-            }
-          },
-        },
-      ],
-    );
+  // --- NEW: DELETE LOGIC SPLIT ---
+
+  // 1. Shows the Modal
+  const promptDeleteAccount = () => {
+    setIsDeleteModalVisible(true);
+  };
+
+  // 2. Performs the actual deletion
+  const performDeleteAccount = async () => {
+    try {
+      const { error } = await supabase.rpc("delete_user");
+      if (error) throw error;
+
+      // Close modal first
+      setIsDeleteModalVisible(false);
+
+      // Then sign out
+      signOut();
+    } catch (e: any) {
+      setIsDeleteModalVisible(false);
+      Alert.alert("Error", e.message);
+    }
   };
 
   const changeLanguage = (lang: string) => {
@@ -194,81 +335,88 @@ export default function SettingsScreen() {
     rightElement,
     isDestructive,
   }: any) => (
-    <PressableScale
-      onPress={onPress}
-      activateOnHover={!!onPress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 16,
-        backgroundColor: isDark ? Colors.dark.card : Colors.light.card,
-        marginBottom: 1,
-      }}
-    >
-      <View
-        className={clsx(
-          "w-10 h-10 rounded-xl items-center justify-center mr-4",
-          isDestructive
-            ? "bg-red-100 dark:bg-red-900/20"
-            : "bg-black/5 dark:bg-white/5",
-        )}
+    <View className="bg-card-light dark:bg-card-dark">
+      <PressableFinal
+        onPress={onPress}
+        activateOnHover={!!onPress}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 16,
+          marginBottom: 1,
+        }}
       >
-        <Ionicons
-          name={icon}
-          size={20}
-          color={isDestructive ? "#EF4444" : isDark ? "#94A3B8" : "#64748B"}
-        />
-      </View>
-
-      <View className="flex-1">
-        <Text
+        <View
           className={clsx(
-            "font-heading font-bold text-base",
+            "w-10 h-10 rounded-xl items-center justify-center mr-4",
             isDestructive
-              ? "text-red-500"
-              : "text-text-main-light dark:text-text-main-dark",
+              ? "bg-red-100 dark:bg-red-900/20"
+              : "bg-black/5 dark:bg-white/5",
           )}
         >
-          {label}
-        </Text>
-      </View>
+          <Ionicons
+            name={icon}
+            size={20}
+            color={isDestructive ? "#EF4444" : isDark ? "#94A3B8" : "#64748B"}
+          />
+        </View>
 
-      {rightElement
-        ? rightElement
-        : value && (
-            <View className="flex-row items-center">
-              <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-sm mr-2">
-                {value}
-              </Text>
-              {onPress && (
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={isDark ? "#64748B" : "#94A3B8"}
-                />
-              )}
-            </View>
-          )}
-    </PressableScale>
+        <View className="flex-1">
+          <Text
+            className={clsx(
+              "font-heading font-bold text-base",
+              isDestructive
+                ? "text-red-500"
+                : "text-text-main-light dark:text-text-main-dark",
+            )}
+          >
+            {label}
+          </Text>
+        </View>
+
+        {rightElement
+          ? rightElement
+          : value && (
+              <View className="flex-row items-center">
+                <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-sm mr-2">
+                  {value}
+                </Text>
+                {onPress && (
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={isDark ? "#64748B" : "#94A3B8"}
+                  />
+                )}
+              </View>
+            )}
+      </PressableFinal>
+    </View>
   );
 
   return (
-    <View className="flex-1 bg-page-light dark:bg-page-dark">
+    <View
+      className="flex-1 bg-page-light dark:bg-page-dark"
+      style={{
+        paddingLeft: isDesktop ? 300 : 20,
+        paddingRight: 20,
+      }}
+    >
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 20,
-          paddingBottom: 40,
+          paddingBottom: insets.bottom + 80,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-6 mb-6">
+        <View className="mb-6">
           <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-bold">
             {t("settings.header_title")}
           </Text>
         </View>
 
         {/* A. PROFILE HEADER */}
-        <View className="mx-4 mb-6 p-6 rounded-[32px] bg-card-light dark:bg-card-dark border border-black/5 dark:border-white/5 flex-row items-center shadow-sm">
+        <View className="mb-6 p-6 rounded-[32px] bg-card-light dark:bg-card-dark border border-black/5 dark:border-white/5 flex-row items-center shadow-sm">
           <View className="flex-1">
             <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs uppercase font-bold tracking-wider mb-1">
               {t("settings.signed_in_as")}
@@ -287,7 +435,7 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
-          <PressableScale
+          <PressableFinal
             onPress={() => setIsEditingName(true)}
             activateOnHover
             style={{
@@ -299,12 +447,12 @@ export default function SettingsScreen() {
             }}
           >
             <Ionicons name="pencil" size={20} color={Colors.brand.action} />
-          </PressableScale>
+          </PressableFinal>
         </View>
 
         {/* B. SUBSCRIPTION */}
         <SectionHeader title={t("settings.section_membership")} />
-        <View className="mx-4 rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
+        <View className=" rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
           <SettingRow
             icon="star"
             label={t("settings.plan_status")}
@@ -333,14 +481,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon="card"
             label={t("settings.manage_subscription")}
-            onPress={() => {
-              if (Platform.OS === "ios")
-                Linking.openURL("https://apps.apple.com/account/subscriptions");
-              else
-                Linking.openURL(
-                  "https://play.google.com/store/account/subscriptions",
-                );
-            }}
+            onPress={handleManageSubscription}
           />
           <SettingRow
             icon="refresh"
@@ -351,16 +492,18 @@ export default function SettingsScreen() {
 
         {/* C. PREFERENCES */}
         <SectionHeader title={t("settings.section_preferences")} />
-        <View className="mx-4 rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
+        <View className=" rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
           <SettingRow
             icon={isDark ? "moon" : "sunny"}
             label={t("settings.theme")}
             rightElement={
               <View className="flex-row bg-black/5 dark:bg-white/10 rounded-full p-1">
                 {["light", "dark", "system"].map((themeKey) => (
-                  <PressableScale
+                  <PressableFinal
                     key={themeKey}
-                    onPress={() => setColorScheme(themeKey as any)}
+                    onPress={() =>
+                      handleThemeChange(themeKey as "light" | "dark" | "system")
+                    }
                     style={{
                       paddingHorizontal: 12,
                       paddingVertical: 4,
@@ -385,7 +528,7 @@ export default function SettingsScreen() {
                     >
                       {themeKey}
                     </Text>
-                  </PressableScale>
+                  </PressableFinal>
                 ))}
               </View>
             }
@@ -397,7 +540,7 @@ export default function SettingsScreen() {
             rightElement={
               <View className="flex-row gap-2">
                 {["en", "es", "fr", "it"].map((lang) => (
-                  <PressableScale
+                  <PressableFinal
                     key={lang}
                     onPress={() => changeLanguage(lang)}
                     style={{
@@ -429,7 +572,7 @@ export default function SettingsScreen() {
                     >
                       {lang}
                     </Text>
-                  </PressableScale>
+                  </PressableFinal>
                 ))}
               </View>
             }
@@ -437,36 +580,40 @@ export default function SettingsScreen() {
         </View>
 
         {/* D. NOTIFICATIONS */}
-        <SectionHeader title={t("settings.section_notifications")} />
-        <View className="mx-4 rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
-          <SettingRow
-            icon="notifications"
-            label={t("settings.daily_reminder")}
-            rightElement={
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={toggleNotifications}
-                trackColor={{ false: "#767577", true: Colors.brand.action }}
-                thumbColor={"#f4f3f4"}
+        {Platform.OS !== "web" && (
+          <>
+            <SectionHeader title={t("settings.section_notifications")} />
+            <View className=" rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
+              <SettingRow
+                icon="notifications"
+                label={t("settings.daily_reminder")}
+                rightElement={
+                  <Switch
+                    value={notificationsEnabled}
+                    onValueChange={toggleNotifications}
+                    trackColor={{ false: "#767577", true: Colors.brand.action }}
+                    thumbColor={"#f4f3f4"}
+                  />
+                }
               />
-            }
-          />
-          {notificationsEnabled && (
-            <SettingRow
-              icon="time"
-              label={t("settings.reminder_time")}
-              value={notificationTime.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              onPress={() => setShowTimePicker(true)}
-            />
-          )}
-        </View>
+              {notificationsEnabled && (
+                <SettingRow
+                  icon="time"
+                  label={t("settings.reminder_time")}
+                  value={notificationTime.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  onPress={() => setShowTimePicker(true)}
+                />
+              )}
+            </View>
+          </>
+        )}
 
         {/* E. LEGAL */}
         <SectionHeader title="Legal" />
-        <View className="mx-4 rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
+        <View className=" rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
           <SettingRow
             icon="document-text"
             label={t("privacy_policy")}
@@ -481,7 +628,7 @@ export default function SettingsScreen() {
 
         {/* E. DANGER ZONE */}
         <SectionHeader title={t("settings.section_account")} />
-        <View className="mx-4 rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
+        <View className=" rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
           <SettingRow
             icon="log-out"
             label={t("settings.log_out")}
@@ -493,7 +640,7 @@ export default function SettingsScreen() {
             icon="trash"
             label={t("settings.delete_account")}
             isDestructive
-            onPress={handleDeleteAccount}
+            onPress={promptDeleteAccount}
           />
         </View>
 
@@ -503,6 +650,17 @@ export default function SettingsScreen() {
       </ScrollView>
 
       {/* MODALS */}
+      {/* --- CONFIRMATION MODAL FOR DELETE --- */}
+      <ConfirmModal
+        visible={isDeleteModalVisible}
+        title={t("settings.delete_alert_title")}
+        message={t("settings.delete_alert_msg")}
+        confirmLabel={t("settings.delete_account")}
+        isDestructive={true}
+        onConfirm={performDeleteAccount}
+        onCancel={() => setIsDeleteModalVisible(false)}
+      />
+
       <Modal visible={isEditingName} transparent animationType="fade">
         <View className="flex-1 bg-black/50 items-center justify-center px-6">
           <View className="bg-page-light dark:bg-page-dark w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-black/5 dark:border-white/10">
@@ -518,7 +676,7 @@ export default function SettingsScreen() {
               autoFocus
             />
             <View className="flex-row gap-3">
-              <PressableScale
+              <PressableFinal
                 onPress={() => setIsEditingName(false)}
                 style={{
                   flex: 1,
@@ -531,8 +689,8 @@ export default function SettingsScreen() {
                 <Text className="font-bold text-gray-600 dark:text-gray-300">
                   {t("settings.cancel_btn")}
                 </Text>
-              </PressableScale>
-              <PressableScale
+              </PressableFinal>
+              <PressableFinal
                 onPress={handleSaveName}
                 style={{
                   flex: 1,
@@ -545,7 +703,7 @@ export default function SettingsScreen() {
                 <Text className="font-bold text-white">
                   {t("settings.save_btn")}
                 </Text>
-              </PressableScale>
+              </PressableFinal>
             </View>
           </View>
         </View>
@@ -566,14 +724,14 @@ export default function SettingsScreen() {
           <View className="flex-1 justify-end">
             <View className="bg-card-light dark:bg-card-dark pb-8">
               <View className="flex-row justify-between p-4 border-b border-black/5 dark:border-white/5">
-                <PressableScale onPress={() => setShowTimePicker(false)}>
+                <PressableFinal onPress={() => setShowTimePicker(false)}>
                   <Text className="text-text-muted-light">
                     {t("settings.cancel_btn")}
                   </Text>
-                </PressableScale>
-                <PressableScale onPress={() => setShowTimePicker(false)}>
+                </PressableFinal>
+                <PressableFinal onPress={() => setShowTimePicker(false)}>
                   <Text className="text-action font-bold">Done</Text>
-                </PressableScale>
+                </PressableFinal>
               </View>
               <DateTimePicker
                 value={notificationTime}

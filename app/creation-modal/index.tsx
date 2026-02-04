@@ -1,9 +1,9 @@
 import ThinkingState from "@/components/Creation/ThinkingState";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
+import { useColorScheme } from "nativewind";
 // ❌ REMOVED: import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { PressableScale } from "pressto";
@@ -29,7 +29,7 @@ export default function CreationModal() {
   const insets = useSafeAreaInsets();
   const { type } = useLocalSearchParams<{ type: InputType }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useColorScheme();
   const { t } = useTranslation();
   const { session } = useAuthStore();
   const [isThinking, setIsThinking] = useState(false);
