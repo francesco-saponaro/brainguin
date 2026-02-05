@@ -64,7 +64,14 @@
       "expo-localization",
       "expo-apple-authentication",
       "@bacons/apple-targets",
-      "./plugins/withWidgetFix.js",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "ccacheEnabled": false
+          }
+        }
+      ],
       [
         "react-native-android-widget",
         {
