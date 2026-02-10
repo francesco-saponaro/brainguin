@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { Linking } from "react-native";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
@@ -9,30 +10,44 @@ const nameToWidget = {
 };
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
-  const widgetInfo = props.widgetInfo;
+  const widgetInfo = props.widgetInfo as any;
   const Widget =
     nameToWidget[widgetInfo.widgetName as keyof typeof nameToWidget];
 
   switch (props.widgetAction) {
     case "WIDGET_ADDED":
-      props.renderWidget(<Widget />);
-      break;
-
     case "WIDGET_UPDATE":
-      // Not needed for now
-      break;
-
     case "WIDGET_RESIZED":
-      // Not needed for now
-      break;
+      let data = widgetInfo.props;
 
-    case "WIDGET_DELETED":
-      // Not needed for now
+      if (
+        !data ||
+        !data.dueCards ||
+        data.dueCards === undefined ||
+        data.dueCards === 0
+      ) {
+        try {
+          const savedData = await AsyncStorage.getItem("widget_last_data");
+          if (savedData) {
+            data = JSON.parse(savedData);
+            console.log("WIDGET_LOG: Data restored from Storage");
+          } else {
+            console.log("WIDGET_LOG: Storage was empty!");
+          }
+        } catch (e) {
+          console.log("WIDGET_LOG: Storage Error:", e);
+        }
+      }
+
+      // If data is STILL empty, render a "Please open app" state
+      props.renderWidget(<Widget {...(data || { dueCards: 0 })} />);
       break;
 
     case "WIDGET_CLICK":
-      if (props.clickAction === "OPEN_APP") {
-        Linking.openURL("brainguin://study/daily");
+      if (props.clickAction) {
+        Linking.openURL(props.clickAction);
+      } else {
+        Linking.openURL("brainguin://");
       }
       break;
 

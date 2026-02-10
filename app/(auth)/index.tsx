@@ -315,16 +315,6 @@ const LoginScreen = () => {
           </PressableFinal>
 
           {/* Main Login Button */}
-          {/* <Pressable
-            onPress={handleSubmit(onLogin)}
-            disabled={loading || !isFormValid}
-            className={clsx(
-              "p-4 rounded-xl items-center shadow-sm mb-6 transition-all duration-200 active:scale-95",
-              loading || !isFormValid
-                ? "bg-slate-400 opacity-50"
-                : "bg-action hover:bg-orange-600 dark:hover:bg-orange-400 shadow-action/30",
-            )}
-          > */}
           <PressableFinal
             onPress={() =>
               loading || !isFormValid ? null : handleSubmit(onLogin)()

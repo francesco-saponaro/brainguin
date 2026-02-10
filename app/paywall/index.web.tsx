@@ -91,6 +91,8 @@ export default function PaywallScreen() {
           text1: t("paywall.purchase_success_title"),
           text2: t("paywall.purchase_success_desc"),
         });
+
+        router.back();
       }
     } catch (e: any) {
       if (!e.userCancelled) {

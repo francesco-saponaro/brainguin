@@ -57,7 +57,7 @@ export default function CreationModal() {
       if (limitError) throw limitError;
 
       if (limitData.limit_reached) {
-        router.replace("/paywall");
+        router.push("/paywall");
         return;
       }
 

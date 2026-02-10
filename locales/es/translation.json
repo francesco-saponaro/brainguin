@@ -295,5 +295,14 @@
     "name_updated_toast": "¡Nombre actualizado!",
     "notification_scheduled_title": "¡Hora de estudiar! 🐧",
     "notification_scheduled_body": "Tus tarjetas te esperan. ¡Mantén tu racha viva!"
+  },
+  "updates": {
+    "required_title": "Actualización disponible",
+    "required_body": "Hay una nueva versión de BrainGuin disponible. Por favor, actualiza la aplicación para continuar.",
+    "button": "Actualizar ahora"
+  },
+  "maintenance": {
+    "title": "En mantenimiento",
+    "body": "BrainGuin está recibiendo una puesta a punto. ¡Estaremos de vuelta en unos minutos!"
   }
 }

@@ -54,7 +54,7 @@ export default function CreationModal() {
 
       // 🛑 STEP 2: IF LIMIT REACHED -> SHOW PAYWALL
       if (limitData.limit_reached) {
-        router.replace("/paywall");
+        router.push("/paywall");
         return;
       }
 

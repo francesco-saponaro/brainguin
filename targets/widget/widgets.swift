@@ -144,7 +144,7 @@ struct WidgetEntryView : View {
                 }
             }
         }
-        .widgetURL(URL(string: hasDueCards ? "brainguin://study/daily" : "brainguin://home"))
+        .widgetURL(URL(string: hasDueCards ? "brainguin://study/daily" : "brainguin://"))
         .containerBackground(for: .widget) {
             bgColor
         }

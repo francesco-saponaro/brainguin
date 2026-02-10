@@ -459,7 +459,7 @@ export default function StudyScreen() {
             tint={isDark ? "dark" : "light"}
             style={StyleSheet.absoluteFill}
           />
-          <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 shadow-2xl items-center border border-black/5 dark:border-white/10">
+          <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10">
             <View className="flex-row justify-between items-center mb-6 w-full">
               <View className="flex-row items-center gap-2">
                 <Ionicons name="bulb" size={24} color="#F97316" />

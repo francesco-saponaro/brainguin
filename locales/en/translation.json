@@ -296,5 +296,14 @@
     "name_updated_toast": "Name updated!",
     "notification_scheduled_title": "Study Time! 🐧",
     "notification_scheduled_body": "Your daily cards are waiting. Keep your streak alive!"
+  },
+  "updates": {
+    "required_title": "Update Available",
+    "required_body": "A new version of BrainGuin is available. Please update to continue using the app.",
+    "button": "Update Now"
+  },
+  "maintenance": {
+    "title": "Under Maintenance",
+    "body": "BrainGuin is getting a quick tune-up. We'll be back in a few minutes!"
   }
 }

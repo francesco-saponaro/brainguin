@@ -274,9 +274,10 @@ export default function LibraryScreen() {
     fetchDecks();
   }, []);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    fetchDecks();
+    await fetchDecks();
+    setRefreshing(false);
   };
 
   // Determine if any filters are active for coloring the button

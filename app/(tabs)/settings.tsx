@@ -14,6 +14,8 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
+  AppState,
+  AppStateStatus,
   Modal,
   Platform,
   ScrollView,
@@ -81,6 +83,34 @@ export default function SettingsScreen() {
     };
     loadSettings();
   }, [session]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      async (nextAppState: AppStateStatus) => {
+        // If the app is returning to the foreground
+        if (nextAppState === "active") {
+          const { status } = await Notifications.getPermissionsAsync();
+
+          // If they granted it in settings, update the UI and DB
+          if (status === "granted" && !notificationsEnabled) {
+            setNotificationsEnabled(true);
+            await scheduleNotification(notificationTime);
+            updateProfile({ is_notifications_enabled: true });
+          }
+          // If they revoked it in settings, update the UI and DB
+          else if (status !== "granted" && notificationsEnabled) {
+            setNotificationsEnabled(false);
+            updateProfile({ is_notifications_enabled: false });
+          }
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [notificationsEnabled, notificationTime]);
 
   // --- 2. UPDATE HELPERS ---
   const updateProfile = async (updates: any) => {
@@ -275,6 +305,7 @@ export default function SettingsScreen() {
         title: t("settings.notification_scheduled_title"),
         body: t("settings.notification_scheduled_body"),
         sound: true, // Plays default sound
+        data: { url: "/library" },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
@@ -416,7 +447,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* A. PROFILE HEADER */}
-        <View className="mb-6 p-6 rounded-[32px] bg-card-light dark:bg-card-dark border border-black/5 dark:border-white/5 flex-row items-center shadow-sm">
+        <View className="mb-6 p-6 rounded-[32px] bg-card-light dark:bg-card-dark border border-black/5 dark:border-white/5 flex-row items-center">
           <View className="flex-1">
             <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs uppercase font-bold tracking-wider mb-1">
               {t("settings.signed_in_as")}
@@ -663,7 +694,7 @@ export default function SettingsScreen() {
 
       <Modal visible={isEditingName} transparent animationType="fade">
         <View className="flex-1 bg-black/50 items-center justify-center px-6">
-          <View className="bg-page-light dark:bg-page-dark w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-black/5 dark:border-white/10">
+          <View className="bg-page-light dark:bg-page-dark w-full max-w-sm rounded-3xl p-6 border border-black/5 dark:border-white/10">
             <Text className="text-text-main-light dark:text-text-main-dark font-heading text-xl font-bold mb-4">
               {t("settings.update_name_title")}
             </Text>

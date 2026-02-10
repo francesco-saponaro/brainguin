@@ -9,15 +9,9 @@ import {
 
 interface WidgetProps {
   dueCards?: number;
-  streak?: number;
-  memorized?: number;
 }
 
-export function AndroidWidget({
-  dueCards = 0,
-  streak = 0,
-  memorized = 0,
-}: WidgetProps) {
+export function AndroidWidget({ dueCards = 0 }: WidgetProps) {
   const bgColor = (dueCards > 0 ? "#0F172A" : "#16a34a") as ColorProp;
 
   const textColor = "#ffffff" as ColorProp;
@@ -32,7 +26,7 @@ export function AndroidWidget({
         width: "match_parent",
         borderRadius: 32,
       }}
-      clickAction="OPEN_APP"
+      clickAction={dueCards > 0 ? "brainguin://study/daily" : "brainguin://"}
     >
       {/* LAYER 1: BACKGROUND & DECOR */}
       <OverlapWidget style={{ height: "match_parent", width: "match_parent" }}>

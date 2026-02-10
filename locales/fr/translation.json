@@ -293,5 +293,14 @@
     "name_updated_toast": "Nom mis à jour !",
     "notification_scheduled_title": "C'est l'heure d'étudier ! 🐧",
     "notification_scheduled_body": "Vos cartes vous attendent. Gardez votre série en vie !"
+  },
+  "updates": {
+    "required_title": "Mise à jour disponible",
+    "required_body": "Une nouvelle version de BrainGuin est disponible. Veuillez mettre à jour l'application pour continuer.",
+    "button": "Mettre à jour"
+  },
+  "maintenance": {
+    "title": "Maintenance en cours",
+    "body": "BrainGuin fait peau neuve. Nous serons de retour dans quelques instants !"
   }
 }

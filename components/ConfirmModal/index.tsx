@@ -32,7 +32,7 @@ export default function ConfirmModal({
       <View style={styles.overlay}>
         <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
 
-        <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 shadow-2xl items-center border border-black/5 dark:border-white/10">
+        <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10">
           <View
             className={clsx(
               "w-20 h-20 rounded-full items-center justify-center mb-6",

@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/storeUser";
 import { AndroidWidget } from "@/widget/AndroidWidget";
 import { ExtensionStorage } from "@bacons/apple-targets";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import clsx from "clsx";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router"; // Added useFocusEffect
@@ -16,6 +17,7 @@ import { PressableOpacity, PressableScale } from "pressto";
 import React, { useCallback, useState } from "react"; // Added hooks
 import { useTranslation } from "react-i18next";
 import {
+  InteractionManager,
   Platform,
   RefreshControl,
   ScrollView,
@@ -23,10 +25,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import {
-  requestWidgetUpdate,
-  WidgetPreview,
-} from "react-native-android-widget";
+import { requestWidgetUpdate } from "react-native-android-widget";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const APP_GROUP_ID = "group.com.brainguin.app";
@@ -67,6 +66,12 @@ export default function HomeScreen() {
 
   // --- FETCH LOGIC IN HOME PAGE ---
   const fetchHomeStats = async () => {
+    // 1. Wait for interactions/navigation to finish
+    // This ensures the Navigation Container is ready and the screen transition is done
+    await new Promise((resolve) =>
+      InteractionManager.runAfterInteractions(() => resolve(null)),
+    );
+
     try {
       if (!session?.user) return;
 
@@ -94,40 +99,50 @@ export default function HomeScreen() {
         .eq("id", session.user.id)
         .single();
 
+      console.log(dueCount);
+
       const stats = {
         streak: userData?.streak_count || 0,
         dueCards: dueCount || 0,
         memorized: masteredCount || 0,
       };
 
-      //   const stats = {
-      //   streak: 10,
-      //   dueCards: 25,
-      //   memorized: 30,
+      // const stats = {
+      //   streak: 0,
+      //   dueCards: 1,
+      //   memorized: 0,
       // };
 
       setStats(stats);
 
       // 1. iOS UPDATE (Keep this)
-      storage.set("stats", JSON.stringify(stats));
-      ExtensionStorage.reloadWidget();
+      if (Platform.OS === "ios") {
+        storage.set("stats", JSON.stringify(stats));
+        ExtensionStorage.reloadWidget();
+      }
 
       // 2. ANDROID UPDATE (Add this)
       // We explicitly tell Android: "Render the widget named 'Android' with THESE props"
-      requestWidgetUpdate({
-        widgetName: "Android",
-        renderWidget: () => (
-          <AndroidWidget
-            dueCards={stats.dueCards}
-            streak={stats.streak}
-            memorized={stats.memorized}
-          />
-        ),
-        widgetNotFound: () => {
-          // Called if the user hasn't added the widget to their home screen yet
-          console.log("Android widget not active");
-        },
-      });
+      if (Platform.OS === "android") {
+        requestWidgetUpdate({
+          widgetName: "Android",
+          props: {
+            dueCards: stats.dueCards,
+          },
+          renderWidget: () => <AndroidWidget dueCards={stats.dueCards} />,
+          widgetNotFound: () => {
+            // Called if the user hasn't added the widget to their home screen yet
+            console.log("Android widget not active");
+          },
+        } as any);
+
+        AsyncStorage.setItem(
+          "widget_last_data",
+          JSON.stringify({
+            dueCards: stats.dueCards,
+          }),
+        );
+      }
     } catch (e) {
       console.error("Error fetching home stats:", e);
     }
@@ -151,17 +166,13 @@ export default function HomeScreen() {
       className="flex-1 bg-page-light dark:bg-page-dark"
       style={{ paddingTop: insets.top }}
     >
-      <WidgetPreview
-        renderWidget={() => (
-          <AndroidWidget
-            dueCards={stats.dueCards}
-            streak={stats.streak}
-            memorized={stats.memorized}
-          />
-        )}
-        width={320}
-        height={160} // Adjusted height to match minHeight usually seen on Android
-      />
+      {/* {stats.dueCards > 0 && (
+        <WidgetPreview
+          renderWidget={() => <AndroidWidget dueCards={stats.dueCards} />}
+          width={320}
+          height={160} // Adjusted height to match minHeight usually seen on Android
+        />
+      )} */}
       <ScrollView
         className="flex-1"
         refreshControl={
@@ -309,7 +320,7 @@ export default function HomeScreen() {
                 </Text>
 
                 {stats.dueCards > 0 ? (
-                  <View className="bg-action py-4 px-8 rounded-2xl self-start shadow-lg shadow-action/30">
+                  <View className="bg-action py-4 px-8 rounded-2xl self-start">
                     <Text className="text-white font-heading font-bold text-lg">
                       {t("start_session")}
                     </Text>
@@ -353,7 +364,7 @@ export default function HomeScreen() {
             )}
           >
             {/* 1. STREAK CARD */}
-            <View className="flex-1 bg-wood p-5 rounded-[32px] relative overflow-hidden shadow-lg shadow-wood/30">
+            <View className="flex-1 bg-wood p-5 rounded-[32px] relative overflow-hidden">
               <View className="absolute inset-0 bg-black/5 border-t border-white/20 rounded-[32px]" />
               <View className="flex-row items-center z-10">
                 <View className="bg-white/20 p-3 rounded-2xl mr-3 border border-white/10">
@@ -374,7 +385,7 @@ export default function HomeScreen() {
             </View>
 
             {/* 2. MEMORIZED CARD */}
-            <View className="flex-1 bg-card-light dark:bg-card-dark p-5 rounded-[32px] border border-black/5 dark:border-white/5 shadow-xl shadow-black/5 relative overflow-hidden">
+            <View className="flex-1 bg-card-light dark:bg-card-dark p-5 rounded-[32px] border border-black/5 dark:border-white/5 relative overflow-hidden">
               <View className="absolute right-[-20] top-[-20] w-24 h-24 bg-accent/10 rounded-full blur-3xl" />
               <View className="z-10">
                 <View className="flex-row items-center mb-1">
@@ -416,15 +427,6 @@ function ActionButton({ icon, label, sub, color, onPress }: any) {
   const Pressable = Platform.OS === "web" ? PressableOpacity : PressableScale;
 
   return (
-    // <Pressable
-    //   onPress={onPress}
-    //   className={clsx(
-    //     "flex-1 p-5 rounded-[32px] border shadow-md shadow-black/5 active:scale-95 transition-all duration-200 flex-row items-center",
-    //     "bg-card-light dark:bg-card-dark border-black/5 dark:border-white/5",
-    //     "hover:bg-slate-100",
-    //     "dark:hover:bg-slate-800",
-    //   )}
-    // >
     <Pressable
       onPress={onPress}
       activateOnHover

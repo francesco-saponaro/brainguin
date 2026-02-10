@@ -79,6 +79,8 @@ export default function PaywallScreen() {
           text1: t("paywall.purchase_success_title"),
           text2: t("paywall.purchase_success_desc"),
         });
+
+        router.back();
       }
     } catch (e: any) {
       if (!e.userCancelled) {
@@ -174,7 +176,7 @@ export default function PaywallScreen() {
               style={{ width: 60, height: 60 }}
               resizeMode="contain"
             />
-            <View className="absolute -right-2 -top-2 bg-white rounded-full p-1 shadow-sm">
+            <View className="absolute -right-2 -top-2 bg-white rounded-full p-1">
               <Ionicons name="star" size={20} color="#F59E0B" />
             </View>
           </View>
@@ -243,7 +245,14 @@ export default function PaywallScreen() {
 
             <Text className="text-white/80 font-body text-xs mb-5">
               {t("paywall.monthlyBreakdown", {
-                price: `${pkg ? (pkg.product.price / 12).toFixed(2) : "2.50"} ${pkg?.product.currencyCode || "€"}`,
+                // 1. We take the numeric price and divide by 12
+                // 2. We use Intl.NumberFormat to automatically handle the symbol position and decimals
+                price: pkg
+                  ? new Intl.NumberFormat(undefined, {
+                      style: "currency",
+                      currency: pkg.product.currencyCode,
+                    }).format(pkg.product.price / 12)
+                  : "€2.50",
               })}
             </Text>
 

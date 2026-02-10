@@ -297,14 +297,6 @@ export default function OnboardingScreen() {
             <Animated.View
               style={[animatedButtonStyles, { flex: currentPage > 0 ? 2 : 1 }]}
             >
-              {/* <Pressable
-                onPress={goToNextPage}
-                className={`p-4 rounded-xl items-center shadow-sm hover:brightness-90 transition-all duration-250 ${
-                  isLastPage
-                    ? "bg-primary active:bg-primary-hover"
-                    : "bg-action active:bg-action-hover"
-                }`}
-              > */}
               <PressableScale
                 onPress={goToNextPage}
                 activateOnHover

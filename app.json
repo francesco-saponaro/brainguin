@@ -3,10 +3,16 @@
     "name": "BrainGuin",
     "slug": "brainguin",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "brainguin",
     "userInterfaceStyle": "automatic",
+    "updates": {
+      "url": "https://u.expo.dev/d8e047ea-0955-44df-bd82-7e1375baf699"
+    },
     "newArchEnabled": true,
     "notification": {
       "icon": "./assets/images/logo.png",
@@ -17,6 +23,7 @@
       "usesAppleSignIn": true,
       "appleTeamId": "86BLA5VR2L",
       "bundleIdentifier": "com.brainguin.app",
+      "buildNumber": "1",
       "entitlements": {
         "com.apple.security.application-groups": ["group.com.brainguin.app"]
       },
@@ -34,6 +41,7 @@
     },
     "android": {
       "package": "com.brainguin.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFC",
         "foregroundImage": "./assets/images/logo.png"
@@ -78,9 +86,7 @@
               "targetCellWidth": 5,
               "targetCellHeight": 2,
               "description": "Keep track of your studies",
-              "previewImage": "./assets/images/main.png",
-              "widgetFeatues": "reconfigurable",
-              "resizeMode": "horizontal|vertical|none"
+              "previewImage": "./assets/images/main.png"
             }
           ]
         }
