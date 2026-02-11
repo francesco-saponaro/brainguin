@@ -140,7 +140,7 @@ export default function OnboardingScreen() {
       const { error: dbError } = await supabase
         .from("users")
         .update({
-          language: i18n.language, // 👈 Persist language choice
+          preferences: { language: i18n.language }, // 👈 Saving as JSON
         })
         .eq("id", session.user.id);
 

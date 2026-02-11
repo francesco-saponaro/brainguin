@@ -300,7 +300,7 @@ export default function LibraryScreen() {
           style={{
             paddingLeft: isDesktop ? 300 : 20,
             paddingRight: 20,
-            paddingTop: Platform.OS === "ios" ? insets.top : 20,
+            paddingTop: insets.top + 20,
           }}
         >
           {/* HEADER AREA */}

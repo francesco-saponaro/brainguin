@@ -96,12 +96,28 @@ export default function PaywallScreen() {
   };
 
   // 3. RESTORE HANDLER
+  // 3. RESTORE HANDLER (DEBUG VERSION)
   const handleRestore = async () => {
     setIsPurchasing(true);
     try {
+      console.log("⏳ Restoring purchases...");
       const customerInfo = await Purchases.restorePurchases();
+
+      console.log(
+        "🧾 Restore Complete. Customer Info:",
+        JSON.stringify(customerInfo, null, 2),
+      );
+      console.log(
+        "🔑 Active Entitlements:",
+        Object.keys(customerInfo.entitlements.active),
+      );
+
+      // CHECK: Is the entitlement name actually "pro"?
+      // If your logs say "premium" or "Pro", change this string!
       if (customerInfo.entitlements.active["pro"]) {
+        console.log("✅ 'pro' entitlement found active!");
         await supabase.rpc("upgrade_user_to_pro");
+
         Toast.show({
           type: "success",
           text1: t("paywall.restore_success_title"),
@@ -109,6 +125,11 @@ export default function PaywallScreen() {
         });
         router.back();
       } else {
+        console.warn(
+          "❌ No active 'pro' entitlement found. Found:",
+          customerInfo.entitlements.active,
+        );
+
         Toast.show({
           type: "info",
           text1: t("paywall.restore_no_purchase_title"),
@@ -116,6 +137,7 @@ export default function PaywallScreen() {
         });
       }
     } catch (e: any) {
+      console.error("❌ Restore Error:", e);
       Toast.show({
         type: "error",
         text1: t("paywall.restore_error_title"),

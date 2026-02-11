@@ -1,6 +1,5 @@
 import PENGUIN_LOGO from "@/assets/images/main.png";
 import { supabase } from "@/lib/supabase";
-import { useAuthStore } from "@/store/storeUser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router"; // Standard Hook
@@ -40,7 +39,6 @@ type UpdatePasswordType = z.infer<ReturnType<typeof UpdatePasswordSchema>>;
 
 const UpdatePasswordScreen = () => {
   const router = useRouter();
-  const { session, setSession, isOnboarded } = useAuthStore();
   // ✅ NOW THIS WILL WORK because RootLayout converted # to ?
   const params = useLocalSearchParams();
   const { t } = useTranslation();
@@ -49,10 +47,11 @@ const UpdatePasswordScreen = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<UpdatePasswordType>({
     resolver: zodResolver(schema),
     defaultValues: { password: "", confirmPassword: "" },
+    mode: "onChange",
   });
   const PressableFinal =
     Platform.OS === "web" ? PressableOpacity : PressableScale;
@@ -200,21 +199,24 @@ const UpdatePasswordScreen = () => {
                 />
               )}
             />
+            {errors.confirmPassword && (
+              <Text className="text-red-500 mt-1 ml-1 text-sm font-medium">
+                {errors.confirmPassword.message}
+              </Text>
+            )}
           </View>
 
-          {/* <Pressable
-            onPress={handleSubmit(onUpdate)}
-            disabled={loading}
-            className="bg-action p-4 rounded-xl items-center"
-          > */}
           <PressableFinal
-            onPress={() => (loading ? null : handleSubmit(onUpdate)())}
+            onPress={() =>
+              loading || !isValid ? null : handleSubmit(onUpdate)()
+            }
             style={{
               backgroundColor: "#F97316",
               padding: 16,
               borderRadius: 12,
               alignItems: "center",
-              opacity: loading ? 0.6 : 1,
+              opacity: loading || !isValid ? 0.6 : 1,
+              pointerEvents: loading || !isValid ? "none" : "auto",
             }}
             activateOnHover
           >

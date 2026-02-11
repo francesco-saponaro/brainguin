@@ -184,6 +184,7 @@ const LoginScreen = () => {
         }
       }
     } catch (e: any) {
+      console.error("Apple Login Error:", e);
       // Don't show error if user just cancelled the modal
       if (e.code !== "ERR_REQUEST_CANCELED") {
         Toast.show({
