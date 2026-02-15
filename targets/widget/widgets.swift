@@ -6,12 +6,13 @@ struct Stats: Codable {
     let streak: Int
     let dueCards: Int
     let memorized: Int
+    let total: Int
 }
 
 // --- 2. PROVIDER (Data Fetcher) ---
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), stats: Stats(streak: 5, dueCards: 10, memorized: 100))
+        SimpleEntry(date: Date(), stats: Stats(streak: 0, dueCards: 0, memorized: 0, total: 0))
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
@@ -33,7 +34,7 @@ struct Provider: TimelineProvider {
         guard let json = defaults?.string(forKey: "stats"),
               let data = json.data(using: .utf8),
               let stats = try? JSONDecoder().decode(Stats.self, from: data) else {
-            return Stats(streak: 0, dueCards: 0, memorized: 0)
+            return Stats(streak: 0, dueCards: 0, memorized: 0, total: 0)
         }
         return stats
     }

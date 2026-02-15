@@ -431,12 +431,12 @@ export default function SettingsScreen() {
       style={{
         paddingLeft: isDesktop ? 300 : 20,
         paddingRight: 20,
-        paddingTop: insets.top,
+        paddingTop: insets.top + 27,
       }}
     >
       <ScrollView
         contentContainerStyle={{
-          paddingTop: isDesktop ? 40 : 20,
+          paddingTop: isDesktop ? 40 : 0,
           paddingBottom: insets.bottom + 80,
         }}
         showsVerticalScrollIndicator={false}

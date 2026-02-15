@@ -1,6 +1,6 @@
 {
   "auth": {
-    "welcome_back": "¡Bienvenido de nuevo!",
+    "welcome_back": "¡Hola de nuevo!",
     "subtitle": "Inicia sesión para continuar tu progreso",
     "email_label": "Correo electrónico",
     "email_placeholder": "pinguino@brainguin.app",
@@ -46,8 +46,8 @@
     "hero_signup_title": "Únete a BrainGuin.",
     "hero_signup_subtitle": "Crea una cuenta para seguir tu progreso, guardar tus mazos y dominar cualquier tema más rápido.",
     "hook_speed": "Convierte horas de lectura en minutos de maestría. Inicia sesión para empezar tu primer Sprint de Creación.",
-    "hook_recall": "Deja de releer. Empieza a recordar. Inicia sesión para convertir tus PDF en tarjetas de memoria de recuerdo activo.",
-    "hook_ai_power": "Desbloquea tu compañero de estudio con IA. Un PDF, un clic, un plan de estudio perfecto.",
+    "hook_recall": "Deja de releer. Empieza a recordar. Inicia sesión para convertir tus estudios en tarjetas de memoria de recuerdo activo.",
+    "hook_ai_power": "Desbloquea tu compañero de estudio con IA. Un PDF, un link, un plan de estudio perfecto.",
     "hook_mascot": "¡Únete a la colonia! Inicia sesión para fijar tus metas de examen y deja que nuestra IA cree tu cola de repaso diaria."
   },
   "formValidations": {
@@ -89,7 +89,7 @@
     "success_description": "Todo está listo. ¡Empecemos tu primer Sprint de Creación y a por esos exámenes!"
   },
   "home": {
-    "welcome_back": "¡Bienvenido de nuevo!",
+    "welcome_back": "¡Hola de nuevo!",
     "ready_to_sprint": "¿Listo para el Sprint?"
   },
   "creation": {
@@ -105,7 +105,9 @@
     "paste_link": "Pegar enlace",
     "what_do_you_want_to_learn": "¿Qué quieres aprender?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. La historia del samurai, Mecánica Cuántica 101...",
-    "generate_flashcards": "Generar Flashcards"
+    "generate_flashcards": "Generar Flashcards",
+    "upload_your_pdf": "Sube tu PDF",
+    "paste_topic_description": "Escribe o pega una descripción del tema que quieres aprender"
   },
   "common": {
     "cancel": "Cancelar",
@@ -135,12 +137,21 @@
       "url": "URL",
       "topic": "Tema"
     },
+    "source_badges": {
+      "pdf": "Documento PDF",
+      "url": "Artículo Web",
+      "topic": "Tema de IA",
+      "unknown": "Fuente Desconocida"
+    },
     "card": {
       "flashcards": "Tarjetas",
       "created": "Creado",
       "reviewed": "Revisado",
       "never_reviewed": "Nunca revisado",
-      "start_review": "Iniciar Repaso"
+      "start_review": "Iniciar Repaso",
+      "mastered_count": "Dominados",
+      "status_completed": "Completado",
+      "generate_more": "Generar más tarjetas"
     },
     "toast": {
       "generating_title": "Generando más...",
@@ -186,15 +197,46 @@
     "quit_session_title": "¿Salir de la sesión?",
     "quit_session_msg": "Las tarjetas calificadas se han guardado. El resto quedará pendiente.",
     "quit_session_confirm": "Salir",
-    "review_again": "Repasar de nuevo"
+    "review_again": "Repasar de nuevo",
+    "instruction_tap": "Toca para girar",
+    "instruction_swipe": "Desliza para puntuar",
+    "how_it_works_link": "¿Cómo funciona?",
+    "how_it_works": {
+      "title": "¿Cómo funciona? 🧠",
+      "intro_1": "BrainGuin utiliza la",
+      "spaced_repetition": "Repetición Espaciada",
+      "intro_2": "para predecir cuándo vas a olvidar una tarjeta. Tu tarea es sencilla: dinos qué tan difícil fue recordar la respuesta.",
+      "hard_title": "Difícil / Olvidado",
+      "hard_desc_1": "No sabías la respuesta. Reiniciaremos esta tarjeta y te la mostraremos de nuevo en",
+      "time_10m": "10 minutos",
+      "hard_gesture": "Gesto: Desliza a la Izquierda ←",
+      "medium_title": "Medio",
+      "medium_desc_1": "La sabías, pero tuviste que pensar. La mostraremos de nuevo",
+      "time_tomorrow": "mañana",
+      "medium_action": "Acción: Toca el botón Amarillo",
+      "easy_title": "Fácil",
+      "easy_desc_1": "¡La sabías al instante! No mostraremos esta tarjeta en",
+      "time_4d": "4 días",
+      "easy_desc_2": "(o más).",
+      "easy_gesture": "Gesto: Desliza a la Derecha →",
+      "delete_title": "Eliminar Tarjeta",
+      "delete_desc": "Usa esto si la IA generó una tarjeta incorrecta o si simplemente no quieres estudiarla.",
+      "delete_gesture": "Gesto: Desliza hacia Abajo ↓ (o icono Papelera)",
+      "button_close": "¡Entendido!"
+    },
+    "swipe_actions": {
+      "delete_label": "ELIMINAR",
+      "footer_hint": "⬅️ Difícil  •  ⬇️ Eliminar  •  ➡️ Fácil"
+    }
   },
   "errors": {
     "fetch_failed": "Error al cargar",
     "expansion_failed": "Error al expandir",
     "delete_failed": "Error al eliminar"
   },
-  "web_articles": "Artículos web",
-  "ai_generation": "Generación por IA",
+  "load_pdf": "Cargar un PDF",
+  "web_articles": "Pegar una URL que contenga texto",
+  "ai_generation_load": "Pegar o escribir texto",
   "start_session": "Iniciar sesión",
   "great_job": "¡Buen trabajo!",
   "memorized": "Memorizado",
@@ -242,7 +284,7 @@
   "section_preferences": "Preferencias",
   "section_notifications": "Notificaciones",
   "section_account": "Cuenta",
-  "plan_status": "Estado del plan",
+  "plan_status": "Estado de la suscripción",
   "plan_free": "GRATIS",
   "plan_pro": "PRO 🏆",
   "manage_subscription": "Gestionar suscripción",
@@ -273,11 +315,11 @@
     "section_preferences": "Preferencias",
     "section_notifications": "Notificaciones",
     "section_account": "Cuenta",
-    "plan_status": "Estado del plan",
+    "plan_status": "Estado de la suscripción",
     "plan_free": "GRATIS",
     "plan_pro": "PRO 🏆",
     "manage_subscription": "Gestionar suscripción",
-    "restore_purchases": "Restaurar compras",
+    "restore_purchases": "Restaurar subscripción",
     "theme": "Tema",
     "language": "Idioma",
     "daily_reminder": "Recordatorio diario",

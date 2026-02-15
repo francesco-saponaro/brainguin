@@ -53,6 +53,7 @@ export default function HomeScreen() {
     streak: 0,
     dueCards: 0,
     memorized: 0,
+    total: 0,
   });
 
   const Pressable = Platform.OS === "web" ? PressableOpacity : PressableScale;
@@ -80,10 +81,13 @@ export default function HomeScreen() {
       // 1. Get Due Cards (next_review_at <= now AND not mastered)
       const { count: dueCount } = await supabase
         .from("flashcards")
-        .select("*", { count: "exact", head: true })
+        // 👇 CHANGE 1: Use !inner to join decks
+        .select("*, decks!inner(is_archived)", { count: "exact", head: true })
         .eq("user_id", session.user.id)
         .lte("next_review_at", todayISO)
-        .neq("status", "mastered");
+        .neq("status", "mastered")
+        // 👇 CHANGE 2: Only show cards where deck is NOT archived
+        .eq("decks.is_archived", false);
 
       // 2. Get Memorized Count
       const { count: masteredCount } = await supabase
@@ -91,6 +95,11 @@ export default function HomeScreen() {
         .select("*", { count: "exact", head: true })
         .eq("user_id", session.user.id)
         .eq("status", "mastered");
+
+      const { count: totalCount } = await supabase
+        .from("flashcards")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id);
 
       // 3. Get Streak from Users table
       const { data: userData } = await supabase
@@ -105,6 +114,7 @@ export default function HomeScreen() {
         streak: userData?.streak_count || 0,
         dueCards: dueCount || 0,
         memorized: masteredCount || 0,
+        total: totalCount || 0,
       };
 
       // const stats = {
@@ -161,6 +171,9 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
+  const memorizedPercentage =
+    stats.total > 0 ? Math.min((stats.memorized / stats.total) * 100, 100) : 0;
+
   return (
     <View
       className="flex-1 bg-page-light dark:bg-page-dark"
@@ -212,15 +225,17 @@ export default function HomeScreen() {
 
           <View
             className={clsx(
-              "flex-row gap-4",
+              "flex-row gap-4 justify-between",
               isDesktop ? "items-center" : "items-end",
             )}
           >
             <View>
-              <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-base font-medium tracking-tight">
-                {t("home.welcome_back")}, {userName}
-              </Text>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-bold mt-1">
+              <View className="flex-row items-center">
+                <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-base font-medium tracking-tight flex-1">
+                  {t("home.welcome_back")}, {userName}
+                </Text>
+              </View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading text-3xl font-bold mt-1">
                 Ready to Sprint?
               </Text>
             </View>
@@ -239,22 +254,22 @@ export default function HomeScreen() {
           <ActionButton
             icon="document-text"
             label="PDF"
-            sub="Auto-Flashcards"
+            sub={t("load_pdf")}
             color="#38BDF8"
-            // onPress={() => openCreationModal("pdf")}
-            onPress={signOut}
+            onPress={() => openCreationModal("pdf")}
           />
           <ActionButton
             icon="link"
             label="URL"
             sub={t("web_articles")}
             color="#F97316"
-            onPress={() => router.push("/paywall")}
+            onPress={() => openCreationModal("url")}
+            // onPress={() => router.push("/paywall")}
           />
           <ActionButton
             icon="bulb"
             label="Topic"
-            sub={t("ai_generation")}
+            sub={t("ai_generation_load")}
             color="#22C55E"
             onPress={() => openCreationModal("topic")}
           />
@@ -279,7 +294,7 @@ export default function HomeScreen() {
               overflow: "hidden",
               minHeight: 240,
               justifyContent: "center",
-              padding: isSmallMobile ? 16 : 32,
+              padding: isSmallMobile ? 16 : 26,
               borderRadius: isSmallMobile ? 32 : 48,
               backgroundColor:
                 stats.dueCards > 0 ? Colors.brand.primary : "#16a34a",
@@ -364,10 +379,10 @@ export default function HomeScreen() {
             )}
           >
             {/* 1. STREAK CARD */}
-            <View className="flex-1 bg-wood p-5 rounded-[32px] relative overflow-hidden">
+            <View className="flex-1 bg-wood py-5 px-3 rounded-[32px] relative overflow-hidden">
               <View className="absolute inset-0 bg-black/5 border-t border-white/20 rounded-[32px]" />
-              <View className="flex-row items-center z-10">
-                <View className="bg-white/20 p-3 rounded-2xl mr-3 border border-white/10">
+              <View className="flex-row items-center z-10 justify-center">
+                <View className="bg-white/20 p-3 rounded-2xl mr-2 border border-white/10">
                   <Text className="text-2xl">🔥</Text>
                 </View>
                 <View>
@@ -388,7 +403,7 @@ export default function HomeScreen() {
             <View className="flex-1 bg-card-light dark:bg-card-dark p-5 rounded-[32px] border border-black/5 dark:border-white/5 relative overflow-hidden">
               <View className="absolute right-[-20] top-[-20] w-24 h-24 bg-accent/10 rounded-full blur-3xl" />
               <View className="z-10">
-                <View className="flex-row items-center mb-1">
+                <View className="flex-row items-center mb-2">
                   <Ionicons
                     name="checkmark-circle"
                     size={12}
@@ -399,7 +414,7 @@ export default function HomeScreen() {
                     {t("memorized")}
                   </Text>
                 </View>
-                <View className="flex-row items-baseline">
+                <View className="flex-row items-center">
                   <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-bold">
                     {stats.memorized}
                   </Text>
@@ -407,8 +422,11 @@ export default function HomeScreen() {
                     {t("cards")}
                   </Text>
                 </View>
-                <View className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mt-3 overflow-hidden">
-                  <View className="h-full bg-accent w-[65%] rounded-full" />
+                <View className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                  <View
+                    className="h-full bg-accent rounded-full"
+                    style={{ width: `${memorizedPercentage}%` }}
+                  />
                 </View>
               </View>
             </View>

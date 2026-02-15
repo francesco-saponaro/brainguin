@@ -1,3 +1,4 @@
+import PENGUIN_LOGO from "@/assets/images/main.png";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import "@/utils/i18n";
@@ -15,6 +16,7 @@ import {
 } from "@react-navigation/native";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { Stack, useRootNavigationState, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -22,10 +24,17 @@ import { useColorScheme } from "nativewind";
 import { PressablesConfig } from "pressto";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Linking, Platform, Text, TextInput, View } from "react-native";
+import {
+  Linking,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import "../global.css";
 
@@ -62,14 +71,66 @@ export default function RootLayout() {
   const { t } = useTranslation();
   const { colorScheme, setColorScheme } = useColorScheme();
   const { session, setSession, isOnboarded } = useAuthStore();
-  const [isMaintenance, setIsMaintenance] = useState(false);
+
+  // --- STATE MANAGEMENT ---
+  const [isSystemChecking, setIsSystemChecking] = useState(true);
+  const [blockerStatus, setBlockerStatus] = useState<
+    "maintenance" | "update_required" | null
+  >(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isI18nInitialized, setIsI18nInitialized] = useState(false);
-  const [isPreferencesSynced, setIsPreferencesSynced] = useState(false); // Renamed for clarity
+  const [isPreferencesSynced, setIsPreferencesSynced] = useState(false);
 
-  // 1. THE AUTH INITIALIZER & LISTENER
+  // 1. 🚀 PRIORITY CHECK: Maintenance & Version
+  // This runs FIRST. If blocked, we stop everything else.
+  const checkSystemStatus = async () => {
+    try {
+      if (Platform.OS === "web") return false;
+
+      const { data } = await supabase.from("app_settings").select("*").single();
+
+      if (data) {
+        // A. Maintenance Check
+        if (data.maintenance_mode) {
+          setBlockerStatus("maintenance");
+          return true; // 🛑 Blocked
+        }
+
+        // B. Version Check
+        const currentVersion = Constants.expoConfig?.version || "1.0.0";
+        const minVersion =
+          Platform.OS === "ios"
+            ? data.min_version_ios
+            : data.min_version_android;
+
+        // Simple string comparison (You might want semver here if versions get complex)
+        const isOutdated =
+          currentVersion.localeCompare(minVersion, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          }) < 0;
+
+        if (isOutdated) {
+          setBlockerStatus("update_required");
+          return true; // 🛑 Blocked
+        }
+      }
+      return false; // ✅ Not blocked
+    } catch (error) {
+      console.warn("System check failed (offline?)", error);
+      return false; // Default to allowing app access if check fails
+    } finally {
+      setIsSystemChecking(false);
+    }
+  };
+
+  // 2. THE AUTH INITIALIZER & LISTENER
   useEffect(() => {
     const initializeAuth = async () => {
+      // Check System Status
+      const isBlocked = await checkSystemStatus();
+      if (isBlocked) return; // 🛑 STOP: Don't fetch user if maintenance/update
+
       try {
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
@@ -94,6 +155,11 @@ export default function RootLayout() {
     };
 
     initializeAuth();
+  }, []);
+
+  // 3. 👤 AUTH LISTENER (Only runs if passed bootstrap)
+  useEffect(() => {
+    if (blockerStatus) return; // Don't listen if blocked
 
     const {
       data: { subscription },
@@ -111,9 +177,9 @@ export default function RootLayout() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [blockerStatus]);
 
-  // 2. THE DEEP LINK INTERCEPTOR TO CATCH PASSWORD RESET LINKS
+  // 4. THE DEEP LINK INTERCEPTOR TO CATCH PASSWORD RESET LINKS
   // This catches the URL before Expo Router strips the hash (#)
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
@@ -157,7 +223,7 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  // 3. i18n INITIALIZATION HANDLER
+  // 5. i18n INITIALIZATION HANDLER
   // This prevents the "Flash" of the wrong language
   useEffect(() => {
     if (i18n.isInitialized) {
@@ -169,10 +235,19 @@ export default function RootLayout() {
     }
   }, []);
 
-  // 4. SYNC USER PREFERENCES (Language & Theme)
+  // 6. SYNC USER PREFERENCES (Language & Theme)
   useEffect(() => {
+    // 1. Wait for Auth to finish initializing before doing anything
     if (!isAuthReady || !isI18nInitialized) return;
 
+    // 2. If Auth is done, but there is NO USER, we are "synced" by default.
+    // (We don't need to fetch anything, so unblock the splash screen)
+    if (!session?.user?.id) {
+      setIsPreferencesSynced(true);
+      return;
+    }
+
+    // 3. If we HAVE a user, actually fetch their preferences
     const syncUserPreferences = async () => {
       try {
         if (session?.user?.id) {
@@ -207,8 +282,20 @@ export default function RootLayout() {
     };
 
     syncUserPreferences();
-  }, [session, isAuthReady, isI18nInitialized]);
+  }, [session?.user?.id, isAuthReady, isI18nInitialized]);
 
+  // --- LAYOUT HANDLERS ---
+  // Handler A: For Blocking Screens (Update / Maintenance)
+  //
+  // Only waits for Fonts & i18n. IGNORES user state.
+  const onLayoutBlockerView = useCallback(async () => {
+    if (fontsLoaded && isI18nInitialized) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, isI18nInitialized]);
+
+  // Handler B: For Main App
+  // Waits for everything
   const appIsReady =
     fontsLoaded &&
     isAuthReady &&
@@ -216,118 +303,102 @@ export default function RootLayout() {
     isPreferencesSynced &&
     navigationState?.key;
 
-  // 5. THE VERSION GUARD
-  useEffect(() => {
-    if (!appIsReady) return;
-
-    const checkStatus = async () => {
-      const { data } = await supabase.from("app_settings").select("*").single();
-
-      if (data) {
-        // 1. Check Maintenance Mode first
-        if (data.maintenance_mode) {
-          setIsMaintenance(true);
-          return; // Stop here, don't even check version
-        }
-
-        // 2. Check Version (as we did before)
-        const currentVersion = Constants.expoConfig?.version || "1.0.0";
-        const minVersion =
-          Platform.OS === "ios"
-            ? data.min_version_ios
-            : data.min_version_android;
-        const isOutdated =
-          currentVersion.localeCompare(minVersion, undefined, {
-            numeric: true,
-          }) < 0;
-
-        if (isOutdated) {
-          Alert.alert(
-            t("updates.required_title"),
-            t("updates.required_body"),
-            [
-              {
-                text: t("updates.button"),
-                onPress: () => {
-                  const APP_STORE_ID = "6758918032"; // You get this from App Store Connect
-                  const PLAY_STORE_ID = "com.brainguin.app"; // This is your 'package' name
-
-                  const url =
-                    Platform.OS === "ios"
-                      ? `https://apps.apple.com/app/id${APP_STORE_ID}`
-                      : `market://details?id=${PLAY_STORE_ID}`;
-
-                  Linking.openURL(url).catch(() => {
-                    // Fallback for Android if Play Store app is missing
-                    if (Platform.OS === "android") {
-                      Linking.openURL(
-                        `https://play.google.com/store/apps/details?id=${PLAY_STORE_ID}`,
-                      );
-                    }
-                  });
-                },
-              },
-            ],
-            { cancelable: false },
-          );
-        }
-      }
-    };
-
-    checkStatus();
-  }, [appIsReady]);
-
-  // 3. Render Maintenance Screen if active
-  if (isMaintenance) {
-    return (
-      <SafeAreaProvider>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 24,
-              fontWeight: "bold",
-              color: colorScheme === "dark" ? "white" : "black",
-            }}
-          >
-            {t("maintenance.title", "Under Maintenance")}
-          </Text>
-          <Text
-            style={{
-              marginTop: 10,
-              textAlign: "center",
-              paddingHorizontal: 20,
-            }}
-          >
-            {t(
-              "maintenance.body",
-              "BrainGuin is getting a quick tune-up. We'll be back in a few minutes!",
-            )}
-          </Text>
-        </View>
-      </SafeAreaProvider>
-    );
-  }
-
-  const onLayoutRootView = useCallback(async () => {
+  const onLayoutMainView = useCallback(async () => {
     if (appIsReady) {
-      // This tells the splash screen to hide immediately!
       await SplashScreen.hideAsync();
     }
   }, [appIsReady]);
+
+  // 🛑 BLOCKER VIEW (Rendered immediately if needed)
+  if (blockerStatus && !isSystemChecking) {
+    const isMaintenance = blockerStatus === "maintenance";
+    const title = isMaintenance
+      ? t("maintenance.title")
+      : t("updates.required_title");
+    const body = isMaintenance
+      ? t("maintenance.body")
+      : t("updates.required_body");
+
+    // Safety check for fonts
+    if (!fontsLoaded || !isI18nInitialized) return null;
+
+    return (
+      <SafeAreaProvider>
+        {/* ✅ Attach the BLOCKER layout handler here */}
+        <SafeAreaView
+          style={{
+            flex: 1,
+            backgroundColor: colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            gap: 16,
+          }}
+          onLayout={onLayoutBlockerView}
+        >
+          <Image
+            source={PENGUIN_LOGO}
+            style={{ width: 200, height: 200 }}
+            contentFit="contain"
+          />
+
+          <View className="items-center gap-1 px-8">
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "bold",
+                color: colorScheme === "dark" ? "white" : "black",
+              }}
+            >
+              {title}
+            </Text>
+            <Text
+              style={{
+                textAlign: "center",
+                paddingHorizontal: 32,
+                color: colorScheme === "dark" ? "#CBD5E1" : "#475569",
+                marginBottom: 24,
+              }}
+            >
+              {body}
+            </Text>
+          </View>
+
+          {/* Show Update Button if it's an update */}
+          {!isMaintenance && (
+            <Pressable
+              onPress={() => {
+                const APP_ID =
+                  Platform.OS === "ios" ? "6758918032" : "com.brainguin.app";
+                const url =
+                  Platform.OS === "ios"
+                    ? `https://apps.apple.com/app/id${APP_ID}`
+                    : `market://details?id=${APP_ID}`;
+                Linking.openURL(url);
+              }}
+              style={{
+                backgroundColor: "#F97316",
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                borderRadius: 12,
+              }}
+            >
+              <Text className="text-white font-heading text-lg font-bold">
+                {t("updates.button")}
+              </Text>
+            </Pressable>
+          )}
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
 
   if (!appIsReady) {
     return null;
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutMainView}>
       <SafeAreaProvider>
         <ThemeProvider
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}

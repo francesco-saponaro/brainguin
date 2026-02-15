@@ -46,8 +46,8 @@
     "hero_signup_title": "Join BrainGuin.",
     "hero_signup_subtitle": "Create an account to track your progress, save your decks, and master any topic faster.",
     "hook_speed": "Turn hours of reading into minutes of mastery. Sign in to start your first Creation Sprint.",
-    "hook_recall": "Stop re-reading. Start remembering. Sign in to turn your PDFs into active-recall flashcards.",
-    "hook_ai_power": "Unlock your AI Study Partner. One PDF, one click, one perfect study plan.",
+    "hook_recall": "Stop re-reading. Start remembering. Sign in to turn your studies into active-recall flashcards.",
+    "hook_ai_power": "Unlock your AI Study Partner. One PDF, one link, one perfect study plan.",
     "hook_mascot": "Join the colony! Sign in to set your exam goals and let our AI build your daily review queue."
   },
   "formValidations": {
@@ -129,12 +129,21 @@
       "url": "URL",
       "topic": "Topic"
     },
+    "source_badges": {
+      "pdf": "PDF Document",
+      "url": "Web Article",
+      "topic": "AI Topic",
+      "unknown": "Unknown Source"
+    },
     "card": {
       "flashcards": "Flashcards",
       "created": "Created",
       "reviewed": "Reviewed",
       "never_reviewed": "Never reviewed",
-      "start_review": "Start Review"
+      "start_review": "Start Review",
+      "mastered_count": "Mastered",
+      "status_completed": "Completed",
+      "generate_more": "Generate More Cards"
     },
     "toast": {
       "generating_title": "Generating More...",
@@ -180,7 +189,37 @@
     "quit_session_title": "Quit Session?",
     "quit_session_msg": "Cards you've already rated are saved. The rest will remain pending.",
     "quit_session_confirm": "Quit",
-    "review_again": "Review Again"
+    "review_again": "Review Again",
+    "instruction_tap": "Tap to flip",
+    "instruction_swipe": "Swipe to rate",
+    "how_it_works_link": "How it works?",
+    "how_it_works": {
+      "title": "How it works 🧠",
+      "intro_1": "BrainGuin uses",
+      "spaced_repetition": "Spaced Repetition",
+      "intro_2": "to predict exactly when you are about to forget a card. Your job is simple: tell us how hard it was to remember the answer.",
+      "hard_title": "Hard / Forgot",
+      "hard_desc_1": "You didn't know the answer. We will reset this card and show it to you again in",
+      "time_10m": "10 minutes",
+      "hard_gesture": "Gesture: Swipe Left ←",
+      "medium_title": "Medium",
+      "medium_desc_1": "You knew it, but had to think. We will show it again",
+      "time_tomorrow": "tomorrow",
+      "medium_action": "Action: Tap Yellow Button",
+      "easy_title": "Easy",
+      "easy_desc_1": "You knew it instantly! We won't show this card for",
+      "time_4d": "4 days",
+      "easy_desc_2": "(or more).",
+      "easy_gesture": "Gesture: Swipe Right →",
+      "delete_title": "Delete Card",
+      "delete_desc": "Use this if the AI generated a bad card or you just don't want to study it.",
+      "delete_gesture": "Gesture: Swipe Down ↓ (or tap Trash icon)",
+      "button_close": "Got it!"
+    },
+    "swipe_actions": {
+      "delete_label": "DELETE",
+      "footer_hint": "⬅️ Hard  •  ⬇️ Delete  •  ➡️ Easy"
+    }
   },
   "errors": {
     "fetch_failed": "Fetch Failed",
@@ -194,8 +233,9 @@
     "url_content_error": "Website content is too short or blocked.",
     "timeout_error": "Max retries exceeded. Please try again."
   },
-  "web_articles": "Web Articles",
-  "ai_generation": "AI Generation",
+  "load_pdf": "Load a PDF",
+  "web_articles": "Paste a URL containing text",
+  "ai_generation_load": "Paste or write text",
   "start_session": "Start Session",
   "great_job": "Great Job!",
   "memorized": "Memorized",

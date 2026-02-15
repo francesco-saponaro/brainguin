@@ -36,6 +36,7 @@ interface SwiperProps {
   onFinish: () => void;
   onRate: (cardId: string, rating: "hard" | "medium" | "easy") => void;
   onShowContext: (context: string) => void;
+  onDelete: (cardId: string) => void;
 }
 
 // --- MAIN CARD WRAPPER ---
@@ -46,14 +47,17 @@ const SwipeableCard = ({
   total,
   onRate,
   onShowContext,
+  onDelete,
 }: any) => {
-  const { width } = useWindowDimensions();
+  const { t } = useTranslation();
+  const { width, height } = useWindowDimensions();
   const [isFlipped, setIsFlipped] = useState(false);
 
   const isActive = index === currentIndex;
   const isNext = index === currentIndex + 1;
 
   const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
   const rotateY = useSharedValue(0);
   const scale = useSharedValue(isNext ? 0.95 : 1);
 
@@ -79,9 +83,19 @@ const SwipeableCard = ({
     .enabled(isActive)
     .onUpdate((event) => {
       translateX.value = event.translationX;
+      translateY.value = event.translationY;
     })
     .onEnd((event) => {
-      if (Math.abs(event.translationX) > width * 0.15) {
+      // ✅ 1. CHECK FOR DELETE (SWIPE DOWN)
+      // If user swiped down more than 15% of screen height
+      if (event.translationY > height * 0.15) {
+        // Animate off-screen downwards
+        translateY.value = withTiming(height, { duration: 250 }, () => {
+          runOnJS(onDelete)(card.id);
+        });
+      }
+      // ✅ 2. CHECK FOR RATING (SWIPE LEFT/RIGHT)
+      else if (Math.abs(event.translationX) > width * 0.15) {
         // ✅ UX DECISION: Swiping maps to the extremes.
         // Left (< 0) -> Hard
         // Right (> 0) -> Easy
@@ -94,6 +108,7 @@ const SwipeableCard = ({
         );
       } else {
         translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
       }
     });
 
@@ -101,6 +116,7 @@ const SwipeableCard = ({
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
+      { translateY: translateY.value },
       { scale: scale.value },
       {
         rotateZ: `${interpolate(translateX.value, [-width, width], [-15, 15])}deg`,
@@ -123,6 +139,17 @@ const SwipeableCard = ({
     zIndex: 999,
   }));
 
+  // ✅ NEW: Delete Overlay (Trash Icon)
+  const deleteOverlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      translateY.value,
+      [0, height * 0.15],
+      [0, 1],
+      Extrapolation.CLAMP,
+    ),
+    zIndex: 1000, // On top of everything
+  }));
+
   const frontStyle = useAnimatedStyle(() => ({
     transform: [{ rotateY: `${rotateY.value}deg` }],
     opacity: rotateY.value < 90 ? 1 : 0,
@@ -138,6 +165,25 @@ const SwipeableCard = ({
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={[styles.card, cardStyle]}>
+        {/* ✅ DELETE INDICATOR (Trash Icon) */}
+        {isActive && (
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.deleteOverlay,
+              deleteOverlayStyle,
+            ]}
+          >
+            <View style={styles.deleteCircle}>
+              <Ionicons name="trash" size={40} color="white" />
+            </View>
+            <Text style={styles.deleteText}>
+              {t("study.swipe_actions.delete_label")}
+            </Text>
+          </Animated.View>
+        )}
+
+        {/* Rating Indicator */}
         {isActive && (
           <Animated.View
             style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
@@ -155,6 +201,7 @@ const SwipeableCard = ({
             onShowContext={onShowContext}
             onFlip={triggerFlip}
             isActive={isActive}
+            onDelete={() => onDelete(card.id)}
           />
         </Animated.View>
 
@@ -171,6 +218,7 @@ const SwipeableCard = ({
             onFlip={triggerFlip}
             isActive={isActive}
             showButtons={isActive}
+            onDelete={() => onDelete(card.id)}
           />
         </Animated.View>
       </Animated.View>
@@ -190,6 +238,7 @@ const CardContent = React.memo(
     onFlip,
     isActive,
     showButtons,
+    onDelete,
   }: any) => {
     const { t } = useTranslation();
 
@@ -204,6 +253,11 @@ const CardContent = React.memo(
       <View style={styles.cardContentContainer}>
         {/* HEADER */}
         <View style={styles.header}>
+          {/* ✅ NEW: TRASH BUTTON (Visible on Card) */}
+          <PressableScale onPress={onDelete} style={styles.iconButton}>
+            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+          </PressableScale>
+
           <Text style={styles.counter}>
             {t("study.card_counter", { index: index + 1, total })}
           </Text>
@@ -225,8 +279,11 @@ const CardContent = React.memo(
             <Text style={isBack ? styles.answerText : styles.questionText}>
               {isBack ? card.back : card.front}
             </Text>
+            {/* ✅ NEW: PROMINENT TAP TO FLIP BUTTON */}
             {!isBack && (
-              <Text style={styles.hintText}>{t("study.tap_to_flip")}</Text>
+              <View style={styles.flipPill}>
+                <Text style={styles.flipText}>{t("study.tap_to_flip")}</Text>
+              </View>
             )}
           </View>
         </GestureDetector>
@@ -263,24 +320,8 @@ const CardContent = React.memo(
                     {t("study.time_short")}
                   </Text>
                 </PressableScale>
-                {/* HARD (Red) */}
-                {/* <Pressable
-                    onPress={() => onRate("hard")}
-                    className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-red-100 border-red-500 active:bg-red-300"
-                  >
-                    <Text className="font-bold uppercase text-[11px] tracking-widest text-red-500">
-                      {t("study.hard")}
-                    </Text>
-                    <Text className="font-bold text-[10px] mt-0.5 opacity-80 text-red-500">
-                      {t("study.time_short")}
-                    </Text>
-                  </Pressable> */}
 
                 {/* MEDIUM (Yellow) */}
-                {/* <Pressable
-                    onPress={() => onRate("medium")}
-                    className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-yellow-100 border-yellow-500 active:bg-yellow-300"
-                  > */}
                 <PressableScale
                   onPress={() => onRate("medium")}
                   activateOnHover
@@ -305,10 +346,7 @@ const CardContent = React.memo(
                 </PressableScale>
 
                 {/* EASY (Green) */}
-                {/* <Pressable
-                    onPress={() => onRate("easy")}
-                    className="flex-1 py-3 rounded-xl items-center justify-center border border-b-4 active:scale-95 bg-green-100 border-green-500 active:bg-green-300"
-                  > */}
+
                 <PressableScale
                   onPress={() => onRate("easy")}
                   style={{
@@ -333,8 +371,12 @@ const CardContent = React.memo(
                 </PressableScale>
               </View>
 
-              {/* ✅ NEW: SWIPE INSTRUCTION TEXT */}
+              {/* ✅ UPDATED: Swipe instruction text */}
               <Text style={styles.swipeHint}>{t("study.swipe_hint_text")}</Text>
+
+              <Text style={styles.swipeHint}>
+                {t("study.swipe_actions.footer_hint")}
+              </Text>
             </>
           ) : (
             <View style={{ height: 50 }} />
@@ -350,6 +392,7 @@ export default function FlashcardSwiper({
   onFinish,
   onRate,
   onShowContext,
+  onDelete,
 }: SwiperProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -360,6 +403,15 @@ export default function FlashcardSwiper({
       else setCurrentIndex((prev) => prev + 1);
     },
     [currentIndex, cards.length, onFinish, onRate],
+  );
+
+  const handleDelete = useCallback(
+    (cardId: string) => {
+      onDelete(cardId);
+      // We don't increment index because the card is physically removed from the array
+      // If it was the last card, onFinish is handled by the parent
+    },
+    [onDelete],
   );
 
   const visibleCards = cards.filter(
@@ -380,6 +432,7 @@ export default function FlashcardSwiper({
               total={cards.length}
               onRate={(r: any) => handleRate(card.id, r)}
               onShowContext={onShowContext}
+              onDelete={handleDelete}
             />
           );
         })}
@@ -404,6 +457,30 @@ const styles = StyleSheet.create({
     backfaceVisibility: "hidden",
   },
   overlay: { borderRadius: 32, pointerEvents: "none" },
+  // ✅ NEW: Styles for the delete overlay
+  deleteOverlay: {
+    borderRadius: 32,
+    backgroundColor: "rgba(239, 68, 68, 0.9)", // Red background
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  deleteCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  deleteText: {
+    color: "white",
+    fontWeight: "900",
+    fontSize: 24,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
   cardFace: {
     borderRadius: 32,
     padding: 25,
@@ -413,6 +490,11 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0,0,0,0.05)",
   },
   cardContentContainer: { flex: 1, justifyContent: "space-between" },
+  iconButton: {
+    padding: 8,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 20,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -440,6 +522,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textTransform: "uppercase",
     fontSize: 12,
+  },
+  flipPill: {
+    marginTop: 30,
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 99,
+  },
+  flipText: {
+    color: "#64748B",
+    fontWeight: "bold",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   footer: { justifyContent: "flex-end", paddingBottom: 0 },
   ratingRow: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
@@ -477,67 +573,3 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 });
-
-// {Platform.OS === "web" ? (
-//   <View style={styles.ratingRow}>
-//     <Pressable
-//       onPress={() => onRate("hard")}
-//       style={({ pressed, hovered }: any) => [
-//         styles.rateBtn,
-//         {
-//           backgroundColor:
-//             pressed || hovered ? "#FCA5A5" : "#FEE2E2", // Darker Red on Hover
-//           borderColor: "#EF4444",
-//           transform: [{ scale: pressed ? 0.95 : 1 }],
-//         },
-//       ]}
-//     >
-//       <Text style={[styles.rateText, { color: "#EF4444" }]}>
-//         {t("study.hard")}
-//       </Text>
-//       <Text style={[styles.rateSubText, { color: "#EF4444" }]}>
-//         {t("study.time_short")} {/* Replaces "10m" */}
-//       </Text>
-//     </Pressable>
-
-//     <Pressable
-//       onPress={() => onRate("medium")}
-//       style={({ pressed, hovered }: any) => [
-//         styles.rateBtn,
-//         {
-//           backgroundColor:
-//             pressed || hovered ? "#FDE047" : "#FEF9C3", // Darker Yellow on Hover
-//           borderColor: "#EAB308",
-//           transform: [{ scale: pressed ? 0.95 : 1 }],
-//         },
-//       ]}
-//     >
-//       <Text style={[styles.rateText, { color: "#EAB308" }]}>
-//         {t("study.medium")}
-//       </Text>
-//       <Text style={[styles.rateSubText, { color: "#EAB308" }]}>
-//         {t("study.time_med")} {/* Replaces "24h" */}
-//       </Text>
-//     </Pressable>
-
-//     <Pressable
-//       onPress={() => onRate("easy")}
-//       style={({ pressed, hovered }: any) => [
-//         styles.rateBtn,
-//         {
-//           backgroundColor:
-//             pressed || hovered ? "#86EFAC" : "#DCFCE7", // Darker Green on Hover
-//           borderColor: "#22C55E",
-//           transform: [{ scale: pressed ? 0.95 : 1 }],
-//         },
-//       ]}
-//     >
-//       <Text style={[styles.rateText, { color: "#22C55E" }]}>
-//         {t("study.easy")}
-//       </Text>
-//       <Text style={[styles.rateSubText, { color: "#22C55E" }]}>
-//         {t("study.time_long")} {/* Replaces "3d" */}
-//       </Text>
-//     </Pressable>
-//   </View>
-// ) : (

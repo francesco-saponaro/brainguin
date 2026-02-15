@@ -305,14 +305,14 @@ export default function LibraryScreen() {
         >
           {/* HEADER AREA */}
           <View className="flex-row justify-between items-center mb-2">
-            <View className="gap-[2px]">
+            {/* <View className="gap-[2px]">
               <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs font-bold uppercase tracking-[2px]">
                 {t("library.header_small")}
-              </Text>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-bold">
-                {t("library.header_title")}
-              </Text>
-            </View>
+              </Text> */}
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-bold">
+              {t("library.header_title")}
+            </Text>
+            {/* </View> */}
 
             <PressableFinal
               onPress={() => router.push("/creation-modal")}
@@ -471,6 +471,37 @@ function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
   const PressableFinal =
     Platform.OS === "web" ? PressableOpacity : PressableScale;
 
+  // Helper for Source Badge Label & Color
+  const getSourceBadge = (type: string) => {
+    switch (type) {
+      case "pdf":
+        return {
+          label: t("library.source_badges.pdf"),
+          color:
+            "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+        };
+      case "url":
+        return {
+          label: t("library.source_badges.url"),
+          color:
+            "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+        };
+      case "topic":
+        return {
+          label: t("library.source_badges.topic"),
+          color:
+            "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+        };
+      default:
+        return {
+          label: t("library.source_badges.unknown"),
+          color: "bg-gray-100 text-gray-700",
+        };
+    }
+  };
+
+  const badge = getSourceBadge(item.source_type);
+
   return (
     <PressableFinal
       onPress={onPress}
@@ -483,8 +514,8 @@ function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
         borderWidth: 1,
         position: "relative",
         overflow: "hidden",
-        height: 280,
         justifyContent: "space-between",
+        minHeight: 280,
         backgroundColor: isDark ? Colors.dark.card : Colors.light.card,
         borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
         shadowColor: "#000",
@@ -499,111 +530,94 @@ function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
         <View className="absolute right-[-30] top-[-30] w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
       )}
 
-      <View>
-        <View className="flex-row justify-between items-start">
-          <View
-            className={clsx(
-              "w-12 h-12 rounded-2xl items-center justify-center",
-              isCompleted
-                ? "bg-yellow-100 dark:bg-yellow-900/30"
-                : "bg-black/5 dark:bg-white/10",
-            )}
+      <View className="flex-row justify-between items-start mb-4">
+        <View
+          className={`px-3 py-1.5 rounded-full ${badge.color.split(" ")[0]}`}
+        >
+          <Text
+            className={`text-[10px] font-bold uppercase tracking-wider ${badge.color.split(" ")[1]}`}
           >
-            <Ionicons
-              name={
-                isCompleted
-                  ? "trophy"
-                  : item.source_type === "pdf"
-                    ? "document-text"
-                    : item.source_type === "url"
-                      ? "link"
-                      : "bulb"
-              }
-              size={24}
-              color={
-                isCompleted
-                  ? "#F59E0B"
-                  : item.source_type === "pdf"
-                    ? "#38BDF8"
-                    : item.source_type === "url"
-                      ? "#F97316"
-                      : "#22C55E"
-              }
-            />
-          </View>
-
-          <View className="flex-row gap-2">
-            <PressableFinal
-              activateOnHover
-              onPress={onGenerate}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                backgroundColor: `${Colors.brand.accent}1A`,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Ionicons name="sparkles" size={18} color={Colors.brand.action} />
-            </PressableFinal>
-
-            <PressableFinal
-              activateOnHover
-              onPress={onDelete}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                backgroundColor: "#EF44441A",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Ionicons name="trash" size={18} color="#EF4444" />
-            </PressableFinal>
-          </View>
+            {badge.label}
+          </Text>
         </View>
 
+        <PressableFinal
+          activateOnHover
+          onPress={onDelete}
+          style={{
+            width: 32,
+            height: 32,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: 0.6,
+          }}
+        >
+          <Ionicons
+            name="trash-outline"
+            size={18}
+            color={isDark ? "#FFF" : "#000"}
+          />
+        </PressableFinal>
+      </View>
+
+      <View className="mb-6">
         <Text
           numberOfLines={2}
-          className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-xl mt-4 leading-tight"
+          className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl leading-tight"
         >
           {item.title}
         </Text>
-
-        <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs uppercase font-bold mt-1 tracking-wider">
-          {mastered}/{count} {t("mastered")}
+        <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs uppercase font-bold mt-2 tracking-wider">
+          {mastered} / {count} {t("library.card.mastered_count")}
         </Text>
       </View>
 
-      <View>
-        <View className="mb-2">
-          <View
+      <View className="gap-3">
+        <View
+          className={clsx(
+            "py-3.5 rounded-2xl items-center border",
+            isCompleted
+              ? "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800"
+              : "bg-action/10 border-action/5",
+          )}
+        >
+          <Text
             className={clsx(
-              "py-3.5 rounded-2xl items-center border",
+              "font-heading font-bold text-xs uppercase tracking-[2px]",
               isCompleted
-                ? "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800"
-                : "bg-action/10 border-action/5",
+                ? "text-green-600 dark:text-green-400"
+                : "text-action",
             )}
           >
-            <Text
-              className={clsx(
-                "font-heading font-bold text-xs uppercase tracking-[2px]",
-                isCompleted
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-action",
-              )}
-            >
-              {isCompleted ? "COMPLETED" : t("library.card.start_review")}
-            </Text>
-          </View>
+            {isCompleted
+              ? t("library.card.status_completed")
+              : t("library.card.start_review")}
+          </Text>
         </View>
+
+        {!isCompleted && !isArchived && (
+          <PressableFinal
+            onPress={onGenerate}
+            activateOnHover
+            style={{
+              paddingVertical: 12,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            <Ionicons name="sparkles" size={14} color={Colors.brand.action} />
+            <Text className="text-action font-bold text-xs uppercase tracking-wide">
+              {t("library.card.generate_more")}
+            </Text>
+          </PressableFinal>
+        )}
 
         <PressableFinal
           onPress={onArchive}
           activateOnHover
-          style={{ alignItems: "center", padding: 8 }}
+          style={{ alignItems: "center", paddingTop: 4 }}
         >
           <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase opacity-60">
             {isArchived ? (

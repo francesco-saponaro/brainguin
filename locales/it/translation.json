@@ -46,8 +46,8 @@
     "hero_signup_title": "Unisciti a BrainGuin.",
     "hero_signup_subtitle": "Crea un account per tracciare i tuoi progressi, salvare i tuoi mazzi e padroneggiare qualsiasi argomento più velocemente.",
     "hook_speed": "Trasforma ore di lettura in minuti di padronanza. Accedi per iniziare il tuo primo Sprint di Creazione.",
-    "hook_recall": "Smetti di rileggere. Inizia a ricordare. Accedi per trasformare i tuoi PDF in flashcard per il richiamo attivo.",
-    "hook_ai_power": "Sblocca il tuo partner di studio AI. Un PDF, un clic, un piano di studio perfetto.",
+    "hook_recall": "Smetti di rileggere. Inizia a ricordare. Accedi per trasformare i tuoi studi in flashcard per il richiamo attivo.",
+    "hook_ai_power": "Sblocca il tuo partner di studio AI. Un PDF, un link, un piano di studio perfetto.",
     "hook_mascot": "Unisciti alla colonia! Accedi per impostare i tuoi obiettivi d'esame e lascia che la nostra AI crei la tua coda di ripasso quotidiana."
   },
   "formValidations": {
@@ -80,7 +80,7 @@
     "success_description": "È tutto pronto. Inizia il tuo primo Sprint di Creazione e supera alla grande i tuoi esami!"
   },
   "home": {
-    "welcome_back": "Ben tornato",
+    "welcome_back": "Bentornato",
     "ready_to_sprint": "Pronto per lo Sprint?"
   },
   "creation": {
@@ -96,7 +96,9 @@
     "paste_link": "Incolla il link",
     "what_do_you_want_to_learn": "Cosa vuoi imparare?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. La storia del Samurai, Meccanica Quantistica 101...",
-    "generate_flashcards": "Genera Flashcard"
+    "generate_flashcards": "Genera le Flashcard",
+    "upload_your_pdf": "Carica il tuo PDF",
+    "paste_topic_description": "Scrivi o Incolla una descrizione dell'argomento che vuoi imparare"
   },
   "common": {
     "cancel": "Annulla",
@@ -126,12 +128,21 @@
       "url": "URL",
       "topic": "Argomento"
     },
+    "source_badges": {
+      "pdf": "Documento PDF",
+      "url": "Articolo Web",
+      "topic": "Argomento AI",
+      "unknown": "Sorgente Sconosciuta"
+    },
     "card": {
       "flashcards": "Flashcard",
       "created": "Creato",
       "reviewed": "Recensito",
       "never_reviewed": "Mai recensito",
-      "start_review": "Inizia Ripasso"
+      "start_review": "Inizia Ripasso",
+      "mastered_count": "Imparati",
+      "status_completed": "Completato",
+      "generate_more": "Genera Altre Carte"
     },
     "toast": {
       "generating_title": "Generazione in corso...",
@@ -177,7 +188,37 @@
     "quit_session_title": "Uscire dalla sessione?",
     "quit_session_msg": "Le carte valutate sono salvate. Il resto rimarrà in sospeso.",
     "quit_session_confirm": "Esci",
-    "review_again": "Ripassa di nuovo"
+    "review_again": "Ripassa di nuovo",
+    "instruction_tap": "Tocca per girare",
+    "instruction_swipe": "Scorri per valutare",
+    "how_it_works_link": "Come funziona?",
+    "how_it_works": {
+      "title": "Come funziona 🧠",
+      "intro_1": "BrainGuin usa la",
+      "spaced_repetition": "Ripetizione Dilazionata",
+      "intro_2": "per prevedere quando stai per dimenticare una carta. Il tuo compito è semplice: dicci quanto è stato difficile ricordare la risposta.",
+      "hard_title": "Difficile / Dimenticato",
+      "hard_desc_1": "Non sapevi la risposta. Resetteremo questa carta e te la mostreremo di nuovo tra",
+      "time_10m": "10 minuti",
+      "hard_gesture": "Gesto: Scorri a Sinistra ←",
+      "medium_title": "Medio",
+      "medium_desc_1": "La sapevi, ma hai dovuto pensarci. La mostreremo di nuovo",
+      "time_tomorrow": "domani",
+      "medium_action": "Azione: Premi il tasto Giallo",
+      "easy_title": "Facile",
+      "easy_desc_1": "La sapevi istantaneamente! Non mostreremo questa carta per",
+      "time_4d": "4 giorni",
+      "easy_desc_2": "(o più).",
+      "easy_gesture": "Gesto: Scorri a Destra →",
+      "delete_title": "Elimina Carta",
+      "delete_desc": "Usa questo se l'IA ha generato una carta errata o se non vuoi più studiarla.",
+      "delete_gesture": "Gesto: Scorri in Basso ↓ (o icona Cestino)",
+      "button_close": "Ho capito!"
+    },
+    "swipe_actions": {
+      "delete_label": "ELIMINA",
+      "footer_hint": "⬅️ Difficile  •  ⬇️ Elimina  •  ➡️ Facile"
+    }
   },
   "errors": {
     "fetch_failed": "Caricamento fallito",
@@ -191,15 +232,16 @@
     "url_content_error": "Il contenuto del sito è troppo breve o bloccato.",
     "timeout_error": "Numero massimo di tentativi superato."
   },
-  "web_articles": "Articoli Web",
-  "ai_generation": "Generazione AI",
+  "load_pdf": "Carica un PDF",
+  "web_articles": "Incolla un URL contenente il testo",
+  "ai_generation_load": "Incolla o scrivi il testo",
   "start_session": "Inizia Sessione",
   "great_job": "Ottimo lavoro!",
   "memorized": "Memorizzato",
   "cards": "Carte",
   "days": "Giorni",
   "cards_to_review": "Carte da ripassare",
-  "all_caught_up": "Tutto in pari!",
+  "all_caught_up": "Tutto fatto!",
   "daily_mission": "Missione quotidiana",
   "mission_complete": "Missione completata",
   "paywall": {
@@ -240,11 +282,11 @@
   "section_preferences": "Preferenze",
   "section_notifications": "Notifiche",
   "section_account": "Account",
-  "plan_status": "Stato del piano",
+  "plan_status": "Stato dell'abbonamento",
   "plan_free": "GRATIS",
   "plan_pro": "PRO 🏆",
   "manage_subscription": "Gestisci abbonamento",
-  "restore_purchases": "Ripristina acquisti",
+  "restore_purchases": "Ripristina abbonamento",
   "theme": "Tema",
   "language": "Lingua",
   "daily_reminder": "Promemoria giornaliero",
@@ -271,11 +313,11 @@
     "section_preferences": "Preferenze",
     "section_notifications": "Notifiche",
     "section_account": "Account",
-    "plan_status": "Stato del piano",
+    "plan_status": "Stato dell'abbonamento",
     "plan_free": "GRATIS",
     "plan_pro": "PRO 🏆",
     "manage_subscription": "Gestisci abbonamento",
-    "restore_purchases": "Ripristina acquisti",
+    "restore_purchases": "Ripristina abbonamento",
     "theme": "Tema",
     "language": "Lingua",
     "daily_reminder": "Promemoria giornaliero",

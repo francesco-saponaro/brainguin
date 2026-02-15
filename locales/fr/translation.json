@@ -1,6 +1,6 @@
 {
   "auth": {
-    "welcome_back": "Bon retour !",
+    "welcome_back": "Bon retour!",
     "subtitle": "Connectez-vous pour continuer votre progression",
     "email_label": "E-mail",
     "email_placeholder": "pingouin@brainguin.app",
@@ -46,8 +46,8 @@
     "hero_signup_title": "Rejoignez BrainGuin.",
     "hero_signup_subtitle": "Créez un compte pour suivre vos progrès, enregistrer vos paquets et maîtriser n'importe quel sujet plus rapidement.",
     "hook_speed": "Transformez des heures de lecture en minutes de maîtrise. Connectez-vous pour lancer votre premier Sprint de Création.",
-    "hook_recall": "Arrêtez de relire. Commencez à retenir. Connectez-vous pour transformer vos PDF en flashcards de mémorisation active.",
-    "hook_ai_power": "Débloquez votre partenaire d'étude IA. Un PDF, un clic, un plan d'étude parfait.",
+    "hook_recall": "Arrêtez de relire. Commencez à retenir. Connectez-vous pour transformer vos études en flashcards de mémorisation active.",
+    "hook_ai_power": "Débloquez votre partenaire d'étude IA. Un PDF, un link, un plan d'étude parfait.",
     "hook_mascot": "Rejoignez la colonie ! Connectez-vous pour fixer vos objectifs d'examen et laissez notre IA créer votre file de révision quotidienne."
   },
   "formValidations": {
@@ -80,7 +80,7 @@
     "success_description": "Tout est prêt. Commençons votre premier Sprint de Création et réussissons ces examens !"
   },
   "home": {
-    "welcome_back": "Bienvenue de nouveau",
+    "welcome_back": "Bon retour!",
     "ready_to_sprint": "Prêt pour le Sprint ?"
   },
   "creation": {
@@ -96,7 +96,9 @@
     "paste_link": "Coller le lien",
     "what_do_you_want_to_learn": "Qu'est-ce que vous voulez apprendre ?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. L'histoire du samurai, Mécanique Quantique 101...",
-    "generate_flashcards": "Générer des Flashcards"
+    "generate_flashcards": "Générer des Flashcards",
+    "upload_your_pdf": "Télécharger votre PDF",
+    "paste_topic_description": "Écrivez ou collez une description du sujet que vous souhaitez apprendre"
   },
   "common": {
     "cancel": "Annuler",
@@ -126,12 +128,21 @@
       "url": "URL",
       "topic": "Sujet"
     },
+    "source_badges": {
+      "pdf": "Document PDF",
+      "url": "Article Web",
+      "topic": "Sujet IA",
+      "unknown": "Source Inconnue"
+    },
     "card": {
       "flashcards": "Cartes",
       "created": "Créé",
       "reviewed": "Révisé",
       "never_reviewed": "Jamais révisé",
-      "start_review": "Réviser"
+      "start_review": "Réviser",
+      "mastered_count": "Maîtrisés",
+      "status_completed": "Terminé",
+      "generate_more": "Générer plus de cartes"
     },
     "toast": {
       "generating_title": "Génération en cours...",
@@ -177,7 +188,37 @@
     "quit_session_title": "Quitter la session ?",
     "quit_session_msg": "Les cartes évaluées sont sauvegardées. Le reste restera en attente.",
     "quit_session_confirm": "Quitter",
-    "review_again": "Réviser à nouveau"
+    "review_again": "Réviser à nouveau",
+    "instruction_tap": "Appuyez per retourner",
+    "instruction_swipe": "Balayez pour évaluer",
+    "how_it_works_link": "Comment ça marche ?",
+    "how_it_works": {
+      "title": "Comment ça marche 🧠",
+      "intro_1": "BrainGuin utilise la",
+      "spaced_repetition": "Répétition Espacée",
+      "intro_2": "pour prédire quand vous allez oublier une carte. Votre rôle est simple : dites-nous si la réponse était difficile à retenir.",
+      "hard_title": "Difficile / Oublié",
+      "hard_desc_1": "Vous ne connaissiez pas la réponse. Nous allons réinitialiser cette carte et vous la montrer dans",
+      "time_10m": "10 minutes",
+      "hard_gesture": "Geste : Balayez vers la gauche ←",
+      "medium_title": "Moyen",
+      "medium_desc_1": "Vous la connaissiez, mais avez dû réfléchir. Elle réapparaîtra",
+      "time_tomorrow": "demain",
+      "medium_action": "Action : Appuyez sur le bouton jaune",
+      "easy_title": "Facile",
+      "easy_desc_1": "C'était instantané ! Nous ne montrerons pas cette carte avant",
+      "time_4d": "4 jours",
+      "easy_desc_2": "(ou plus).",
+      "easy_gesture": "Geste : Balayez vers la droite →",
+      "delete_title": "Supprimer la carte",
+      "delete_desc": "Utilisez ceci si l'IA a généré une mauvaise carte ou si vous ne voulez plus l'étudier.",
+      "delete_gesture": "Geste : Balayez vers le bas ↓ (ou icône Corbeille)",
+      "button_close": "D'accord !"
+    },
+    "swipe_actions": {
+      "delete_label": "SUPPRIMER",
+      "footer_hint": "⬅️ Difficile  •  ⬇️ Supprimer  •  ➡️ Facile"
+    }
   },
   "errors": {
     "fetch_failed": "Échec du chargement",
@@ -191,8 +232,9 @@
     "url_content_error": "Le contenu du site est trop court ou bloqué.",
     "timeout_error": "Nombre maximal de tentatives dépassé."
   },
-  "web_articles": "Articles Web",
-  "ai_generation": "Génération par IA",
+  "load_pdf": "Charger un PDF",
+  "web_articles": "Coller une URL contenant du texte",
+  "ai_generation_load": "Coller ou écrire du texte",
   "start_session": "Démarrer la session",
   "great_job": "Beau travail !",
   "memorized": "Mémorisé",
@@ -235,12 +277,12 @@
   "url_blocked": "Le contenu du site est trop court ou bloqué.",
   "timeout": "Nombre maximal de tentatives dépassé.",
   "header_title": "Paramètres",
-  "signed_in_as": "Connecté en tant que",
+  "signed_in_as": "Utilisateur",
   "section_membership": "Abonnement",
   "section_preferences": "Préférences",
   "section_notifications": "Notifications",
   "section_account": "Compte",
-  "plan_status": "Statut du plan",
+  "plan_status": "État de l'abonnement",
   "plan_free": "GRATUIT",
   "plan_pro": "PRO 🏆",
   "manage_subscription": "Gérer l'abonnement",
@@ -266,12 +308,12 @@
   "terms": "Conditions",
   "settings": {
     "header_title": "Paramètres",
-    "signed_in_as": "Connecté en tant que",
+    "signed_in_as": "Utilisateur",
     "section_membership": "Abonnement",
     "section_preferences": "Préférences",
     "section_notifications": "Notifications",
     "section_account": "Compte",
-    "plan_status": "Statut du plan",
+    "plan_status": "État de l'abonnement",
     "plan_free": "GRATUIT",
     "plan_pro": "PRO 🏆",
     "manage_subscription": "Gérer l'abonnement",

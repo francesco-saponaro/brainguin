@@ -13,6 +13,7 @@ import {
   Alert,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -47,6 +48,7 @@ export default function StudyScreen() {
 
   // Hints/Context Modal State
   const [contextModalVisible, setContextModalVisible] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [activeContext, setActiveContext] = useState("");
 
   const onOpenContext = (ctx: string) => {
@@ -73,10 +75,13 @@ export default function StudyScreen() {
           const now = new Date().toISOString();
           const { data: cardData, error } = await supabase
             .from("flashcards")
-            .select("*, decks(title)") // <--- JOIN to get deck title
+            // 👇 CHANGE 1: Use "!inner" to enforce filtering on the joined table
+            .select("*, decks!inner(title, is_archived)")
             .eq("user_id", session.user.id)
             .lte("next_review_at", now) // Due now or past
             .neq("status", "mastered")
+            // 👇 CHANGE 2: Only show cards where deck is NOT archived
+            .eq("decks.is_archived", false)
             .order("next_review_at", { ascending: true }) // Oldest due first
             .limit(50); // Cap at 50
 
@@ -206,7 +211,7 @@ export default function StudyScreen() {
 
     // 3. Save to Supabase
     if (session?.user) {
-      await supabase
+      const { error } = await supabase // 👈 Add error extraction
         .from("flashcards")
         .update({
           next_review_at: nextReview.toISOString(),
@@ -216,6 +221,39 @@ export default function StudyScreen() {
           repetition_count: newReps,
         })
         .eq("id", cardId);
+
+      if (error) {
+        console.error("🔥 Error rating card:", error.message);
+        // Optional: Show a toast so you know it failed
+      }
+    }
+  };
+
+  // --- DELETE CARD LOGIC ---
+  const handleDeleteCard = async (cardId: string) => {
+    // 1. Optimistic UI Update (Remove immediately so user doesn't wait)
+    setCards((prev) => prev.filter((c) => c.id !== cardId));
+
+    // If that was the last card, trigger finish
+    if (cards.length <= 1) {
+      handleSessionFinish();
+    }
+
+    // 2. Delete from DB
+    if (session?.user) {
+      const { error } = await supabase
+        .from("flashcards")
+        .delete()
+        .eq("id", cardId);
+
+      if (error) {
+        console.error("🔥 Error deleting card:", error.message);
+        Alert.alert(t("errors.generic"), t("errors.delete_failed"));
+        // Optional: Re-fetch cards if it failed
+      } else {
+        // Optional: Show a quiet toast
+        // Toast.show({ type: 'info', text1: 'Card deleted' });
+      }
     }
   };
 
@@ -400,7 +438,6 @@ export default function StudyScreen() {
         >
           <Ionicons name="close" size={24} color={deck ? "#64748B" : "#FFF"} />
         </PressableScale>
-
         <View className="items-center">
           <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
             {id === "daily" ? "DAILY MISSION" : t("study.header_small")}
@@ -412,9 +449,18 @@ export default function StudyScreen() {
             {deck?.title}
           </Text>
         </View>
-
-        <View className="w-10" />
+        <View className="w-10" /> {/* Placeholder for spacing */}
       </View>
+
+      {/* ✅ NEW: SUBTITLE INSTRUCTION */}
+      <PressableScale onPress={() => setInfoModalVisible(true)}>
+        <Text className="text-text-muted-light dark:text-text-muted-dark text-xs text-center mt-2 font-medium">
+          {t("study.instruction_tap")} • {t("study.instruction_swipe")} •{" "}
+          <Text className="text-action font-bold">
+            {t("study.how_it_works_link")}
+          </Text>
+        </Text>
+      </PressableScale>
 
       {/* SWIPER AREA */}
       <View className="flex-1 px-4 pb-10 w-full max-w-[800px] self-center">
@@ -424,6 +470,7 @@ export default function StudyScreen() {
             onFinish={handleSessionFinish}
             onRate={handleRateCard}
             onShowContext={(ctx) => onOpenContext(ctx)}
+            onDelete={(cardId) => handleDeleteCard(cardId)}
           />
         ) : (
           <View className="flex-1 items-center justify-center">
@@ -445,6 +492,143 @@ export default function StudyScreen() {
           </View>
         )}
       </View>
+
+      {/* --- HOW IT WORKS MODAL --- */}
+      <Modal
+        visible={infoModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setInfoModalVisible(false)}
+      >
+        <BlurView
+          intensity={20}
+          tint={isDark ? "dark" : "light"}
+          style={StyleSheet.absoluteFill}
+        >
+          <View className="flex-1 justify-end">
+            <View className="bg-page-light dark:bg-card-dark rounded-t-[32px] p-8 h-[85%] shadow-2xl border-t border-white/10">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl">
+                  {t("study.how_it_works.title")}
+                </Text>
+                <Pressable
+                  onPress={() => setInfoModalVisible(false)}
+                  className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
+                >
+                  <Ionicons
+                    name="close"
+                    size={24}
+                    color={isDark ? "white" : "black"}
+                  />
+                </Pressable>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text className="text-text-muted-light dark:text-text-muted-dark text-base mb-6 leading-6">
+                  {t("study.how_it_works.intro_1")}{" "}
+                  <Text className="font-bold text-action">
+                    {t("study.how_it_works.spaced_repetition")}
+                  </Text>{" "}
+                  {t("study.how_it_works.intro_2")}
+                </Text>
+
+                {/* HARD */}
+                <View className="flex-row mb-6 gap-4">
+                  <View className="bg-red-100 dark:bg-red-900/20 w-12 h-12 rounded-full items-center justify-center">
+                    <Ionicons name="refresh" size={24} color="#EF4444" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-red-500 font-bold text-lg mb-1">
+                      {t("study.how_it_works.hard_title")}
+                    </Text>
+                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                      {t("study.how_it_works.hard_desc_1")}{" "}
+                      <Text className="font-bold">
+                        {t("study.how_it_works.time_10m")}
+                      </Text>
+                      .
+                    </Text>
+                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                      {t("study.how_it_works.hard_gesture")}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* MEDIUM */}
+                <View className="flex-row mb-6 gap-4">
+                  <View className="bg-yellow-100 dark:bg-yellow-900/20 w-12 h-12 rounded-full items-center justify-center">
+                    <Ionicons name="time" size={24} color="#EAB308" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-yellow-600 dark:text-yellow-500 font-bold text-lg mb-1">
+                      {t("study.how_it_works.medium_title")}
+                    </Text>
+                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                      {t("study.how_it_works.medium_desc_1")}{" "}
+                      <Text className="font-bold">
+                        {t("study.how_it_works.time_tomorrow")}
+                      </Text>
+                      .
+                    </Text>
+                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                      {t("study.how_it_works.medium_action")}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* EASY */}
+                <View className="flex-row mb-6 gap-4">
+                  <View className="bg-green-100 dark:bg-green-900/20 w-12 h-12 rounded-full items-center justify-center">
+                    <Ionicons name="checkmark" size={24} color="#22C55E" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-green-600 dark:text-green-500 font-bold text-lg mb-1">
+                      {t("study.how_it_works.easy_title")}
+                    </Text>
+                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                      {t("study.how_it_works.easy_desc_1")}{" "}
+                      <Text className="font-bold">
+                        {t("study.how_it_works.time_4d")}
+                      </Text>{" "}
+                      {t("study.how_it_works.easy_desc_2")}
+                    </Text>
+                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                      {t("study.how_it_works.easy_gesture")}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* DELETE */}
+                <View className="flex-row mb-8 gap-4">
+                  <View className="bg-gray-100 dark:bg-gray-800 w-12 h-12 rounded-full items-center justify-center">
+                    <Ionicons name="trash" size={24} color="#94A3B8" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-gray-600 dark:text-gray-400 font-bold text-lg mb-1">
+                      {t("study.how_it_works.delete_title")}
+                    </Text>
+                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                      {t("study.how_it_works.delete_desc")}
+                    </Text>
+                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                      {t("study.how_it_works.delete_gesture")}
+                    </Text>
+                  </View>
+                </View>
+
+                <Pressable
+                  onPress={() => setInfoModalVisible(false)}
+                  className="bg-action py-4 rounded-xl items-center mb-8"
+                >
+                  <Text className="text-white font-bold text-lg">
+                    {t("study.how_it_works.button_close")}
+                  </Text>
+                </Pressable>
+              </ScrollView>
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
 
       {/* --- CONTEXT MODAL --- */}
       <Modal
@@ -536,449 +720,3 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
-
-// import FlashcardSwiper from "@/components/Study/FlashcardSwiper";
-// import { supabase } from "@/lib/supabase";
-// import { useAuthStore } from "@/store/storeUser";
-// import { Ionicons } from "@expo/vector-icons";
-// import { BlurView } from "expo-blur";
-// import { Image } from "expo-image";
-// import { useLocalSearchParams, useRouter } from "expo-router";
-// import { useColorScheme } from "nativewind";
-// import React, { useEffect, useRef, useState } from "react";
-// import { useTranslation } from "react-i18next"; // 1. Import hook
-// import {
-//   ActivityIndicator,
-//   Modal,
-//   Platform,
-//   ScrollView,
-//   StyleSheet,
-//   Text,
-//   View,
-// } from "react-native";
-// import { SafeAreaView } from "react-native-safe-area-context";
-
-// import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
-// import { PressableScale } from "pressto";
-// import { Modalize } from "react-native-modalize";
-
-// export default function StudyScreen() {
-//   const { colorScheme } = useColorScheme();
-//   const modalizeRef = useRef<Modalize>(null);
-//   const isDark = colorScheme === "dark";
-//   const { id } = useLocalSearchParams();
-//   const router = useRouter();
-//   const { session } = useAuthStore();
-//   const { t } = useTranslation(); // 2. Initialize hook
-
-//   const [deck, setDeck] = useState<any>(null);
-//   const [cards, setCards] = useState<any[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [isFinished, setIsFinished] = useState(false);
-
-//   const [sessionStats, setSessionStats] = useState({
-//     hard: 0,
-//     medium: 0,
-//     easy: 0,
-//   });
-
-//   const [contextModalVisible, setContextModalVisible] = useState(false);
-//   const [activeContext, setActiveContext] = useState("");
-
-//   const onOpen = (ctx: string) => {
-//     setActiveContext(ctx);
-//     modalizeRef.current?.open();
-//   };
-
-//   useEffect(() => {
-//     // const fetchDeckData = async () => {
-//     //   try {
-//     //     // Fetch Deck Info
-//     //     const { data: deckData } = await supabase.from('decks').select('*').eq('id', id).single();
-//     //     setDeck(deckData);
-
-//     //     // Fetch Cards
-//     //     // In real app: Fetch only 'status != mastered' if you want
-//     //     const { data: cardData } = await supabase.from('flashcards').select('*').eq('deck_id', id);
-//     //     setCards(cardData || []);
-//     //   } catch(e) {
-//     //     console.error(e);
-//     //   } finally {
-//     //     setLoading(false);
-//     //   }
-//     // };
-
-//     const fetchDeckData = async () => {
-//       // TODO: Replace with real Supabase fetch:
-//       // const { data } = await supabase.from('flashcards').select('*').eq('deck_id', id);
-
-//       // MOCK DATA (With Context added!)
-//       setTimeout(() => {
-//         setDeck({
-//           id: id,
-//           title: "The History of Samurai ⚔️",
-//           source_type: "topic",
-//         });
-
-//         setCards([
-//           {
-//             id: "1",
-//             front: "Who were the Samurai?",
-//             back: "Hereditary military nobility...",
-//             context: "They emerged in the Heian period.", // ✅ BUTTON WILL SHOW FOR THIS
-//           },
-//           {
-//             id: "2",
-//             front: "What is 'Bushido'?",
-//             back: "The 'Way of the Warrior'...",
-//             context: "Think of it like Chivalry for knights.", // ✅ BUTTON WILL SHOW
-//           },
-//           {
-//             id: "3", // No context, button will hide
-//             front: "What was the Katana?",
-//             back: "A curved, single-edged blade...",
-//           },
-//         ]);
-
-//         setLoading(false);
-//       }, 1000);
-//     };
-
-//     if (session?.user) fetchDeckData();
-//   }, [id, session]);
-
-//   // --- THE ALGORITHM ---
-//   const handleRateCard = async (
-//     cardId: string,
-//     rating: "hard" | "medium" | "easy",
-//   ) => {
-//     setSessionStats((prev) => ({ ...prev, [rating]: prev[rating] + 1 }));
-
-//     // 1. Calculate Logic
-//     const now = new Date();
-//     let nextReview = new Date();
-//     let status = "learning";
-
-//     if (rating === "easy") {
-//       nextReview.setDate(now.getDate() + 3); // +3 Days
-//       status = "review";
-//     } else if (rating === "medium") {
-//       nextReview.setDate(now.getDate() + 1); // +1 Day
-//       status = "learning";
-//     } else {
-//       nextReview.setMinutes(now.getMinutes() + 10); // +10 Mins (See it again soon)
-//       status = "new";
-//     }
-
-//     // 2. Save to Supabase (Fire & Forget)
-//     if (session?.user) {
-//       await supabase
-//         .from("flashcards")
-//         .update({
-//           next_review_at: nextReview.toISOString(),
-//           status: status,
-//         })
-//         .eq("id", cardId);
-//     }
-//   };
-
-//   const handleSessionFinish = async () => {
-//     if (session?.user) {
-//       // Update Deck "Last Reviewed"
-//       await supabase
-//         .from("decks")
-//         .update({ last_reviewed_at: new Date().toISOString() })
-//         .eq("id", id);
-
-//       // Update User Streak (Simple check)
-//       // Check if last_active_date was yesterday, if so increment.
-//       const today = new Date().toISOString().split("T")[0];
-//       await supabase.rpc("update_streak", { user_date: today });
-//     }
-//     setIsFinished(true);
-//   };
-
-//   if (loading) {
-//     return (
-//       <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark items-center justify-center">
-//         <ActivityIndicator size="large" color="#F97316" />
-//       </SafeAreaView>
-//     );
-//   }
-
-//   // --- FINISHED STATE ---
-//   if (isFinished) {
-//     return (
-//       <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark">
-//         <ScrollView
-//           contentContainerStyle={{
-//             flexGrow: 1,
-//             alignItems: "center",
-//             justifyContent: "center",
-//             paddingHorizontal: 24,
-//             paddingVertical: 40,
-//           }}
-//           showsVerticalScrollIndicator={false}
-//           className="w-full"
-//         >
-//           <View className="w-full max-w-[400px] items-center">
-//             {/* MASCOT */}
-//             <Image
-//               source={CELEBRATOR_PENGUIN}
-//               style={{ width: 200, height: 200, marginBottom: 20 }}
-//               contentFit="contain"
-//             />
-
-//             <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-3xl text-center mb-2">
-//               {t("study.finished_title")}
-//             </Text>
-//             <Text className="text-text-muted-light dark:text-text-muted-dark text-center font-body mb-8 text-lg">
-//               {t("study.finished_desc", {
-//                 count: cards.length,
-//                 title: deck?.title,
-//               })}
-//             </Text>
-
-//             {/* STATS GRID */}
-//             <View className="flex-row gap-4 w-full mb-10">
-//               <StatBox
-//                 label={t("study.hard")}
-//                 value={sessionStats.hard}
-//                 color="bg-red-100 dark:bg-red-900/30"
-//                 textColor="text-red-600 dark:text-red-400"
-//               />
-//               <StatBox
-//                 label={t("study.medium")}
-//                 value={sessionStats.medium}
-//                 color="bg-yellow-100 dark:bg-yellow-900/30"
-//                 textColor="text-yellow-600 dark:text-yellow-400"
-//               />
-//               <StatBox
-//                 label={t("study.easy")}
-//                 value={sessionStats.easy}
-//                 color="bg-green-100 dark:bg-green-900/30"
-//                 textColor="text-green-600 dark:text-green-400"
-//               />
-//             </View>
-
-//             {/* ACTIONS */}
-//             <PressableScale
-//               onPress={() => router.replace("/(tabs)/library")}
-//               style={{
-//                 backgroundColor: "#F97316",
-//                 width: "100%",
-//                 paddingVertical: 16,
-//                 borderRadius: 16,
-//                 alignItems: "center",
-//                 marginBottom: 16,
-//                 // Shadow matching shadow-orange-500/20
-//                 shadowColor: "#F97316",
-//                 shadowOffset: { width: 0, height: 4 },
-//                 shadowOpacity: 0.2,
-//                 shadowRadius: 8,
-//                 elevation: 4,
-//               }}
-//               activateOnHover
-//             >
-//               <Text className="text-white font-bold font-heading text-lg">
-//                 {t("study.finished_btn")}
-//               </Text>
-//             </PressableScale>
-
-//             <PressableScale
-//               onPress={() => {
-//                 setSessionStats({ hard: 0, medium: 0, easy: 0 });
-//                 setIsFinished(false);
-//               }}
-//               style={{
-//                 paddingVertical: 12,
-//                 paddingHorizontal: 24,
-//                 borderRadius: 12,
-//               }}
-//               activateOnHover
-//             >
-//               <Text className="text-text-muted-light dark:text-text-muted-dark font-semibold">
-//                 Review Again
-//               </Text>
-//             </PressableScale>
-//           </View>
-//         </ScrollView>
-//       </SafeAreaView>
-//     );
-//   }
-
-//   return (
-//     <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark">
-//       {/* HEADER */}
-//       <View
-//         className="flex-row items-center justify-between px-6 mb-4"
-//         style={{ paddingTop: Platform.OS === "web" ? 30 : 10 }}
-//       >
-//         <PressableScale
-//           onPress={() => router.back()}
-//           activateOnHover
-//           style={{
-//             width: 40,
-//             height: 40,
-//             backgroundColor:
-//               colorScheme === "dark"
-//                 ? "rgba(255,255,255,0.1)"
-//                 : "rgba(0,0,0,0.05)",
-//             borderRadius: 20,
-//             alignItems: "center",
-//             justifyContent: "center",
-//           }}
-//         >
-//           <Ionicons name="close" size={24} color={deck ? "#64748B" : "#FFF"} />
-//         </PressableScale>
-
-//         <View className="items-center">
-//           <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
-//             {t("study.header_small")}
-//           </Text>
-//           <Text
-//             className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-base"
-//             numberOfLines={1}
-//           >
-//             {deck?.title}
-//           </Text>
-//         </View>
-
-//         <View className="w-10" />
-//       </View>
-
-//       {/* SWIPER AREA */}
-//       <View className="flex-1 px-4 pb-10 w-full max-w-[800px] self-center">
-//         {cards.length > 0 ? (
-//           <FlashcardSwiper
-//             cards={cards}
-//             onFinish={handleSessionFinish}
-//             onRate={handleRateCard}
-//             onShowContext={(ctx) => onOpen(ctx)}
-//           />
-//         ) : (
-//           <View className="flex-1 items-center justify-center">
-//             <Text className="text-text-muted-light">
-//               No cards found in this deck.
-//             </Text>
-//           </View>
-//         )}
-//       </View>
-
-//       <Modalize
-//         ref={modalizeRef}
-//         adjustToContentHeight // This makes it a "True" Bottom Sheet
-//         handlePosition="inside"
-//         modalStyle={{
-//           backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
-//           borderTopLeftRadius: 32,
-//           borderTopRightRadius: 32,
-//         }}
-//         handleStyle={{ backgroundColor: isDark ? "#475569" : "#CBD5E1" }}
-//         panGestureEnabled={true}
-//         closeOnOverlayTap={true}
-//       >
-//         <View className="p-8 pb-20 min-h-[250px]">
-//           <View className="flex-row items-center gap-2 mb-4">
-//             <Ionicons name="bulb" size={24} color="#F97316" />
-//             <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-xl">
-//               {t("study.hint_title")}
-//             </Text>
-//           </View>
-
-//           <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed">
-//             {activeContext}
-//           </Text>
-//         </View>
-//       </Modalize>
-
-//       {/* --- CONTEXT MODAL (The Bulb Popup) --- */}
-//       <Modal
-//         visible={contextModalVisible}
-//         transparent
-//         animationType="fade"
-//         onRequestClose={() => setContextModalVisible(false)}
-//       >
-//         <View style={styles.overlay}>
-//           <BlurView
-//             intensity={30}
-//             tint={isDark ? "dark" : "light"}
-//             style={StyleSheet.absoluteFill}
-//           />
-//           <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 shadow-2xl items-center border border-black/5 dark:border-white/10">
-//             <View className="flex-row justify-between items-center mb-6 w-full">
-//               <View className="flex-row items-center gap-2">
-//                 <Ionicons name="bulb" size={24} color="#F97316" />
-//                 <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-xl">
-//                   {t("study.hint_title")}
-//                 </Text>
-//               </View>
-
-//               <PressableScale
-//                 onPress={() => setContextModalVisible(false)}
-//                 style={{
-//                   backgroundColor:
-//                     colorScheme === "dark"
-//                       ? "rgba(255,255,255,0.1)"
-//                       : "rgba(0,0,0,0.05)",
-//                   padding: 8,
-//                   borderRadius: 99,
-//                 }}
-//                 activateOnHover
-//               >
-//                 <Ionicons
-//                   name="close"
-//                   size={20}
-//                   color={isDark ? "#94A3B8" : "#64748B"} // Using muted colors from config
-//                 />
-//               </PressableScale>
-//             </View>
-
-//             <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed">
-//               {activeContext}
-//             </Text>
-
-//             <PressableScale
-//               onPress={() => setContextModalVisible(false)}
-//               style={{
-//                 marginTop: 40,
-//                 backgroundColor: "#F97316",
-//                 width: "100%",
-//                 paddingVertical: 16,
-//                 borderRadius: 16,
-//                 alignItems: "center",
-//               }}
-//               activateOnHover
-//             >
-//               <Text className="text-white font-bold text-lg">
-//                 {t("study.hint_btn")}
-//               </Text>
-//             </PressableScale>
-//           </View>
-//         </View>
-//       </Modal>
-//     </SafeAreaView>
-//   );
-// }
-
-// const StatBox = ({ label, value, color, textColor }: any) => (
-//   <View className={`flex-1 ${color} rounded-2xl p-4 items-center`}>
-//     <Text className={`font-heading font-bold text-2xl ${textColor}`}>
-//       {value}
-//     </Text>
-//     <Text
-//       className={`font-body font-bold text-xs uppercase ${textColor} opacity-80`}
-//     >
-//       {label}
-//     </Text>
-//   </View>
-// );
-
-// const styles = StyleSheet.create({
-//   overlay: {
-//     flex: 1,
-//     backgroundColor: "rgba(0,0,0,0.5)",
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-// });
