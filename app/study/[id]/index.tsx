@@ -172,8 +172,9 @@ export default function StudyScreen() {
       newReps = 0;
       newEase = Math.max(1.3, newEase - 0.2); // Make card slightly "harder" for future
 
-      // Schedule for 10 minutes from now
-      nextReview.setMinutes(now.getMinutes() + 10);
+      // 👇 REMOVED the 10-minute delay.
+      // Setting it to 1 second in the past so it is INSTANTLY due again.
+      nextReview = new Date(now.getTime() - 1000);
     } else if (rating === "medium") {
       // Small bump, keep in learning
       newInterval = 1; // 1 Day

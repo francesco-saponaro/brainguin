@@ -98,10 +98,7 @@ Deno.serve(async (req) => {
       Do NOT limit the number of cards. Create as many as necessary to comprehensively cover the material (up to 50 max).
 
       LANGUAGE RULE (CRITICAL):
-      **Detect the language of the SOURCE MATERIAL.** You MUST generate the Title, Summary, Questions, Answers, and Context hints in that **EXACT SAME LANGUAGE**. 
-      - If the source is in Spanish, the output JSON must be in Spanish.
-      - If the source is in French, the output JSON must be in French.
-      - Do NOT translate unless the source material explicitly teaches a language (e.g., "Spanish 101").
+      **You MUST detect the language of the SOURCE MATERIAL and generate EVERYTHING in that EXACT SAME LANGUAGE.** You MUST generate the Title, Summary, Questions, Answers, and Context hints in that **EXACT SAME LANGUAGE**. 
 
       CRITICAL RULES:
       1. **Atomic Principle**: One card = One specific fact. Do not merge multiple concepts.

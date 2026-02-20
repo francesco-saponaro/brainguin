@@ -449,9 +449,16 @@ export default function LibraryScreen() {
           onConfirm={performDelete}
           onCancel={() => setIsDeleteModalVisible(false)}
         />
-
-        {isThinking ? <ThinkingState /> : null}
       </Pressable>
+
+      <Modal
+        visible={isThinking}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent={true}
+      >
+        <ThinkingState />
+      </Modal>
     </View>
   );
 }
