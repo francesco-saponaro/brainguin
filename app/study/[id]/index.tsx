@@ -6,11 +6,12 @@ import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  InteractionManager,
   Modal,
   Platform,
   Pressable,
@@ -19,6 +20,8 @@ import {
   Text,
   View,
 } from "react-native";
+import DatePicker from "react-native-date-picker";
+import { Modalize } from "react-native-modalize";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
@@ -27,7 +30,7 @@ import { PressableScale } from "pressto";
 export default function StudyScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
-  const { id } = useLocalSearchParams(); // Can be a UUID or "daily"
+  const { id, isNew } = useLocalSearchParams(); // Can be a UUID or "daily"
   const router = useRouter();
   const { session } = useAuthStore();
   const { t } = useTranslation();
@@ -48,13 +51,25 @@ export default function StudyScreen() {
 
   // Hints/Context Modal State
   const [contextModalVisible, setContextModalVisible] = useState(false);
-  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const howItWorksModalRef = useRef<Modalize>(null);
+  const examModalRef = useRef<Modalize>(null); // 👈 Replaces examModalVisible state
+  const [showDatePicker, setShowDatePicker] = useState(false); // 👈 New
+  const [tempDate, setTempDate] = useState(new Date()); // 👈 New
   const [activeContext, setActiveContext] = useState("");
 
   const onOpenContext = (ctx: string) => {
     setActiveContext(ctx);
     setContextModalVisible(true);
   };
+
+  // 🚨 OPEN MODALIZE
+  useEffect(() => {
+    if (!loading && isNew === "true") {
+      InteractionManager.runAfterInteractions(() => {
+        examModalRef.current?.open();
+      });
+    }
+  }, [loading, isNew]);
 
   // --- 1. FETCH DATA (HANDLES "DAILY" vs "SPECIFIC" MODES) ---
   useEffect(() => {
@@ -75,8 +90,8 @@ export default function StudyScreen() {
           const now = new Date().toISOString();
           const { data: cardData, error } = await supabase
             .from("flashcards")
-            // 👇 CHANGE 1: Use "!inner" to enforce filtering on the joined table
-            .select("*, decks!inner(title, is_archived)")
+            // ✅ Fetch exam_date alongside title and archive status
+            .select("*, decks!inner(title, is_archived, exam_date)")
             .eq("user_id", session.user.id)
             .lte("next_review_at", now) // Due now or past
             .neq("status", "mastered")
@@ -95,6 +110,7 @@ export default function StudyScreen() {
             context: c.context,
             // Pass the source deck title so the card can display it contextually
             deckTitle: c.decks?.title,
+            deckExamDate: c.decks?.exam_date, // ✅ Save exam date for Daily Mode Math
           }));
 
           setCards(mappedCards);
@@ -198,6 +214,24 @@ export default function StudyScreen() {
         newInterval = Math.ceil(prevInterval * newEase);
       }
 
+      // 🚨 MAGIC MATH: EXAM SQUASHING 🚨
+      const examDateStr =
+        id === "daily" ? currentCard.deckExamDate : deck?.exam_date;
+
+      if (examDateStr && newInterval > 0) {
+        const examDate = new Date(examDateStr);
+        const daysLeft = Math.ceil(
+          (examDate.getTime() - now.getTime()) / (1000 * 3600 * 24),
+        );
+
+        if (daysLeft > 0) {
+          // Force the interval to be no larger than half the days remaining (minimum 1 day).
+          // If 5 days left, interval becomes 2. They will see it again BEFORE the exam!
+          const maxAllowedInterval = Math.max(1, Math.floor(daysLeft / 2));
+          newInterval = Math.min(newInterval, maxAllowedInterval);
+        }
+      }
+
       // 🏆 MASTERY CHECK
       if (newInterval > 21) {
         newStatus = "mastered";
@@ -227,6 +261,36 @@ export default function StudyScreen() {
         console.error("🔥 Error rating card:", error.message);
         // Optional: Show a toast so you know it failed
       }
+    }
+  };
+
+  // --- SAVE EXAM DATE ---
+  const saveExamDate = async (date: Date | null) => {
+    try {
+      const targetDateStr = date ? date.toISOString().split("T")[0] : null;
+
+      if (id !== "daily" && session?.user) {
+        await supabase
+          .from("decks")
+          .update({ exam_date: targetDateStr })
+          .eq("id", id);
+        setDeck((prev: any) => ({ ...prev, exam_date: targetDateStr }));
+
+        // 🚨 MAGIC PULL-FORWARD LOGIC 🚨
+        // If an exam is set, any cards scheduled AFTER the exam date are pulled back to TODAY!
+        if (targetDateStr) {
+          await supabase
+            .from("flashcards")
+            .update({ next_review_at: new Date().toISOString() })
+            .eq("deck_id", id)
+            .gt("next_review_at", targetDateStr); // Only pull cards scheduled too far in the future
+        }
+      }
+
+      examModalRef.current?.close();
+      router.setParams({ isNew: "" });
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -439,7 +503,7 @@ export default function StudyScreen() {
         >
           <Ionicons name="close" size={24} color={deck ? "#64748B" : "#FFF"} />
         </PressableScale>
-        <View className="items-center">
+        <View className="flex-1 items-center mx-4">
           <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
             {id === "daily" ? "DAILY MISSION" : t("study.header_small")}
           </Text>
@@ -450,11 +514,51 @@ export default function StudyScreen() {
             {deck?.title}
           </Text>
         </View>
-        <View className="w-10" /> {/* Placeholder for spacing */}
+
+        <View className="flex-row items-center gap-2">
+          {/* ✅ 📅 EXAM PACE BUTTON */}
+          {id !== "daily" && (
+            <PressableScale
+              onPress={() => examModalRef.current?.open()}
+              style={{
+                width: 40,
+                height: 40,
+                backgroundColor: isDark
+                  ? "rgba(255,255,255,0.1)"
+                  : "rgba(0,0,0,0.05)",
+                borderRadius: 20,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name="calendar"
+                size={20}
+                color={deck?.exam_date ? "#F97316" : isDark ? "#FFF" : "#000"}
+              />
+            </PressableScale>
+          )}
+
+          <PressableScale
+            onPress={() => howItWorksModalRef.current?.open()}
+            style={{
+              width: 40,
+              height: 40,
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.1)"
+                : "rgba(0,0,0,0.05)",
+              borderRadius: 20,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="help" size={24} color="#F97316" />
+          </PressableScale>
+        </View>
       </View>
 
       {/* ✅ NEW: SUBTITLE INSTRUCTION */}
-      <PressableScale onPress={() => setInfoModalVisible(true)}>
+      <PressableScale onPress={() => howItWorksModalRef.current?.open()}>
         <Text className="text-text-muted-light dark:text-text-muted-dark text-xs text-center mt-2 font-medium">
           {t("study.instruction_tap")} • {t("study.instruction_swipe")} •{" "}
           <Text className="text-action font-bold">
@@ -494,142 +598,231 @@ export default function StudyScreen() {
         )}
       </View>
 
-      {/* --- HOW IT WORKS MODAL --- */}
-      <Modal
-        visible={infoModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setInfoModalVisible(false)}
+      {/* --- ✅ NEW: EXAM DATE / PACE MODAL --- */}
+      {/* --- ✅ NEW: MODALIZE EXAM DATE --- */}
+      <Modalize
+        ref={examModalRef}
+        adjustToContentHeight
+        panGestureEnabled={isNew !== "true"} // 👈 PREVENTS SWIPING DOWN
+        closeOnOverlayTap={isNew !== "true"} // 👈 PREVENTS TAPPING OUTSIDE TO CLOSE
+        modalStyle={{
+          backgroundColor: isDark ? "#1E293B" : "#F8FAFC", // Match your theme
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+        }}
+        handlePosition="inside"
+        handleStyle={{
+          backgroundColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+        }}
+        withHandle={isNew !== "true"}
+        onClosed={() => {
+          // Clear params when the user swipes it down or it closes
+          if (isNew === "true") {
+            router.setParams({ isNew: "" });
+          }
+        }}
       >
-        <BlurView
-          intensity={20}
-          tint={isDark ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        >
-          <View className="flex-1 justify-end">
-            <View className="bg-page-light dark:bg-card-dark rounded-t-[32px] p-8 h-[85%] shadow-2xl border-t border-white/10">
-              <View className="flex-row justify-between items-center mb-6">
-                <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl">
-                  {t("study.how_it_works.title")}
+        <View className="p-8 pb-12">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl">
+              {t("study.exam_modal.title", "When is your Exam? 📅")}
+            </Text>
+            {/* {isNew !== "true" && (
+              <Pressable
+                onPress={() => examModalRef.current?.close()}
+                className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
+              >
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={isDark ? "white" : "black"}
+                />
+              </Pressable>
+            )} */}
+          </View>
+
+          <Text className="text-text-muted-light dark:text-text-muted-dark text-base mb-6 leading-6">
+            {t("study.exam_modal.desc")}
+          </Text>
+
+          <View className="gap-3 mt-2">
+            <Pressable
+              onPress={() => {
+                examModalRef.current?.close();
+                // Wait for Modalize to animate down before opening native DatePicker
+                setTimeout(() => setShowDatePicker(true), 300);
+              }}
+              className="bg-action py-4 rounded-xl items-center flex-row justify-center gap-2"
+            >
+              <Ionicons name="calendar" size={20} color="white" />
+              <Text className="text-white font-bold text-lg">
+                {t("study.exam_modal.pick_date", "Pick Exam Date")}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                examModalRef.current?.close();
+                saveExamDate(null);
+              }}
+              className="py-4 rounded-xl border border-black/10 dark:border-white/10"
+            >
+              <Text className="text-center font-bold text-text-muted-light dark:text-text-muted-dark">
+                {t("study.exam_modal.no_exam")}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modalize>
+
+      {/* --- NATIVE DATE PICKER OVERLAY --- */}
+      <DatePicker
+        modal
+        open={showDatePicker}
+        date={tempDate}
+        mode="date"
+        minimumDate={new Date(new Date().setDate(new Date().getDate() + 2))}
+        title={t("study.exam_modal.pick_date", "Select Exam Date")}
+        onConfirm={(date) => {
+          setShowDatePicker(false);
+          setTempDate(date);
+          saveExamDate(date);
+        }}
+        onCancel={() => {
+          setShowDatePicker(false);
+        }}
+      />
+
+      {/* --- HOW IT WORKS MODAL --- */}
+      <Modalize
+        ref={howItWorksModalRef}
+        adjustToContentHeight
+        panGestureEnabled={true}
+        closeOnOverlayTap={true}
+        modalStyle={{
+          backgroundColor: isDark ? "#1E293B" : "#F8FAFC", // Match your theme
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+          paddingTop: 40,
+          paddingBottom: 60,
+          paddingHorizontal: 24,
+        }}
+        handlePosition="inside"
+        handleStyle={{
+          backgroundColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+        }}
+        withHandle={true}
+      >
+        <View className="flex-row justify-between items-center mb-6">
+          <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl">
+            {t("study.how_it_works.title")}
+          </Text>
+          <Pressable
+            onPress={() => howItWorksModalRef.current?.close()}
+            className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
+          >
+            <Ionicons
+              name="close"
+              size={24}
+              color={isDark ? "white" : "black"}
+            />
+          </Pressable>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text className="text-text-muted-light dark:text-text-muted-dark text-base mb-6 leading-6">
+            {t("study.how_it_works.intro_1")}{" "}
+            <Text className="font-bold text-action">
+              {t("study.how_it_works.spaced_repetition")}
+            </Text>{" "}
+            {t("study.how_it_works.intro_2")}
+          </Text>
+
+          {/* HARD */}
+          <View className="flex-row mb-6 gap-4">
+            <View className="bg-red-100 dark:bg-red-900/20 w-12 h-12 rounded-full items-center justify-center">
+              <Ionicons name="refresh" size={24} color="#EF4444" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-red-500 font-bold text-lg mb-1">
+                {t("study.how_it_works.hard_title")}
+              </Text>
+              <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                {t("study.how_it_works.hard_desc_1")}{" "}
+                <Text className="font-bold">
+                  {t("study.how_it_works.time_10m")}
                 </Text>
-                <Pressable
-                  onPress={() => setInfoModalVisible(false)}
-                  className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
-                >
-                  <Ionicons
-                    name="close"
-                    size={24}
-                    color={isDark ? "white" : "black"}
-                  />
-                </Pressable>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <Text className="text-text-muted-light dark:text-text-muted-dark text-base mb-6 leading-6">
-                  {t("study.how_it_works.intro_1")}{" "}
-                  <Text className="font-bold text-action">
-                    {t("study.how_it_works.spaced_repetition")}
-                  </Text>{" "}
-                  {t("study.how_it_works.intro_2")}
-                </Text>
-
-                {/* HARD */}
-                <View className="flex-row mb-6 gap-4">
-                  <View className="bg-red-100 dark:bg-red-900/20 w-12 h-12 rounded-full items-center justify-center">
-                    <Ionicons name="refresh" size={24} color="#EF4444" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-red-500 font-bold text-lg mb-1">
-                      {t("study.how_it_works.hard_title")}
-                    </Text>
-                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
-                      {t("study.how_it_works.hard_desc_1")}{" "}
-                      <Text className="font-bold">
-                        {t("study.how_it_works.time_10m")}
-                      </Text>
-                      .
-                    </Text>
-                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
-                      {t("study.how_it_works.hard_gesture")}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* MEDIUM */}
-                <View className="flex-row mb-6 gap-4">
-                  <View className="bg-yellow-100 dark:bg-yellow-900/20 w-12 h-12 rounded-full items-center justify-center">
-                    <Ionicons name="time" size={24} color="#EAB308" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-yellow-600 dark:text-yellow-500 font-bold text-lg mb-1">
-                      {t("study.how_it_works.medium_title")}
-                    </Text>
-                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
-                      {t("study.how_it_works.medium_desc_1")}{" "}
-                      <Text className="font-bold">
-                        {t("study.how_it_works.time_tomorrow")}
-                      </Text>
-                      .
-                    </Text>
-                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
-                      {t("study.how_it_works.medium_action")}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* EASY */}
-                <View className="flex-row mb-6 gap-4">
-                  <View className="bg-green-100 dark:bg-green-900/20 w-12 h-12 rounded-full items-center justify-center">
-                    <Ionicons name="checkmark" size={24} color="#22C55E" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-green-600 dark:text-green-500 font-bold text-lg mb-1">
-                      {t("study.how_it_works.easy_title")}
-                    </Text>
-                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
-                      {t("study.how_it_works.easy_desc_1")}{" "}
-                      <Text className="font-bold">
-                        {t("study.how_it_works.time_4d")}
-                      </Text>{" "}
-                      {t("study.how_it_works.easy_desc_2")}
-                    </Text>
-                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
-                      {t("study.how_it_works.easy_gesture")}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* DELETE */}
-                <View className="flex-row mb-8 gap-4">
-                  <View className="bg-gray-100 dark:bg-gray-800 w-12 h-12 rounded-full items-center justify-center">
-                    <Ionicons name="trash" size={24} color="#94A3B8" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-gray-600 dark:text-gray-400 font-bold text-lg mb-1">
-                      {t("study.how_it_works.delete_title")}
-                    </Text>
-                    <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
-                      {t("study.how_it_works.delete_desc")}
-                    </Text>
-                    <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
-                      {t("study.how_it_works.delete_gesture")}
-                    </Text>
-                  </View>
-                </View>
-
-                <Pressable
-                  onPress={() => setInfoModalVisible(false)}
-                  className="bg-action py-4 rounded-xl items-center mb-8"
-                >
-                  <Text className="text-white font-bold text-lg">
-                    {t("study.how_it_works.button_close")}
-                  </Text>
-                </Pressable>
-              </ScrollView>
+                .
+              </Text>
+              <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                {t("study.how_it_works.hard_gesture")}
+              </Text>
             </View>
           </View>
-        </BlurView>
-      </Modal>
+
+          {/* MEDIUM */}
+          <View className="flex-row mb-6 gap-4">
+            <View className="bg-yellow-100 dark:bg-yellow-900/20 w-12 h-12 rounded-full items-center justify-center">
+              <Ionicons name="time" size={24} color="#EAB308" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-yellow-600 dark:text-yellow-500 font-bold text-lg mb-1">
+                {t("study.how_it_works.medium_title")}
+              </Text>
+              <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                {t("study.how_it_works.medium_desc_1")}{" "}
+                <Text className="font-bold">
+                  {t("study.how_it_works.time_tomorrow")}
+                </Text>
+                .
+              </Text>
+              <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                {t("study.how_it_works.medium_action")}
+              </Text>
+            </View>
+          </View>
+
+          {/* EASY */}
+          <View className="flex-row mb-6 gap-4">
+            <View className="bg-green-100 dark:bg-green-900/20 w-12 h-12 rounded-full items-center justify-center">
+              <Ionicons name="checkmark" size={24} color="#22C55E" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-green-600 dark:text-green-500 font-bold text-lg mb-1">
+                {t("study.how_it_works.easy_title")}
+              </Text>
+              <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                {t("study.how_it_works.easy_desc_1")}{" "}
+                <Text className="font-bold">
+                  {t("study.how_it_works.time_4d")}
+                </Text>{" "}
+                {t("study.how_it_works.easy_desc_2")}
+              </Text>
+              <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                {t("study.how_it_works.easy_gesture")}
+              </Text>
+            </View>
+          </View>
+
+          {/* DELETE */}
+          <View className="flex-row mb-8 gap-4">
+            <View className="bg-gray-100 dark:bg-gray-800 w-12 h-12 rounded-full items-center justify-center">
+              <Ionicons name="trash" size={24} color="#94A3B8" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-gray-600 dark:text-gray-400 font-bold text-lg mb-1">
+                {t("study.how_it_works.delete_title")}
+              </Text>
+              <Text className="text-text-main-light dark:text-text-main-dark text-sm opacity-80">
+                {t("study.how_it_works.delete_desc")}
+              </Text>
+              <Text className="text-xs text-text-muted-light mt-2 font-bold uppercase tracking-wide">
+                {t("study.how_it_works.delete_gesture")}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </Modalize>
 
       {/* --- CONTEXT MODAL --- */}
       <Modal

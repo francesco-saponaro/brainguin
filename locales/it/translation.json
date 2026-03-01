@@ -1,5 +1,7 @@
 {
+  "document": "Documento",
   "auth": {
+    "document": "Documento",
     "welcome_back": "Bentornato!",
     "subtitle": "Accedi per continuare i tuoi progressi",
     "email_label": "Email",
@@ -47,7 +49,7 @@
     "hero_signup_subtitle": "Crea un account per tracciare i tuoi progressi, salvare i tuoi mazzi e padroneggiare qualsiasi argomento più velocemente.",
     "hook_speed": "Trasforma ore di lettura in minuti di padronanza. Accedi per iniziare il tuo primo Sprint di Creazione.",
     "hook_recall": "Smetti di rileggere. Inizia a ricordare. Accedi per trasformare i tuoi studi in flashcard per il richiamo attivo.",
-    "hook_ai_power": "Sblocca il tuo partner di studio AI. Un PDF, un link, un piano di studio perfetto.",
+    "hook_ai_power": "Sblocca il tuo partner di studio AI. Un documento, un link, un piano di studio perfetto.",
     "hook_mascot": "Unisciti alla colonia! Accedi per impostare i tuoi obiettivi d'esame e lascia che la nostra AI crei la tua coda di ripasso quotidiana."
   },
   "formValidations": {
@@ -61,23 +63,39 @@
     "generic": "Qualcosa è andato storto. Riprova."
   },
   "onboarding": {
-    "skip": "Salta",
+    "language_title": "Scegli la tua lingua 🌍",
+    "language_description": "Seleziona la lingua in cui desideri utilizzare BrainGuin. Non preoccuparti, potrai sempre cambiarla in seguito nelle impostazioni!",
+
+    "welcome_title": "Studia in modo intelligente 🧠",
+    "welcome_description": "Smetti di perdere ore a sottolineare libri e riscrivere appunti. BrainGuin usa l'IA per fare il lavoro pesante, trasformando qualsiasi materiale in pillole di conoscenza che ricorderai davvero.",
+
+    "creation_title": "Carica qualsiasi cosa. 📄",
+    "creation_description": "Hai un enorme PDF? Un lungo articolo web? O un argomento specifico? Dallo in pasto a BrainGuin. La nostra IA digerisce istantaneamente il materiale ed estrae i concetti più importanti.",
+
+    "science_title": "Hackera la tua memoria ⚡",
+    "science_description": "Usiamo un algoritmo di Ripetizione Spaziata che prevede esattamente quando stai per dimenticare un'informazione. Hai una scadenza? Imposta la Data dell'Esame e adatteremo il tuo ritmo!",
+
+    "habit_title": "Solo 5 minuti al giorno ⏱️",
+    "habit_description": "La costanza è il tuo superpotere. Completa il tuo 'Stack Giornaliero' in pochi minuti. Aggiungi il nostro Widget e attiva le notifiche per non perdere mai un ripasso.",
+
+    "try_it_title": "Creiamo il tuo primo mazzo! 🚀",
+    "try_it_description": "Non fidarti solo della nostra parola. Carica un documento, incolla un link web o scrivi un argomento che vuoi imparare ora e guarda la magia accadere.",
+    "try_it_placeholder": "es., L'Impero Romano...",
+
+    "result_title": "Boom! Il tuo mazzo è pronto 🎉",
+    "result_description": "Il richiamo attivo è il modo più veloce per imparare. Leggi la domanda, indovina la risposta, poi tocca per girare. Scorri a Destra se era facile, o a Sinistra se devi ripassarla presto.",
+    "result_card_q": "Qual è la centrale energetica della cellula?",
+    "result_card_tap": "Tocca per girare",
+
+    "paywall_title": "Apprendimento Illimitato 🔓",
+    "paywall_description": "Hai appena visto quanto può essere veloce studiare. Passa a Premium per sbloccare generazioni IA illimitate, ripassi illimitati e caricamento avanzato di documenti. Investi nella tua mente!",
+
+    "prev_button": "Precedente",
     "next_button": "Avanti",
-    "prev_button": "Indietro",
-    "select_language_button": "Scegli lingua",
-    "start_sprint_button": "Inizia il mio primo Sprint",
-    "language_title": "Scegli la lingua",
-    "language_description": "La useremo per i tuoi riassunti e le flashcard generati dall'IA.",
-    "welcome_title": "Padroneggia ogni argomento",
-    "welcome_description": "BrainGuin è il tuo partner di studio IA progettato per aiutarti a imparare più velocemente e ricordare più a lungo.",
-    "creation_sprint_title": "Porta i tuoi contenuti",
-    "creation_sprint_description": "Carica un PDF, incolla un link o scrivi un argomento. Elaboriamo tutto in pochi secondi.",
-    "flashcard_title": "Flashcard istantanee",
-    "flashcard_description": "La nostra IA crea automaticamente un mazzo personalizzato per te. Basta inserimento manuale dei dati.",
-    "spaced_repetition_title": "Impara per sempre",
-    "spaced_repetition_description": "Il nostro algoritmo programma i tuoi ripassi al momento perfetto per non farti dimenticare nulla.",
-    "success_title": "Pronto al decollo?",
-    "success_description": "È tutto pronto. Inizia il tuo primo Sprint di Creazione e supera alla grande i tuoi esami!"
+    "skip": "Salta",
+    "generate_magic": "Genera Magia ⚡",
+    "finish_review": "Termina Ripasso",
+    "unlock_premium": "Sblocca Premium"
   },
   "home": {
     "welcome_back": "Bentornato",
@@ -92,12 +110,12 @@
     "almost_ready": "Quasi pronto...",
     "new_creation_sprint": "Nuovo Sprint di Creazione",
     "tap_to_change_file": "Tocca per cambiare il file",
-    "tap_to_select_pdf": "Tocca per selezionare un PDF",
+    "tap_to_select_document": "Tocca per selezionare un documento",
     "paste_link": "Incolla il link",
     "what_do_you_want_to_learn": "Cosa vuoi imparare?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. La storia del Samurai, Meccanica Quantistica 101...",
     "generate_flashcards": "Genera le Flashcard",
-    "upload_your_pdf": "Carica il tuo PDF",
+    "upload_your_document": "Carica il tuo documento",
     "paste_topic_description": "Scrivi o Incolla una descrizione dell'argomento che vuoi imparare"
   },
   "common": {
@@ -124,17 +142,25 @@
     },
     "source_types": {
       "all": "Tutti",
-      "pdf": "PDF",
+      "document": "Documento",
       "url": "URL",
       "topic": "Argomento"
     },
     "source_badges": {
-      "pdf": "Documento PDF",
+      "document": "Documento",
       "url": "Articolo Web",
       "topic": "Argomento AI",
       "unknown": "Sorgente Sconosciuta"
     },
+    "exam_alert": {
+      "title": "Data dell'esame",
+      "desc": "Cosa vorresti fare?",
+      "remove": "Rimuovi data dell'esame",
+      "change": "Cambia data"
+    },
+    "toast_exam_updated": "Piano di studio aggiornato!",
     "card": {
+      "add_exam": "Aggiungi esame",
       "flashcards": "Flashcard",
       "created": "Creato",
       "reviewed": "Recensito",
@@ -196,28 +222,34 @@
       "title": "Come funziona 🧠",
       "intro_1": "BrainGuin usa la",
       "spaced_repetition": "Ripetizione Dilazionata",
-      "intro_2": "per prevedere quando stai per dimenticare una carta. Il tuo compito è semplice: dicci quanto è stato difficile ricordare la risposta.",
+      "intro_2": "per prevedere quando potresti dimenticare una carta. Il tuo compito è semplice: dicci quanto è stato difficile ricordarla.",
       "hard_title": "Difficile / Dimenticato",
-      "hard_desc_1": "Non sapevi la risposta. Resetteremo questa carta e te la mostreremo di nuovo tra",
-      "time_10m": "10 minuti",
+      "hard_desc_1": "Non sapevi la risposta. Resetteremo i progressi di questa carta e te la mostreremo",
+      "time_10m": "immediatamente",
       "hard_gesture": "Gesto: Scorri a Sinistra ←",
       "medium_title": "Medio",
-      "medium_desc_1": "La sapevi, ma hai dovuto pensarci. La mostreremo di nuovo",
-      "time_tomorrow": "domani",
+      "medium_desc_1": "La sapevi, ma hai dovuto pensarci. La programmeremo per farti rivedere",
+      "time_tomorrow": "presto",
       "medium_action": "Azione: Premi il tasto Giallo",
       "easy_title": "Facile",
-      "easy_desc_1": "La sapevi istantaneamente! Non mostreremo questa carta per",
-      "time_4d": "4 giorni",
-      "easy_desc_2": "(o più).",
+      "easy_desc_1": "La sapevi all'istante! L'intervallo aumenterà così non la rivedrai fino a",
+      "time_4d": "molto più tardi",
+      "easy_desc_2": "(a meno che il tuo esame non si avvicini!).",
       "easy_gesture": "Gesto: Scorri a Destra →",
       "delete_title": "Elimina Carta",
       "delete_desc": "Usa questo se l'IA ha generato una carta errata o se non vuoi più studiarla.",
-      "delete_gesture": "Gesto: Scorri in Basso ↓ (o icona Cestino)",
+      "delete_gesture": "Gesto: Scorri in Basso ↓",
       "button_close": "Ho capito!"
     },
     "swipe_actions": {
       "delete_label": "ELIMINA",
       "footer_hint": "⬅️ Difficile  •  ⬇️ Elimina  •  ➡️ Facile"
+    },
+    "exam_modal": {
+      "title": "Quando è l'esame? 📅",
+      "desc": "Comprimeremo automaticamente il tuo programma di studio per assicurarci che tu memorizzi tutto prima del grande giorno.",
+      "pick_date": "Scegli la data dell'esame",
+      "no_exam": "Nessun esame (Memoria a lungo termine)"
     }
   },
   "errors": {
@@ -225,14 +257,14 @@
     "expansion_failed": "Generazione fallita",
     "delete_failed": "Eliminazione fallita",
     "login_required": "Per favore, accedi prima.",
-    "pdf_processing": "Impossibile elaborare il file PDF.",
+    "document_processing": "Impossibile elaborare il file del documento.",
     "ai_failure": "Generazione IA fallita.",
-    "pdf_empty": "Il testo del PDF è vuoto o illeggibile.",
+    "document_empty": "Il testo del documento è vuoto o illeggibile.",
     "url_access_error": "Impossibile aprire l'URL",
     "url_content_error": "Il contenuto del sito è troppo breve o bloccato.",
     "timeout_error": "Numero massimo di tentativi superato."
   },
-  "load_pdf": "Carica un PDF",
+  "load_document": "Carica un documento",
   "web_articles": "Incolla un URL contenente il testo",
   "ai_generation_load": "Incolla o scrivi il testo",
   "start_session": "Inizia Sessione",
@@ -245,16 +277,12 @@
   "daily_mission": "Missione quotidiana",
   "mission_complete": "Missione completata",
   "paywall": {
-    "headerTitle": "Sblocca",
-    "headerHighlight": "Superpoteri Illimitati",
     "feat1Title": "Generazioni Illimitate",
-    "feat1Desc": "Crea mazzi da qualsiasi PDF, link o argomento.",
+    "feat1Desc": "Crea mazzi da qualsiasi documento, link o argomento.",
     "feat2Title": "Motore di Apprendimento Intelligente",
     "feat2Desc": "Impara le carte 10 volte più velocemente con l'IA.",
     "feat3Title": "Modalità Focus senza Pubblicità",
     "feat3Desc": "Nessuna distrazione. Puro flusso di studio.",
-    "bestValue": "Miglior Prezzo",
-    "perYear": "/anno",
     "monthlyBreakdown": "(Solo {{price}} / mese)",
     "cta": "Sblocca l'Accesso Annuale",
     "guarantee": "Pagamento sicuro. Annulla quando vuoi.",
@@ -267,12 +295,26 @@
     "restore_success_desc": "Il tuo accesso Pro è stato ripristinato.",
     "restore_no_purchase_title": "Nessun Acquisto Trovato",
     "restore_no_purchase_desc": "Non abbiamo trovato abbonamenti attivi.",
-    "restore_error_title": "Errore di Ripristino"
+    "restore_error_title": "Errore di Ripristino",
+    "badge_unlocked": "BrainGuin Pro Sbloccato",
+    "headerTitle": "Sblocca l'Apprendimento",
+    "headerHighlight": "Illimitato",
+    "feat_upload_title": "Carica Qualsiasi Cosa",
+    "feat_upload_desc": "Converti all'istante infiniti PDF, link o testi in flashcard.",
+    "feat_exam_title": "Modalità Ritmo Esame",
+    "feat_exam_desc": "Imposta una scadenza e lascia che l'IA crei il tuo piano di studi.",
+    "feat_algo_title": "Ripetizione Spaziata Smart",
+    "feat_algo_desc": "Sblocca l'algoritmo di memoria per non dimenticare mai nulla.",
+    "feat_habit_title": "Stack Giornaliero Illimitato",
+    "feat_habit_desc": "Mantieni vivo il tuo streak e padroneggia migliaia di carte.",
+    "bestValue": "Miglior Prezzo",
+    "perYear": "/ anno",
+    "perMonth": "/ mese"
   },
   "login_required": "Per favore, accedi prima.",
-  "pdf_processing": "Impossibile elaborare il file PDF.",
+  "document_processing": "Impossibile elaborare il file del documento.",
   "ai_generation": "Generazione IA fallita.",
-  "pdf_unreadable": "Il testo del PDF è vuoto o illeggibile.",
+  "document_empty": "Il testo del documento è vuoto o illeggibile.",
   "url_access": "Impossibile accedere all'URL.",
   "url_blocked": "Il contenuto del sito è troppo breve o bloccato.",
   "timeout": "Numero massimo di tentativi superato.",

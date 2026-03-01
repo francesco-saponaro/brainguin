@@ -2,8 +2,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { Buffer } from "node:buffer";
-import { convert } from "npm:html-to-text";
-import pdf from "npm:pdf-parse@1.1.1";
+import mammoth from "npm:mammoth";
+import { PDFExtract } from "npm:pdf.js-extract";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -38,7 +38,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { inputType, data, userId, deckId } = await req.json();
+    const { inputType, data, userId, deckId, mimeType } = await req.json();
+
+    console.log("--- 🏁 STARTING PROCESS ---");
+    console.log(`Payload received: type=${inputType}, userId=${userId}, mime=${mimeType}`);
 
     if (!OPENAI_API_KEY) throw new Error("Missing OpenAI API Key");
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Missing Database Keys");
@@ -46,30 +49,94 @@ Deno.serve(async (req) => {
 
     console.log(`🐧 BrainGuin Processing: ${inputType}`);
 
-    // --- 1. ROBUST TEXT EXTRACTION (With Specific Errors) ---
-    let cleanText = "";
+    // --- 1. ROBUST TEXT EXTRACTION & PROMPT SETUP ---
+    let cleanText = ""; // Keep this for URL/Topic saving
 
     try {
-      if (inputType === 'pdf') {
-        console.log("📄 Extracting PDF...");
-        const dataBuffer = Buffer.from(data, 'base64');
-        const pdfData = await pdf(dataBuffer);
-        cleanText = pdfData.text;
-        if (!cleanText || cleanText.length < 50) throw new Error("PDF text is empty or unreadable.");
+     if (inputType === 'document') {
+      console.log("📂 Step 1: Processing Document...");
+         if (!data) throw new Error("No file data provided.");
+         const dataBuffer = Buffer.from(data, 'base64');
+         const safeMime = mimeType || ''; // Fallback to empty string if undefined
+
+         if (safeMime.includes('pdf')) {
+            //  console.log("📄 Extracting PDF Text...");
+            //  const pdfData = await pdf(dataBuffer);
+            //  cleanText = pdfData.text;
+            //  console.log(`✅ PDF Extracted: ${cleanText.length} chars`);
+            console.log("📄 Extracting PDF via pdf.js-extract...");
+            const pdfExtract = new PDFExtract();
+            const result = await pdfExtract.extractBuffer(dataBuffer, {});
+            cleanText = result.pages
+                .map(page => page.content.map(item => item.str).join(" "))
+                .join("\n");
+         } 
+         else if (safeMime.includes('wordprocessingml') || safeMime.includes('msword')) {
+             console.log("📝 Extracting Word Doc Text...");
+             const result = await mammoth.extractRawText({ buffer: dataBuffer });
+             cleanText = result.value;
+             console.log(`✅ Word Doc Extracted: ${cleanText.length} chars`);
+         } 
+         else if (safeMime.includes('text/plain')) {
+             console.log("📃 Extracting Plain Text...");
+             cleanText = dataBuffer.toString('utf-8');
+              console.log(`✅ Plain Text Extracted: ${cleanText.length} chars`);
+         }
+         else {
+             // If we don't know the mime type, try parsing it as a string just in case,
+             // otherwise throw an error.
+             throw new Error(`Unsupported document format: ${safeMime}`);
+         }
+
+         if (!cleanText || cleanText.trim().length < 20) {
+              console.warn("⚠️ Extracted text is very short or empty. This might be a scanned image without OCR. Please ensure the document contains selectable text.");
+             throw new Error("Document text is empty or unreadable (might be a scanned image without text).");
+         }
       } 
       else if (inputType === 'url') {
-         console.log("🌐 Scraping URL...");
-         const urlResponse = await fetch(data);
-         if (!urlResponse.ok) throw new Error(`Failed to access URL: ${urlResponse.statusText}`);
-         const html = await urlResponse.text();
-         cleanText = convert(html, { 
-             wordwrap: 130, 
-             selectors: [ 
-                 { selector: 'img', format: 'skip' },
-                 { selector: 'a', options: { ignoreHref: true } }
-             ] 
+       console.log("🌐 Scraping URL...");
+       if (data.includes('twitter.com') || data.includes('x.com')) {
+             console.log("🐦 Using Twitter bypass...");
+             // Convert https://x.com/user/status/123 to https://api.vxtwitter.com/user/status/123
+             const vxUrl = data.replace('x.com', 'api.vxtwitter.com').replace('twitter.com', 'api.vxtwitter.com');
+             
+             const vxResponse = await fetch(vxUrl);
+             if (!vxResponse.ok) throw new Error("Could not fetch Tweet.");
+             
+             const vxData = await vxResponse.json();
+             // Extract the tweet text
+             cleanText = `Tweet by ${vxData.user_name}:\n${vxData.text}`;
+         } 
+         // 🚨 USE JINA FOR EVERYTHING ELSE
+         else {
+       // By prepending https://r.jina.ai/, their server acts as a headless browser,
+         // runs the JavaScript, strips the ads/menus, and returns clean text!
+         const urlResponse = await fetch(`https://r.jina.ai/${data}`, {
+             headers: {
+                 // Tell Jina to return clean Markdown/Text optimized for AI
+                 "Accept": "text/plain", 
+             }
          });
-         if (!cleanText || cleanText.length < 100) throw new Error("Website content is too short or blocked.");
+         
+         if (!urlResponse.ok) throw new Error(`Failed to access URL: ${urlResponse.statusText}`);
+         
+         cleanText = await urlResponse.text();
+         
+         if (!cleanText || cleanText.length < 100) {
+             throw new Error("Website content is too short or aggressively blocked by the host.");
+         }
+        //  const urlResponse = await fetch(data);
+        //  if (!urlResponse.ok) throw new Error(`Failed to access URL: ${urlResponse.statusText}`);
+        //  const html = await urlResponse.text();
+        //  cleanText = convert(html, { 
+        //      wordwrap: 130, 
+        //      selectors: [ 
+        //          { selector: 'img', format: 'skip' },
+        //          { selector: 'a', options: { ignoreHref: true } }
+        //      ] 
+        //  });
+        //  if (!cleanText || cleanText.length < 100) throw new Error("Website content is too short or blocked.");
+         }
       } 
       else {
         cleanText = data;
@@ -98,7 +165,9 @@ Deno.serve(async (req) => {
       Do NOT limit the number of cards. Create as many as necessary to comprehensively cover the material (up to 50 max).
 
       LANGUAGE RULE (CRITICAL):
-      **You MUST detect the language of the SOURCE MATERIAL and generate EVERYTHING in that EXACT SAME LANGUAGE.** You MUST generate the Title, Summary, Questions, Answers, and Context hints in that **EXACT SAME LANGUAGE**. 
+      1. First, detect the primary language of the SOURCE MATERIAL.
+      2. Write that exact language name in the "detected_language" field (e.g., "English", "Spanish", "French").
+      3. ALL subsequent fields (Title, Summary, Questions, Answers, Context) MUST be written in that EXACT SAME language.
 
       CRITICAL RULES:
       1. **Atomic Principle**: One card = One specific fact. Do not merge multiple concepts.
@@ -114,17 +183,19 @@ Deno.serve(async (req) => {
 
       OUTPUT FORMAT (JSON ONLY):
       {
-        "title": "A short, catchy title for this deck (max 5 words) in SOURCE LANGUAGE",
-        "summary": "A brief summary of what this deck covers. in SOURCE LANGUAGE",
+        "detected_language": "The primary language of the source text",
+        "title": "A short, catchy title for this deck (max 5 words) in the DETECTED LANGUAGE",
+        "summary": "A brief summary of what this deck covers in the DETECTED LANGUAGE",
         "flashcards": [
            { 
-             "question": "What is the powerhouse of the cell? in SOURCE LANGUAGE", 
-             "answer": "Mitochondria in SOURCE LANGUAGE",
-             "context": "Cell Biology - Organelle Function in SOURCE LANGUAGE"
+             "question": "What is the powerhouse of the cell? (Must be in DETECTED LANGUAGE)", 
+             "answer": "Mitochondria (Must be in DETECTED LANGUAGE)",
+             "context": "Cell Biology - Organelle Function (Must be in DETECTED LANGUAGE)"
            }
         ]
       }
     `;
+    
 
     const response = await fetchWithRetry('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -134,12 +205,12 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini', 
-        messages: [
+        messages: [ // 👈 Fixed Syntax here
           { role: 'system', content: prompt },
           { role: 'user', content: `SOURCE MATERIAL:\n\n${cleanText}` }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3 // Lower temp = stricter adherence to facts
+        temperature: 0.0
       })
     });
 
@@ -162,8 +233,8 @@ Deno.serve(async (req) => {
           user_id: userId,
           title: content.title || "New Study Deck",
           source_type: inputType,
-          // Store a snippet of source content, not the whole thing if massive
-          source_content: cleanText.substring(0, 1000) 
+          // 🚨 CRITICAL: Save 15000 chars so "Generate More" actually works!
+          source_content: cleanText.substring(0, 15000)
         })
         .select().single();
       
@@ -202,7 +273,7 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error("🔥 Fatal Edge Function Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+      status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

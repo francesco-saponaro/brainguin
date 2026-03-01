@@ -19,7 +19,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-type InputType = "pdf" | "url" | "topic";
+type InputType = "document" | "url" | "topic";
 
 export default function CreationModal() {
   const { type } = useLocalSearchParams<{ type: InputType }>();
@@ -30,12 +30,12 @@ export default function CreationModal() {
   const { colorScheme } = useColorScheme();
   const [isThinking, setIsThinking] = useState(false);
 
-  const [activeType, setActiveType] = useState<InputType>(type || "pdf");
+  const [activeType, setActiveType] = useState<InputType>(type || "document");
   const [inputText, setInputText] = useState("");
   const [selectedFile, setSelectedFile] = useState<any>(null);
 
   const handleCreateSubmit = async (
-    inputType: "pdf" | "url" | "topic",
+    inputType: "document" | "url" | "topic",
     inputData: any,
   ) => {
     if (!session?.user) {
@@ -63,8 +63,8 @@ export default function CreationModal() {
 
       let payloadData = inputData;
 
-      // --- HANDLE PDF CONVERSION (Web Standard) ---
-      if (inputType === "pdf" && inputData.uri) {
+      // --- HANDLE DOCUMENT CONVERSION (Web Standard) ---
+      if (inputType === "document" && inputData.uri) {
         try {
           // 1. Fetch the local blob from the browser
           const response = await fetch(inputData.uri);
@@ -84,8 +84,8 @@ export default function CreationModal() {
 
           payloadData = base64;
         } catch (fileError) {
-          console.error("PDF Processing Error:", fileError);
-          throw new Error(t("pdf_processing"));
+          console.error("Document Processing Error:", fileError);
+          throw new Error(t("document_processing"));
         }
       }
 
@@ -137,16 +137,16 @@ export default function CreationModal() {
       let errorText = t("errors.generic"); // Default fallback
       const rawMsg = e.message || "";
 
-      if (rawMsg.includes("PDF text is empty")) {
-        errorText = t("errors.pdf_empty");
+      if (rawMsg.includes("Document text is empty")) {
+        errorText = t("errors.document_empty");
       } else if (rawMsg.includes("Failed to access URL")) {
         errorText = t("errors.url_access_error");
       } else if (rawMsg.includes("Website content is too short")) {
         errorText = t("errors.url_content_error");
       } else if (rawMsg.includes("Max retries exceeded")) {
         errorText = t("errors.timeout_error");
-      } else if (rawMsg === "PDF_PROCESSING_ERROR") {
-        errorText = t("errors.pdf_processing");
+      } else if (rawMsg === "DOCUMENT_PROCESSING_ERROR") {
+        errorText = t("errors.document_processing");
       } else if (rawMsg === "AI_FAILURE") {
         errorText = t("errors.ai_failure");
       }
@@ -162,7 +162,12 @@ export default function CreationModal() {
   const handleFilePick = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "application/pdf",
+        type: [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "text/plain",
+        ],
         // CopyToCache is ignored on web, but harmless to keep
         copyToCacheDirectory: true,
       });
@@ -173,14 +178,14 @@ export default function CreationModal() {
     } catch (err) {
       Toast.show({
         type: "error",
-        text1: t("creation.invalid_pdf"),
+        text1: t("creation.invalid_document"),
       });
     }
   };
 
   const handleSubmit = () => {
-    if (activeType === "pdf" && selectedFile) {
-      handleCreateSubmit("pdf", selectedFile);
+    if (activeType === "document" && selectedFile) {
+      handleCreateSubmit("document", selectedFile);
     } else if (
       (activeType === "url" || activeType === "topic") &&
       inputText.length > 3
@@ -190,7 +195,7 @@ export default function CreationModal() {
   };
 
   useEffect(() => {
-    setActiveType(type || "pdf");
+    setActiveType(type || "document");
   }, [type]);
 
   return (
@@ -247,7 +252,7 @@ export default function CreationModal() {
             {/* Type Selector (Tabs) */}
             <View className="flex-row gap-2 mb-6">
               {[
-                { id: "pdf", label: "PDF", icon: "document-text" },
+                { id: "document", label: "Document", icon: "document-text" },
                 { id: "url", label: "URL", icon: "link" },
                 { id: "topic", label: "Topic", icon: "bulb" },
               ].map((item) => (
@@ -293,10 +298,10 @@ export default function CreationModal() {
 
             {/* Input Area */}
             <View>
-              {activeType === "pdf" && (
+              {activeType === "document" && (
                 <View>
                   <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                    {t("creation.upload_your_pdf")}
+                    {t("creation.upload_your_document")}
                   </Text>
                   <PressableOpacity
                     activateOnHover
@@ -332,7 +337,7 @@ export default function CreationModal() {
                           color="#94A3B8"
                         />
                         <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-                          {t("creation.tap_to_select_pdf")}
+                          {t("creation.tap_to_select_document")}
                         </Text>
                       </>
                     )}
@@ -397,14 +402,14 @@ export default function CreationModal() {
               borderRadius: 12,
               alignItems: "center",
               backgroundColor: (
-                activeType === "pdf" ? !selectedFile : inputText.length < 3
+                activeType === "document" ? !selectedFile : inputText.length < 3
               )
                 ? colorScheme === "dark"
                   ? "#334155"
                   : "#CBD5E1"
                 : "#F97316",
               opacity: (
-                activeType === "pdf" ? !selectedFile : inputText.length < 3
+                activeType === "document" ? !selectedFile : inputText.length < 3
               )
                 ? 0.5
                 : 1,

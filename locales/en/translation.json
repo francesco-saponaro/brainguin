@@ -1,5 +1,7 @@
 {
+  "document": "Document",
   "auth": {
+    "document": "Document",
     "welcome_back": "Welcome Back!",
     "subtitle": "Sign in to continue your progress",
     "email_label": "Email",
@@ -47,7 +49,7 @@
     "hero_signup_subtitle": "Create an account to track your progress, save your decks, and master any topic faster.",
     "hook_speed": "Turn hours of reading into minutes of mastery. Sign in to start your first Creation Sprint.",
     "hook_recall": "Stop re-reading. Start remembering. Sign in to turn your studies into active-recall flashcards.",
-    "hook_ai_power": "Unlock your AI Study Partner. One PDF, one link, one perfect study plan.",
+    "hook_ai_power": "Unlock your AI Study Partner. One document, one link, one perfect study plan.",
     "hook_mascot": "Join the colony! Sign in to set your exam goals and let our AI build your daily review queue."
   },
   "formValidations": {
@@ -61,23 +63,39 @@
     "generic": "Something went wrong. Please try again."
   },
   "onboarding": {
-    "skip": "Skip",
-    "next_button": "Next",
+    "language_title": "Choose Your Language 🌍",
+    "language_description": "Select the language you'd like to use BrainGuin in. Don't worry, you can always change this later in your settings!",
+
+    "welcome_title": "Study Smarter, Not Harder 🧠",
+    "welcome_description": "Stop wasting hours highlighting textbooks and rewriting notes. BrainGuin uses AI to do the heavy lifting, turning any study material into bite-sized knowledge you will actually remember.",
+
+    "creation_title": "Upload Anything. Literally. 📄",
+    "creation_description": "Got a massive PDF? A long web article? Or just a specific topic? Feed it to BrainGuin. Our AI instantly digests your material and extracts the absolute most important facts for you.",
+
+    "science_title": "Hack Your Memory ⚡",
+    "science_description": "We use a science-backed Spaced Repetition algorithm that predicts exactly when you are about to forget a fact and brings it back to you. Got a deadline? Set an Exam Date and we'll automatically adjust your daily pace!",
+
+    "habit_title": "Just 5 Minutes a Day ⏱️",
+    "habit_description": "Consistency is your ultimate superpower. Clear your tailored 'Daily Stack' in just a few minutes. Add our Home Screen Widget and turn on notifications so you never miss a review.",
+
+    "try_it_title": "Let’s Build Your First Deck! 🚀",
+    "try_it_description": "Don't just take our word for it. Upload a document, Paste a Web link or type a topic you want to learn about right now, and watch the magic happen.",
+    "try_it_placeholder": "e.g., The Roman Empire...",
+
+    "result_title": "Your Deck is Ready! 🎉",
+    "result_description": "Active recall is the fastest way to learn. Read the question, guess the answer, then tap to flip. Swipe Right if it was easy, or Left if you need to review it again soon. Try it!",
+    "result_card_q": "What is the powerhouse of the cell?",
+    "result_card_tap": "Tap to flip",
+
+    "paywall_title": "Unlock Limitless Learning 🔓",
+    "paywall_description": "You've just seen how fast studying can be. Go Premium to unlock unlimited AI generations, unlimited daily reviews, and advanced document uploads. Invest in your brain today!",
+
     "prev_button": "Previous",
-    "select_language_button": "Choose Language",
-    "start_sprint_button": "Start My First Sprint",
-    "language_title": "Choose Language",
-    "language_description": "We'll use this for your AI-generated summaries and flashcards.",
-    "welcome_title": "Master any topic",
-    "welcome_description": "BrainGuin is your AI study partner designed to help you learn faster and remember longer.",
-    "creation_sprint_title": "Bring your content",
-    "creation_sprint_description": "Upload a PDF, paste a link, or type a topic. We process everything in seconds.",
-    "flashcard_title": "Instant Flashcards",
-    "flashcard_description": "Our AI automatically builds a custom deck for you. No more manual data entry.",
-    "spaced_repetition_title": "Learn Forever",
-    "spaced_repetition_description": "Our algorithm schedules your reviews at the perfect time so you never forget.",
-    "success_title": "Ready for takeoff?",
-    "success_description": "You're all set. Let's start your first Creation Sprint and crush those exams!"
+    "next_button": "Next",
+    "skip": "Skip",
+    "generate_magic": "Generate Magic ⚡",
+    "finish_review": "Finish Review",
+    "unlock_premium": "Unlock Premium"
   },
   "home": {
     "welcome_back": "Welcome Back",
@@ -92,14 +110,14 @@
     "almost_ready": "Almost ready...",
     "new_creation_sprint": "New Creation Sprint",
     "tap_to_change_file": "Tap to change file",
-    "tap_to_select_pdf": "Tap to select a PDF",
+    "tap_to_select_document": "Tap to select a Document",
     "paste_link": "Paste Link",
     "what_do_you_want_to_learn": "What do you want to learn?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. The history of the Samurai, Quantum Mechanics 101...",
     "generate_flashcards": "Generate Flashcards",
-    "upload_your_pdf": "Upload your PDF",
+    "upload_your_document": "Upload your Document",
     "paste_topic_description": "Enter a topic you'd like to explore, or simply paste your study notes here.",
-    "invalid_pdf": "Invalid PDF file. Please select a valid PDF."
+    "invalid_document": "Invalid document file. Please select a valid document."
   },
   "common": {
     "cancel": "Cancel",
@@ -125,17 +143,25 @@
     },
     "source_types": {
       "all": "All",
-      "pdf": "PDF",
+      "document": "Document",
       "url": "URL",
       "topic": "Topic"
     },
     "source_badges": {
-      "pdf": "PDF Document",
+      "document": "Document",
       "url": "Web Article",
       "topic": "AI Topic",
       "unknown": "Unknown Source"
     },
+    "exam_alert": {
+      "title": "Exam Date",
+      "desc": "What would you like to do?",
+      "remove": "Remove Exam Date",
+      "change": "Change Date"
+    },
+    "toast_exam_updated": "Study plan updated!",
     "card": {
+      "add_exam": "Add Exam",
       "flashcards": "Flashcards",
       "created": "Created",
       "reviewed": "Reviewed",
@@ -197,28 +223,34 @@
       "title": "How it works 🧠",
       "intro_1": "BrainGuin uses",
       "spaced_repetition": "Spaced Repetition",
-      "intro_2": "to predict exactly when you are about to forget a card. Your job is simple: tell us how hard it was to remember the answer.",
+      "intro_2": "to predict when you might forget a card. Your job is simple: tell us how hard it was to remember.",
       "hard_title": "Hard / Forgot",
-      "hard_desc_1": "You didn't know the answer. We will reset this card and show it to you again in",
-      "time_10m": "10 minutes",
+      "hard_desc_1": "You didn't know the answer. We will reset this card's progress and show it to you",
+      "time_10m": "immediately",
       "hard_gesture": "Gesture: Swipe Left ←",
       "medium_title": "Medium",
-      "medium_desc_1": "You knew it, but had to think. We will show it again",
-      "time_tomorrow": "tomorrow",
+      "medium_desc_1": "You knew it, but had to think. We will schedule it to appear",
+      "time_tomorrow": "soon",
       "medium_action": "Action: Tap Yellow Button",
       "easy_title": "Easy",
-      "easy_desc_1": "You knew it instantly! We won't show this card for",
-      "time_4d": "4 days",
-      "easy_desc_2": "(or more).",
+      "easy_desc_1": "You knew it instantly! The interval will grow so you don't see it again until",
+      "time_4d": "much later",
+      "easy_desc_2": "(unless your exam is coming up!).",
       "easy_gesture": "Gesture: Swipe Right →",
       "delete_title": "Delete Card",
       "delete_desc": "Use this if the AI generated a bad card or you just don't want to study it.",
-      "delete_gesture": "Gesture: Swipe Down ↓ (or tap Trash icon)",
+      "delete_gesture": "Gesture: Swipe Down ↓",
       "button_close": "Got it!"
     },
     "swipe_actions": {
       "delete_label": "DELETE",
       "footer_hint": "⬅️ Hard  •  ⬇️ Delete  •  ➡️ Easy"
+    },
+    "exam_modal": {
+      "title": "When is your Exam? 📅",
+      "desc": "We will automatically compress your study schedule to ensure you memorize everything before the big day.",
+      "pick_date": "Pick Exam Date",
+      "no_exam": "No Exam (Long-Term Retention)"
     }
   },
   "errors": {
@@ -226,14 +258,14 @@
     "expansion_failed": "Expansion failed",
     "delete_failed": "Delete failed",
     "login_required": "Please log in first.",
-    "pdf_processing": "Could not process the PDF file.",
+    "document_processing": "Could not process the document file.",
     "ai_failure": "AI Generation Failed.",
-    "pdf_empty": "PDF text is empty or unreadable.",
+    "document_empty": "Document text is empty or unreadable.",
     "url_access_error": "Failed to access URL.",
     "url_content_error": "Website content is too short or blocked.",
     "timeout_error": "Max retries exceeded. Please try again."
   },
-  "load_pdf": "Load a PDF",
+  "load_document": "Load a Document",
   "web_articles": "Paste a URL containing text",
   "ai_generation_load": "Paste or write text",
   "start_session": "Start Session",
@@ -246,16 +278,12 @@
   "daily_mission": "Daily Mission",
   "mission_complete": "Mission Complete",
   "paywall": {
-    "headerTitle": "Unlock Unlimited",
-    "headerHighlight": "Superpowers",
     "feat1Title": "Unlimited Generations",
-    "feat1Desc": "Create decks from any PDF, Link, or Topic.",
+    "feat1Desc": "Create decks from any Document, Link, or Topic.",
     "feat2Title": "Smart Learning Engine",
     "feat2Desc": "Master cards 10x faster with AI algorithm.",
     "feat3Title": "Ad-Free Focus Mode",
     "feat3Desc": "No distractions. Pure learning flow.",
-    "bestValue": "Best Value",
-    "perYear": "/year",
     "monthlyBreakdown": "(Only {{price}} / month)",
     "cta": "Unlock Yearly Access",
     "guarantee": "Secured payment. Cancel anytime in settings.",
@@ -268,12 +296,26 @@
     "restore_success_desc": "Your Pro access has been restored.",
     "restore_no_purchase_title": "No Purchases Found",
     "restore_no_purchase_desc": "We couldn't find any active subscriptions.",
-    "restore_error_title": "Restore Error"
+    "restore_error_title": "Restore Error",
+    "badge_unlocked": "BrainGuin Pro Unlocked",
+    "headerTitle": "Unlock Limitless",
+    "headerHighlight": "Learning",
+    "feat_upload_title": "Upload Anything",
+    "feat_upload_desc": "Instantly convert infinite PDFs, links, or text into cards.",
+    "feat_exam_title": "Exam Pacing Mode",
+    "feat_exam_desc": "Set a deadline and let the AI build your daily study schedule.",
+    "feat_algo_title": "Smart Spaced Repetition",
+    "feat_algo_desc": "Unlock the full memory algorithm to never forget a fact.",
+    "feat_habit_title": "Unlimited Daily Stack",
+    "feat_habit_desc": "Keep your streak alive and master thousands of cards.",
+    "bestValue": "Best Value",
+    "perYear": "/ year",
+    "perMonth": "/ month"
   },
   "login_required": "Please log in first.",
-  "pdf_processing": "Could not process the PDF file.",
+  "document_processing": "Could not process the document file.",
   "ai_generation": "AI Generation Failed.",
-  "pdf_unreadable": "PDF text is empty or unreadable.",
+  "document_empty": "Document text is empty or unreadable.",
   "url_access": "Failed to access URL.",
   "url_blocked": "Website content is too short or blocked.",
   "timeout": "Max retries exceeded. Please try again.",

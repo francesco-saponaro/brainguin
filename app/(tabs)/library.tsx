@@ -5,13 +5,14 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
-import { useRouter } from "expo-router";
-import { useColorScheme } from "nativewind";
+import { useFocusEffect, useRouter } from "expo-router";
+import { cssInterop, useColorScheme } from "nativewind";
 import { PressableOpacity, PressableScale } from "pressto";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
+  Alert,
   Keyboard,
   Modal,
   Platform,
@@ -22,9 +23,14 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import DatePicker from "react-native-date-picker";
 import { FlatList } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+
+const StyledPressable = cssInterop(PressableScale, {
+  className: "style",
+});
 
 // --- HELPERS ---
 const getNumColumns = (width: number) =>
@@ -56,6 +62,76 @@ export default function LibraryScreen() {
   const [deckToDelete, setDeckToDelete] = useState<any>(null);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
+  // --- EXAM DATE LOGIC ---
+  const [examDatePickerVisible, setExamDatePickerVisible] = useState(false);
+  const [deckForExamDate, setDeckForExamDate] = useState<any>(null);
+  const [tempExamDate, setTempExamDate] = useState(new Date());
+
+  const handleEditExamDate = (deck: any) => {
+    setDeckForExamDate(deck);
+    if (deck.exam_date) {
+      // Ask if they want to Change or Remove the date
+      Alert.alert(
+        t("library.exam_alert.title", "Exam Date"),
+        t("library.exam_alert.desc", "What would you like to do?"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("library.exam_alert.remove", "Remove Exam Date"),
+            style: "destructive",
+            onPress: () => saveLibraryExamDate(deck.id, null),
+          },
+          {
+            text: t("library.exam_alert.change", "Change Date"),
+            onPress: () => {
+              setTempExamDate(new Date(deck.exam_date));
+              setExamDatePickerVisible(true);
+            },
+          },
+        ],
+      );
+    } else {
+      // No date currently, just open the picker
+      setTempExamDate(new Date());
+      setExamDatePickerVisible(true);
+    }
+  };
+
+  const saveLibraryExamDate = async (deckId: string, date: Date | null) => {
+    try {
+      const targetDateStr = date ? date.toISOString().split("T")[0] : null;
+
+      // 1. Update Database Deck
+      await supabase
+        .from("decks")
+        .update({ exam_date: targetDateStr })
+        .eq("id", deckId);
+
+      // 2. Pull cards forward if a new date is set!
+      if (targetDateStr) {
+        await supabase
+          .from("flashcards")
+          .update({ next_review_at: new Date().toISOString() })
+          .eq("deck_id", deckId)
+          .gt("next_review_at", targetDateStr);
+      }
+
+      // 3. Update Local State UI
+      setDecks((prev) =>
+        prev.map((d) =>
+          d.id === deckId ? { ...d, exam_date: targetDateStr } : d,
+        ),
+      );
+      Toast.show({
+        type: "success",
+        text1: t("library.toast_exam_updated", "Study plan updated!"),
+      });
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: "error", text1: "Failed to update date." });
+    }
+  };
+
   // --- FILTERING STATES ---
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -63,10 +139,10 @@ export default function LibraryScreen() {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "reviewed">(
     "newest",
   );
-  // 2. Source Type (PDF, URL...)
-  const [filterType, setFilterType] = useState<"all" | "pdf" | "url" | "topic">(
-    "all",
-  );
+  // 2. Source Type (Document, URL...)
+  const [filterType, setFilterType] = useState<
+    "all" | "document" | "url" | "topic"
+  >("all");
   // 3. Deck Status (Active vs Archived) - Default to 'active' to hide clutter
   const [filterStatus, setFilterStatus] = useState<
     "active" | "archived" | "all"
@@ -99,6 +175,7 @@ export default function LibraryScreen() {
         totalCards: d.total_cards,
         masteredCards: d.mastered_cards,
         isArchived: d.is_archived,
+        exam_date: d.exam_date,
       }));
 
       setDecks(formattedDecks || []);
@@ -246,7 +323,10 @@ export default function LibraryScreen() {
         {
           body: {
             deckId: item.id,
-            inputType: item.source_type,
+            // inputType: item.source_type,
+            // Even if the source_type is "document", the data we are sending
+            // (source_content) is already extracted text. So we treat it as a "topic".
+            inputType: "topic",
             data: item.source_content,
             userId: session.user.id,
           },
@@ -270,9 +350,13 @@ export default function LibraryScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchDecks();
-  }, []);
+  // 🔄 This ensures that every time you come back from the Study page,
+  // the deck stats (including the new exam date) are refreshed.
+  useFocusEffect(
+    useCallback(() => {
+      fetchDecks();
+    }, [fetchDecks]),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -407,6 +491,7 @@ export default function LibraryScreen() {
                   onDelete={() => handleDeletePress(item)}
                   onGenerate={() => handleGenerateMore(item)}
                   onArchive={() => handleArchiveToggle(item)}
+                  onEditExamDate={() => handleEditExamDate(item)}
                 />
               )}
               ListEmptyComponent={
@@ -459,11 +544,33 @@ export default function LibraryScreen() {
       >
         <ThinkingState />
       </Modal>
+
+      <DatePicker
+        modal
+        open={examDatePickerVisible}
+        date={tempExamDate}
+        mode="date"
+        minimumDate={new Date(new Date().setDate(new Date().getDate() + 2))}
+        onConfirm={(date) => {
+          setExamDatePickerVisible(false);
+          saveLibraryExamDate(deckForExamDate.id, date);
+        }}
+        onCancel={() => {
+          setExamDatePickerVisible(false);
+        }}
+      />
     </View>
   );
 }
 
-function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
+function DeckCard({
+  item,
+  onPress,
+  onDelete,
+  onGenerate,
+  onArchive,
+  onEditExamDate,
+}: any) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const { t } = useTranslation();
@@ -481,9 +588,9 @@ function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
   // Helper for Source Badge Label & Color
   const getSourceBadge = (type: string) => {
     switch (type) {
-      case "pdf":
+      case "document":
         return {
-          label: t("library.source_badges.pdf"),
+          label: t("library.source_badges.document"),
           color:
             "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
         };
@@ -537,7 +644,9 @@ function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
         <View className="absolute right-[-30] top-[-30] w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
       )}
 
+      {/* --- TOP ROW: Source Badge & Right Actions --- */}
       <View className="flex-row justify-between items-start mb-4">
+        {/* Source Badge */}
         <View
           className={`px-3 py-1.5 rounded-full ${badge.color.split(" ")[0]}`}
         >
@@ -548,23 +657,52 @@ function DeckCard({ item, onPress, onDelete, onGenerate, onArchive }: any) {
           </Text>
         </View>
 
-        <PressableFinal
-          activateOnHover
-          onPress={onDelete}
-          style={{
-            width: 32,
-            height: 32,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: 0.6,
-          }}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={18}
-            color={isDark ? "#FFF" : "#000"}
-          />
-        </PressableFinal>
+        {/* Right Actions: Exam Date & Delete */}
+        <View className="flex-row items-center gap-2">
+          {item.exam_date ? (
+            <StyledPressable
+              onPress={onEditExamDate}
+              className="bg-action/10 px-3 py-1.5 rounded-full flex-row items-center gap-1 border border-action/20"
+            >
+              <Ionicons name="calendar" size={12} color={Colors.brand.action} />
+              <Text className="text-action text-[10px] font-bold uppercase tracking-widest">
+                {formatDate(item.exam_date)}
+              </Text>
+            </StyledPressable>
+          ) : (
+            <StyledPressable
+              onPress={onEditExamDate}
+              className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex-row items-center gap-1"
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={12}
+                color={isDark ? "#94A3B8" : "#64748B"}
+              />
+              <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
+                {t("library.card.add_exam", "Add Exam")}
+              </Text>
+            </StyledPressable>
+          )}
+
+          <PressableFinal
+            activateOnHover
+            onPress={onDelete}
+            style={{
+              width: 32,
+              height: 32,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: 0.6,
+            }}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={18}
+              color={isDark ? "#FFF" : "#000"}
+            />
+          </PressableFinal>
+        </View>
       </View>
 
       <View className="mb-6">
@@ -801,7 +939,7 @@ function FilterModal({
             {t("library.source_type")}
           </Text>
           <View className="flex-row flex-wrap gap-2 mb-10">
-            {["all", "pdf", "url", "topic"].map((type: any) => (
+            {["all", "document", "url", "topic"].map((type: any) => (
               <PressableFinal
                 key={type}
                 activateOnHover

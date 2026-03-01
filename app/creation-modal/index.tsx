@@ -23,7 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
-type InputType = "pdf" | "url" | "topic";
+type InputType = "document" | "url" | "topic";
 
 export default function CreationModal() {
   const insets = useSafeAreaInsets();
@@ -34,12 +34,12 @@ export default function CreationModal() {
   const { session } = useAuthStore();
   const [isThinking, setIsThinking] = useState(false);
 
-  const [activeType, setActiveType] = useState<InputType>(type || "pdf");
+  const [activeType, setActiveType] = useState<InputType>(type || "document");
   const [inputText, setInputText] = useState("");
   const [selectedFile, setSelectedFile] = useState<any>(null);
 
   const handleCreateSubmit = async (
-    inputType: "pdf" | "url" | "topic",
+    inputType: "document" | "url" | "topic",
     inputData: any,
   ) => {
     if (!session?.user) {
@@ -66,8 +66,8 @@ export default function CreationModal() {
 
       let payloadData = inputData;
 
-      // --- HANDLE PDF CONVERSION (Modern Web API Approach) ---
-      if (inputType === "pdf" && inputData.uri) {
+      // --- HANDLE DOCUMENT CONVERSION (Modern Web API Approach) ---
+      if (inputType === "document" && inputData.uri) {
         try {
           // 1. Fetch the file (works with content:// and file://)
           const response = await fetch(inputData.uri);
@@ -88,10 +88,18 @@ export default function CreationModal() {
 
           payloadData = base64;
         } catch (fileError) {
-          console.error("PDF Processing Error:", fileError);
-          throw new Error(t("pdf_processing"));
+          console.error("Document Processing Error:", fileError);
+          throw new Error(t("document_processing"));
         }
       }
+
+      console.log("Prepared Payload Data:", {
+        type: inputType,
+        dataPreview:
+          typeof payloadData === "string"
+            ? `${payloadData.slice(0, 30)}...`
+            : payloadData,
+      });
 
       // ✅ STEP 3: CALL EDGE FUNCTION
       console.log(`🚀 Sending ${inputType} to BrainGuin AI...`);
@@ -103,6 +111,7 @@ export default function CreationModal() {
             inputType: inputType,
             data: payloadData,
             userId: session.user.id,
+            mimeType: inputType === "document" ? inputData.mimeType : null,
           },
         },
       );
@@ -131,7 +140,7 @@ export default function CreationModal() {
         text2: `Generated ${data.card_count} cards.`,
       });
 
-      router.replace(`/study/${data.deck_id}`);
+      router.replace(`/study/${data.deck_id}?isNew=true`);
     } catch (e: any) {
       setIsThinking(false);
       console.error(e);
@@ -140,16 +149,16 @@ export default function CreationModal() {
       let errorText = t("errors.generic"); // Default fallback
       const rawMsg = e.message || "";
 
-      if (rawMsg.includes("PDF text is empty")) {
-        errorText = t("errors.pdf_empty");
+      if (rawMsg.includes("Document text is empty")) {
+        errorText = t("errors.document_empty");
       } else if (rawMsg.includes("Failed to access URL")) {
         errorText = t("errors.url_access_error");
       } else if (rawMsg.includes("Website content is too short")) {
         errorText = t("errors.url_content_error");
       } else if (rawMsg.includes("Max retries exceeded")) {
         errorText = t("errors.timeout_error");
-      } else if (rawMsg === "PDF_PROCESSING_ERROR") {
-        errorText = t("errors.pdf_processing");
+      } else if (rawMsg === "DOCUMENT_PROCESSING_ERROR") {
+        errorText = t("errors.document_processing");
       } else if (rawMsg === "AI_FAILURE") {
         errorText = t("errors.ai_failure");
       }
@@ -165,7 +174,13 @@ export default function CreationModal() {
   const handleFilePick = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "application/pdf",
+        // 🚨 Change: Allow PDFs, Word Docs, Text files, and Images!
+        type: [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "text/plain",
+        ],
         copyToCacheDirectory: true,
       });
 
@@ -175,14 +190,14 @@ export default function CreationModal() {
     } catch (err) {
       Toast.show({
         type: "error",
-        text1: t("creation.invalid_pdf"),
+        text1: t("creation.invalid_document"),
       });
     }
   };
 
   const handleSubmit = () => {
-    if (activeType === "pdf" && selectedFile) {
-      handleCreateSubmit("pdf", selectedFile);
+    if (activeType === "document" && selectedFile) {
+      handleCreateSubmit("document", selectedFile);
     } else if (
       (activeType === "url" || activeType === "topic") &&
       inputText.length > 3
@@ -192,7 +207,7 @@ export default function CreationModal() {
   };
 
   useEffect(() => {
-    setActiveType(type || "pdf");
+    setActiveType(type || "document");
   }, [type]);
 
   return (
@@ -239,7 +254,7 @@ export default function CreationModal() {
         {/* Type Selector (Tabs) */}
         <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
           {[
-            { id: "pdf", label: "PDF", icon: "document-text" },
+            { id: "document", label: t("document"), icon: "document-text" },
             { id: "url", label: "URL", icon: "link" },
             { id: "topic", label: "Topic", icon: "bulb" },
           ].map((item) => (
@@ -274,7 +289,7 @@ export default function CreationModal() {
                 color={activeType === item.id ? "white" : "#94A3B8"}
               />
               <Text
-                className={`ml-2 font-heading font-bold ${
+                className={`ml-1 font-heading font-bold ${
                   activeType === item.id
                     ? "text-white"
                     : "text-text-muted-light dark:text-text-muted-dark"
@@ -288,16 +303,16 @@ export default function CreationModal() {
 
         {/* Input Content Area */}
         <View className="py-6 justify-center">
-          {activeType === "pdf" && (
+          {activeType === "document" && (
             <View>
               <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.upload_your_pdf")}
+                {t("creation.upload_your_document")}
               </Text>
               <PressableScale
                 onPress={handleFilePick}
                 style={{
                   width: "100%",
-                  height: 240,
+                  height: 200,
                   borderWidth: 2,
                   borderStyle: "dashed",
                   borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
@@ -332,7 +347,7 @@ export default function CreationModal() {
                       color="#94A3B8"
                     />
                     <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-                      {t("creation.tap_to_select_pdf")}
+                      {t("creation.tap_to_select_document")}
                     </Text>
                   </>
                 )}
@@ -364,7 +379,7 @@ export default function CreationModal() {
               </Text>
               <TextInput
                 className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
-                style={{ height: 240 }}
+                style={{ height: 200 }}
                 placeholder={t(
                   "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
                 )}
@@ -390,7 +405,7 @@ export default function CreationModal() {
           paddingHorizontal: 24,
         }}
         pointerEvents={
-          (activeType === "pdf" ? !selectedFile : inputText.length < 3)
+          (activeType === "document" ? !selectedFile : inputText.length < 3)
             ? "none"
             : "auto"
         }
@@ -404,27 +419,27 @@ export default function CreationModal() {
             borderRadius: 12,
             alignItems: "center",
             backgroundColor: (
-              activeType === "pdf" ? !selectedFile : inputText.length < 3
+              activeType === "document" ? !selectedFile : inputText.length < 3
             )
               ? colorScheme === "dark"
                 ? "#334155"
                 : "#CBD5E1"
               : "#F97316",
             opacity: (
-              activeType === "pdf" ? !selectedFile : inputText.length < 3
+              activeType === "document" ? !selectedFile : inputText.length < 3
             )
               ? 0.5
               : 1,
             shadowColor: "#F97316",
             shadowOffset: { width: 0, height: 10 },
             shadowOpacity: (
-              activeType === "pdf" ? !selectedFile : inputText.length < 3
+              activeType === "document" ? !selectedFile : inputText.length < 3
             )
               ? 0
               : 0.2,
             shadowRadius: 20,
             elevation: (
-              activeType === "pdf" ? !selectedFile : inputText.length < 3
+              activeType === "document" ? !selectedFile : inputText.length < 3
             )
               ? 0
               : 5,
@@ -447,3 +462,20 @@ export default function CreationModal() {
     </View>
   );
 }
+
+// LANGUAGE RULE (CRITICAL):
+// **You MUST detect the language of the SOURCE MATERIAL and generate EVERYTHING in that EXACT SAME LANGUAGE.** You MUST generate the Title, Summary, Questions, Answers, and Context hints in that **EXACT SAME LANGUAGE**.
+
+// OUTPUT FORMAT (JSON ONLY):
+//       {
+//         "detected_language": "The primary language of the source text (e.g. English)",
+//         "title": "A short, catchy title for this deck (max 5 words) in the DETECTED LANGUAGE",
+//         "summary": "A brief summary of what this deck covers in the DETECTED LANGUAGE",
+//         "flashcards": [
+//            {
+//              "question": "What is the powerhouse of the cell? (Must be in DETECTED LANGUAGE)",
+//              "answer": "Mitochondria (Must be in DETECTED LANGUAGE)",
+//              "context": "Cell Biology - Organelle Function (Must be in DETECTED LANGUAGE)"
+//            }
+//         ]
+//       }

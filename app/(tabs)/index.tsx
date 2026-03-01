@@ -247,18 +247,24 @@ export default function HomeScreen() {
         <View className={`${isDesktop ? "flex-row" : "flex-col"} gap-4 mb-10`}>
           <ActionButton
             icon="document-text"
-            label="PDF"
-            sub={t("load_pdf")}
+            label={t("document")}
+            sub={t("load_document")}
             color="#38BDF8"
-            onPress={() => openCreationModal("pdf")}
+            onPress={() => openCreationModal("document")}
           />
           <ActionButton
             icon="link"
             label="URL"
             sub={t("web_articles")}
             color="#F97316"
-            onPress={() => openCreationModal("url")}
+            onPress={() => router.push("/onboarding")}
             // onPress={() => router.push("/paywall")}
+            // onPress={() => openCreationModal("url")}
+            // onPress={() =>
+            //   router.replace(
+            //     `/study/2914d810-7bfe-4991-8963-04df2b0865e1?isNew=true`,
+            //   )
+            // }
           />
           <ActionButton
             icon="bulb"

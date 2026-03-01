@@ -1,4 +1,3 @@
-import PENGUINIMAGE from "@/assets/images/main.png";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,7 +8,6 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next"; // Added i18n hook
 import {
   ActivityIndicator,
-  Image,
   Linking,
   Platform,
   Pressable,
@@ -158,7 +156,7 @@ export default function PaywallScreen() {
   return (
     <View className="flex-1 bg-page-light dark:bg-page-dark">
       {/* 1. FIXED HEADER (Outside ScrollView) */}
-      <View className="pt-4 pb-4 px-6 border-b border-black/5 dark:border-white/5 flex-row justify-end items-center w-full">
+      {/* <View className="pt-4 pb-4 px-6 border-b border-black/5 dark:border-white/5 flex-row justify-end items-center w-full">
         <PressableFinal
           onPress={() => router.back()}
           style={{
@@ -176,7 +174,7 @@ export default function PaywallScreen() {
             color={colorScheme === "dark" ? "#FFF" : "#000"}
           />
         </PressableFinal>
-      </View>
+      </View> */}
 
       {/* 2. SCROLLABLE CONTENT */}
       <ScrollView
@@ -190,46 +188,59 @@ export default function PaywallScreen() {
         bounces={true}
       >
         {/* PENGUIN SECTION */}
-        <View className="flex-row justify-center items-center gap-[30px] my-[10px]">
-          <View className="relative">
-            <View className="absolute -inset-4 bg-orange-500/10 rounded-full blur-2xl" />
-            <Image
-              source={PENGUINIMAGE}
-              style={{ width: 60, height: 60 }}
-              resizeMode="contain"
-            />
-            <View className="absolute -right-2 -top-2 bg-white rounded-full p-1">
-              <Ionicons name="star" size={20} color="#F59E0B" />
-            </View>
+        <View className="mb-6 items-center">
+          <View className="bg-action/20 px-4 py-1.5 rounded-full mb-4 border border-action/30">
+            <Text className="text-action font-heading font-bold text-xs uppercase tracking-widest">
+              {t("paywall.badge_unlocked", "BrainGuin Pro Unlocked")}
+            </Text>
           </View>
 
-          <Text className="text-text-main-light dark:text-text-main-dark font-heading text-3xl font-bold text-center leading-tight">
-            {t("paywall.headerTitle")}
-            {"\n"}
-            <Text className="text-orange-500">
-              {t("paywall.headerHighlight")}
+          <View>
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-black text-center leading-tight">
+              {t("paywall.headerTitle", "Unlock Limitless\n")}
             </Text>
-          </Text>
+            <Text className="font-heading text-4xl font-black text-center leading-tight text-orange-500">
+              {t("paywall.headerHighlight", "Learning")}
+            </Text>
+          </View>
         </View>
 
         {/* FEATURES SECTION */}
-        <View className="mt-6 mb-4 space-y-2 gap-2 w-full">
+        <View className="mb-8 space-y-2 gap-2 w-full">
           <FeatureRow
-            icon="infinite"
-            title={t("paywall.feat1Title")}
-            desc={t("paywall.feat1Desc")}
+            icon="document-text"
+            title={t("paywall.feat_upload_title", "Upload Anything")}
+            desc={t(
+              "paywall.feat_upload_desc",
+              "Instantly convert infinite PDFs, links, or text into cards.",
+            )}
             color="#38BDF8"
           />
           <FeatureRow
+            icon="calendar"
+            title={t("paywall.feat_exam_title", "Exam Pacing Mode")}
+            desc={t(
+              "paywall.feat_exam_desc",
+              "Set a deadline and let the AI build your daily study schedule.",
+            )}
+            color="#8B5CF6"
+          />
+          <FeatureRow
             icon="brain"
-            title={t("paywall.feat2Title")}
-            desc={t("paywall.feat2Desc")}
+            title={t("paywall.feat_algo_title", "Smart Spaced Repetition")}
+            desc={t(
+              "paywall.feat_algo_desc",
+              "Unlock the full memory algorithm to never forget a fact.",
+            )}
             color="#F97316"
           />
           <FeatureRow
-            icon="shield-checkmark"
-            title={t("paywall.feat3Title")}
-            desc={t("paywall.feat3Desc")}
+            icon="flame"
+            title={t("paywall.feat_habit_title", "Unlimited Daily Stack")}
+            desc={t(
+              "paywall.feat_habit_desc",
+              "Keep your streak alive and master thousands of cards.",
+            )}
             color="#22C55E"
           />
         </View>
@@ -257,25 +268,27 @@ export default function PaywallScreen() {
             </View>
 
             <View className="flex-row items-baseline mb-1">
-              <Text className="text-white font-heading text-4xl font-bold">
-                {pkg ? pkg.product.priceString : "€29.99"}
-              </Text>
+              {pkg ? (
+                <Text className="text-white font-heading text-4xl font-bold">
+                  {pkg.product.priceString || "€29.99"}
+                </Text>
+              ) : null}
               <Text className="text-white/90 font-body text-base ml-1">
                 {t("paywall.perYear")}
               </Text>
             </View>
 
             <Text className="text-white/80 font-body text-xs mb-5">
-              {t("paywall.monthlyBreakdown", {
-                // 1. We take the numeric price and divide by 12
-                // 2. We use Intl.NumberFormat to automatically handle the symbol position and decimals
-                price: pkg
-                  ? new Intl.NumberFormat(undefined, {
+              {pkg
+                ? t("paywall.monthlyBreakdown", {
+                    // 1. We take the numeric price and divide by 12
+                    // 2. We use Intl.NumberFormat to automatically handle the symbol position and decimals
+                    price: new Intl.NumberFormat(undefined, {
                       style: "currency",
                       currency: pkg.product.currencyCode,
-                    }).format(pkg.product.price / 12)
-                  : "€2.50",
-              })}
+                    }).format(pkg.product.price / 12),
+                  })
+                : null}
             </Text>
 
             <PressableFinal

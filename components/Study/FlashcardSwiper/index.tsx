@@ -37,6 +37,10 @@ interface SwiperProps {
   onRate: (cardId: string, rating: "hard" | "medium" | "easy") => void;
   onShowContext: (context: string) => void;
   onDelete: (cardId: string) => void;
+  isOnboarding?: boolean; // New prop to enable onboarding-specific behaviors
+  height?: number; // Optional height prop for flexibility
+  paddingVertical?: number; // Optional padding prop for flexibility
+  questionMarginTop?: number; // Optional margin for question text
 }
 
 // --- MAIN CARD WRAPPER ---
@@ -48,6 +52,7 @@ const SwipeableCard = ({
   onRate,
   onShowContext,
   onDelete,
+  isOnboarding,
 }: any) => {
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
@@ -164,7 +169,9 @@ const SwipeableCard = ({
 
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View style={[styles.card, cardStyle]}>
+      <Animated.View
+        style={[styles.card, cardStyle, { height: isOnboarding ? 350 : 500 }]}
+      >
         {/* ✅ DELETE INDICATOR (Trash Icon) */}
         {isActive && (
           <Animated.View
@@ -191,7 +198,12 @@ const SwipeableCard = ({
         )}
 
         <Animated.View
-          style={[StyleSheet.absoluteFill, styles.cardFace, frontStyle]}
+          style={[
+            StyleSheet.absoluteFill,
+            styles.cardFace,
+            frontStyle,
+            { paddingVertical: isOnboarding ? 20 : undefined },
+          ]}
         >
           <CardContent
             card={card}
@@ -202,11 +214,17 @@ const SwipeableCard = ({
             onFlip={triggerFlip}
             isActive={isActive}
             onDelete={() => onDelete(card.id)}
+            isOnboarding={isOnboarding}
           />
         </Animated.View>
 
         <Animated.View
-          style={[StyleSheet.absoluteFill, styles.cardFace, backStyle]}
+          style={[
+            StyleSheet.absoluteFill,
+            styles.cardFace,
+            backStyle,
+            { paddingVertical: isOnboarding ? 20 : undefined },
+          ]}
         >
           <CardContent
             card={card}
@@ -219,6 +237,7 @@ const SwipeableCard = ({
             isActive={isActive}
             showButtons={isActive}
             onDelete={() => onDelete(card.id)}
+            isOnboarding={isOnboarding}
           />
         </Animated.View>
       </Animated.View>
@@ -239,6 +258,7 @@ const CardContent = React.memo(
     isActive,
     showButtons,
     onDelete,
+    isOnboarding,
   }: any) => {
     const { t } = useTranslation();
 
@@ -254,10 +274,12 @@ const CardContent = React.memo(
         {/* HEADER */}
         <View style={styles.header}>
           {/* ✅ NEW: TRASH BUTTON (Visible on Card) */}
+
           <PressableScale onPress={onDelete} style={styles.iconButton}>
             <Ionicons name="trash-outline" size={20} color="#EF4444" />
           </PressableScale>
 
+          {/* Placeholder to keep counter centered */}
           <Text style={styles.counter}>
             {t("study.card_counter", { index: index + 1, total })}
           </Text>
@@ -276,7 +298,12 @@ const CardContent = React.memo(
         {/* CONTENT */}
         <GestureDetector gesture={tap}>
           <View style={styles.content}>
-            <Text style={isBack ? styles.answerText : styles.questionText}>
+            <Text
+              style={[
+                isBack ? styles.answerText : styles.questionText,
+                { marginTop: isBack ? 0 : isOnboarding ? 20 : undefined },
+              ]}
+            >
               {isBack ? card.back : card.front}
             </Text>
             {/* ✅ NEW: PROMINENT TAP TO FLIP BUTTON */}
@@ -304,7 +331,7 @@ const CardContent = React.memo(
                   activateOnHover
                   style={{
                     flex: 1,
-                    paddingVertical: 12,
+                    paddingVertical: isOnboarding ? 6 : 12,
                     borderRadius: 12,
                     alignItems: "center",
                     borderWidth: 1,
@@ -327,7 +354,7 @@ const CardContent = React.memo(
                   activateOnHover
                   style={{
                     flex: 1,
-                    paddingVertical: 12,
+                    paddingVertical: isOnboarding ? 6 : 12,
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
@@ -351,7 +378,7 @@ const CardContent = React.memo(
                   onPress={() => onRate("easy")}
                   style={{
                     flex: 1,
-                    paddingVertical: 12,
+                    paddingVertical: isOnboarding ? 6 : 12,
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
@@ -393,6 +420,10 @@ export default function FlashcardSwiper({
   onRate,
   onShowContext,
   onDelete,
+  isOnboarding = false,
+  height = 500,
+  paddingVertical = 25,
+  questionMarginTop = 0,
 }: SwiperProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -433,6 +464,10 @@ export default function FlashcardSwiper({
               onRate={(r: any) => handleRate(card.id, r)}
               onShowContext={onShowContext}
               onDelete={handleDelete}
+              isOnboarding={isOnboarding}
+              cardHeight={height}
+              paddingVertical={paddingVertical}
+              questionMarginTop={questionMarginTop}
             />
           );
         })}
@@ -445,7 +480,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center" },
   card: {
     width: "100%",
-    height: 500,
     backgroundColor: "white",
     borderRadius: 32,
     position: "absolute",
@@ -489,7 +523,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.05)",
   },
-  cardContentContainer: { flex: 1, justifyContent: "space-between" },
+  cardContentContainer: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
   iconButton: {
     padding: 8,
     backgroundColor: "#F1F5F9",
