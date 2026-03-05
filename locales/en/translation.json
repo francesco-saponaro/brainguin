@@ -387,5 +387,13 @@
   "maintenance": {
     "title": "Under Maintenance",
     "body": "BrainGuin is getting a quick tune-up. We'll be back in a few minutes!"
+  },
+  "feedback": {
+    "title": "Help us grow!",
+    "desc": "We are so grateful for your help! Your feedback directly shapes the future of BrainGuin. What can we do to make your learning even better?",
+    "placeholder": "Type your suggestions or thoughts here...",
+    "submit": "Send your thoughts",
+    "success": "Received! Thank you for being part of this journey with us",
+    "too_short": "Please share a bit more detail!"
   }
 }

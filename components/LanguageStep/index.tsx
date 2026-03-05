@@ -3,8 +3,9 @@ import { useColorScheme } from "nativewind";
 import { PressableScale } from "pressto";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import CountryFlag from "react-native-country-flag"; // 🆕 Import the flag library
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const LANGUAGES = [
   { code: "en", label: "English", isoCode: "us" }, // ISO codes for the icons
@@ -19,6 +20,7 @@ interface Props {
 }
 
 const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
+  const insets = useSafeAreaInsets();
   const { i18n, t } = useTranslation();
   const { colorScheme } = useColorScheme();
 
@@ -28,11 +30,20 @@ const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
   };
 
   return (
-    <View className="flex-1 justify-center p-6 pb-2">
-      <Text className="font-heading text-3xl font-bold text-text-main-light dark:text-text-main-dark text-center mb-2">
+    <ScrollView
+      className="pb-2"
+      contentContainerStyle={{
+        justifyContent: "center",
+        flexGrow: 1,
+        paddingBottom: insets.bottom,
+        paddingTop: insets.top,
+      }}
+      contentContainerClassName="px-6"
+    >
+      <Text className="font-heading text-3xl font-bold text-text-main-light dark:text-text-main-dark text-center mb-2 px-4">
         {t("onboarding.language_title") || "Select Language"}
       </Text>
-      <Text className="font-body text-base text-text-muted-light dark:text-text-muted-dark text-center mb-10">
+      <Text className="font-body text-base text-text-muted-light dark:text-text-muted-dark text-center mb-10 px-4">
         {t("onboarding.language_description") ||
           "Choose your preferred language for study materials"}
       </Text>
@@ -99,7 +110,7 @@ const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
           </PressableScale>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

@@ -1,5 +1,7 @@
+import CelebratorPng from "@/assets/images/celebrator.png";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
@@ -188,12 +190,12 @@ export default function PaywallScreen() {
         bounces={true}
       >
         {/* PENGUIN SECTION */}
-        <View className="mb-6 items-center">
-          <View className="bg-action/20 px-4 py-1.5 rounded-full mb-4 border border-action/30">
-            <Text className="text-action font-heading font-bold text-xs uppercase tracking-widest">
-              {t("paywall.badge_unlocked", "BrainGuin Pro Unlocked")}
-            </Text>
-          </View>
+        <View className="mb-4 items-center">
+          <Image
+            source={CelebratorPng}
+            style={{ width: 85, height: 85, zIndex: 10, marginBottom: 10 }}
+            contentFit="contain"
+          />
 
           <View>
             <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-black text-center leading-tight">

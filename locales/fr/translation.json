@@ -385,5 +385,13 @@
   "maintenance": {
     "title": "Maintenance en cours",
     "body": "BrainGuin fait peau neuve. Nous serons de retour dans quelques instants !"
+  },
+  "feedback": {
+    "title": "Aidez-nous à grandir !",
+    "desc": "Nous vous sommes très reconnaissants pour votre aide ! Vos retours façonnent directement l'avenir de BrainGuin. Que pouvons-nous faire pour améliorer votre étude ?",
+    "placeholder": "Tapez vos suggestions ou vos idées ici...",
+    "submit": "Envoyez vos pensées",
+    "success": "Reçu ! Merci de faire partie de ce voyage avec nous",
+    "too_short": "Veuillez donner un peu plus de détails !"
   }
 }

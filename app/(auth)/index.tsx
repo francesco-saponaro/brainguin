@@ -230,14 +230,14 @@ const LoginScreen = () => {
           <View className="items-center mb-8">
             <Image
               source={PENGUIN_LOGO}
-              style={{ width: 100, height: 100 }}
+              style={{ width: 140, height: 140, marginBottom: 10 }}
               contentFit="contain"
-              className="mb-4 lg:hidden"
+              className="lg:hidden"
             />
-            <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center">
+            <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center leading-tight">
               {t("auth.welcome_back")}
             </Text>
-            <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center mt-2 leading-5">
+            <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center leading-tight">
               {t("auth.hook_recall")}
             </Text>
           </View>

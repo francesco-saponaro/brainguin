@@ -1,10 +1,12 @@
 import ThinkingState from "@/components/Creation/ThinkingState";
+import LanguageStep from "@/components/LanguageStep";
 import FlashcardSwiper from "@/components/Study/FlashcardSwiper";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import * as DocumentPicker from "expo-document-picker";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "expo-router";
 import { useColorScheme } from "nativewind";
@@ -33,9 +35,15 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { scheduleOnRN } from "react-native-worklets";
+
+import CelebratorPng from "@/assets/images/celebrator.png";
+import NerdPng from "@/assets/images/nerd.png";
+import PdfPng from "@/assets/images/pdf.png";
+import SmarterPng from "@/assets/images/smarter.png";
+import TimesaverPng from "@/assets/images/timesaver.png";
 
 const API_KEY =
   Platform.OS === "ios"
@@ -46,8 +54,9 @@ type InputType = "document" | "url" | "topic";
 
 export default function OnboardingScreen() {
   const navigation = useNavigation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colorScheme } = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   const dimensions = useWindowDimensions();
   const windowWidth = Math.max(dimensions.width, 1);
@@ -119,12 +128,14 @@ export default function OnboardingScreen() {
         "onboarding.language_description",
         "Select the language...",
       ),
+      image: SmarterPng,
     },
     {
       id: "welcome",
       type: "info",
       title: t("onboarding.welcome_title", "Study Smarter, Not Harder 🧠"),
       description: t("onboarding.welcome_description", "Stop wasting hours..."),
+      image: SmarterPng,
     },
     {
       id: "creation",
@@ -134,6 +145,7 @@ export default function OnboardingScreen() {
         "onboarding.creation_description",
         "Got a massive PDF?...",
       ),
+      image: PdfPng,
     },
     {
       id: "science",
@@ -143,12 +155,14 @@ export default function OnboardingScreen() {
         "onboarding.science_description",
         "We use a science-backed...",
       ),
+      image: NerdPng,
     },
     {
       id: "habit",
       type: "info",
       title: t("onboarding.habit_title", "Just 5 Minutes a Day ⏱️"),
       description: t("onboarding.habit_description", "Consistency is your..."),
+      image: TimesaverPng,
     },
     {
       id: "try-it",
@@ -176,6 +190,7 @@ export default function OnboardingScreen() {
         "onboarding.paywall_description",
         "You've just seen how fast studying can be. Go Premium to unlock unlimited AI generations, unlimited daily reviews, and advanced document uploads. Invest in your brain today!",
       ),
+      image: CelebratorPng,
     },
   ];
 
@@ -202,8 +217,56 @@ export default function OnboardingScreen() {
     }
   };
 
-  const completeOnboarding = () => {
-    console.log("Onboarding Complete!");
+  const completeOnboarding = async () => {
+    // 🚨 FIX: Get the absolute latest user from the store state directly
+    const currentUser = useAuthStore.getState().session?.user;
+
+    console.log("Completing onboarding for user:", currentUser);
+
+    if (!currentUser) {
+      console.error("❌ No user found in session. Cannot complete onboarding.");
+      Toast.show({
+        type: "error",
+        text1: t("errors.generic"),
+        text2: "Authentication session lost. Please try again.",
+      });
+      return;
+    }
+
+    try {
+      // 1. Save profile data
+      const { error: dbError } = await supabase
+        .from("users")
+        .update({
+          preferences: { language: i18n.language },
+        })
+        .eq("id", currentUser.id);
+
+      if (dbError) throw dbError;
+
+      // 2. Update Auth Metadata (The "source of truth" for your route guards)
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.updateUser({
+        data: { is_onboarded: true },
+      });
+
+      if (authError) throw authError;
+
+      // 3. Force update the local store with the new user object (including metadata)
+      // We use 'true' for the second argument to signify isOnboarded = true
+      const latestSession = useAuthStore.getState().session;
+      if (latestSession) {
+        const updatedSession = { ...latestSession, user: user ?? currentUser };
+        useAuthStore.getState().setSession(updatedSession, true);
+      }
+
+      console.log("✅ Onboarding successfully completed");
+    } catch (error) {
+      console.error("Onboarding completion error:", error);
+      Toast.show({ type: "error", text1: t("errors.generic") });
+    }
   };
 
   const handleCreateSubmit = async (
@@ -229,7 +292,7 @@ export default function OnboardingScreen() {
         setHasGenerated(true);
 
         // Scroll immediately
-        const nextIndex = currentIndex + 1;
+        const nextIndex = currentIndex + 2;
         scrollRef.current?.scrollTo({
           x: nextIndex * windowWidth,
           animated: true,
@@ -519,6 +582,7 @@ export default function OnboardingScreen() {
   };
 
   const handlePurchase = async () => {
+    console.log("Attempting to purchase package:", pkg);
     if (!pkg) return;
     setIsPurchasing(true);
 
@@ -587,11 +651,14 @@ export default function OnboardingScreen() {
   if (dimensions.width === 0) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark">
+    <View className="flex-1 bg-page-light dark:bg-page-dark">
       <View className="flex-1">
         {/* Header */}
         {steps[currentIndex]?.type !== "paywall" ? (
-          <View className="absolute top-4 left-0 right-0 z-10 flex-row justify-between items-center px-6">
+          <View
+            className="flex-row justify-between items-center px-6"
+            style={{ paddingTop: insets.top + 10 }}
+          >
             <Text className="font-heading font-bold text-xl text-text-main-light dark:text-text-main-dark">
               BrainGuin
             </Text>
@@ -613,15 +680,21 @@ export default function OnboardingScreen() {
             <View
               key={step.id}
               style={{ width: windowWidth }}
-              className="flex-1 justify-center px-6"
+              className="flex-1 justify-center"
             >
-              {step.type === "language" && <LanguageStepLayout step={step} />}
+              {step.type === "language" && (
+                <LanguageStep
+                  onLanguageSelect={goToNextPage}
+                  activeLanguage={i18n.language}
+                />
+              )}
               {step.type === "info" && (
                 <AnimatedInfoStep
                   step={step}
                   index={index}
                   scrollIndex={scrollIndex}
                   windowWidth={windowWidth}
+                  currentIndex={currentIndex}
                 />
               )}
               {step.type === "interactive-creation" && (
@@ -659,7 +732,8 @@ export default function OnboardingScreen() {
                   pkg={pkg}
                   index={index}
                   scrollIndex={scrollIndex}
-                  windowWidth={windowWidth}
+                  isPurchasing={isPurchasing}
+                  handlePurchase={handlePurchase}
                 />
               )}
             </View>
@@ -668,7 +742,10 @@ export default function OnboardingScreen() {
 
         {/* Footer Button */}
         {steps[currentIndex]?.type !== "paywall" ? (
-          <View className="px-6 pb-8 pt-4 bg-page-light dark:bg-page-dark">
+          <View
+            className="px-6 pt-4 bg-page-light dark:bg-page-dark"
+            style={{ paddingBottom: insets.bottom + 10 }}
+          >
             <PressableScale
               onPress={buttonConfig.action}
               activateOnHover
@@ -715,7 +792,7 @@ export default function OnboardingScreen() {
         }}
         withHandle={false}
       >
-        <View className="p-8 pb-12">
+        <View className="p-8" style={{ paddingBottom: insets.bottom + 10 }}>
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl">
               {t("study.exam_modal.title", "When is your Exam? 📅")}
@@ -869,7 +946,7 @@ export default function OnboardingScreen() {
       >
         <ThinkingState />
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -884,20 +961,49 @@ const styles = StyleSheet.create({
 
 // --- ANIMATED INFO COMPONENT ---
 function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
-  const imageStyle = useAnimatedStyle(() => {
+  const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
+
+  // 🚨 2. THE 3D TUMBLING CRYSTAL BLOCK MATH
+  const cardStyle = useAnimatedStyle(() => {
     const distance = index - scrollIndex.value;
     const inputRange = [-1, 0, 1];
 
     const translateX = interpolate(
       distance,
       inputRange,
-      [-windowWidth * 0.5, 0, windowWidth * 0.5],
+      [-windowWidth, 0, windowWidth],
       Extrapolation.CLAMP,
     );
+    const translateY = interpolate(
+      distance,
+      inputRange,
+      [250, 0, 250],
+      Extrapolation.CLAMP,
+    );
+
+    // The 360 Flip
+    const rotateY = interpolate(
+      distance,
+      inputRange,
+      [-360, 0, 360],
+      Extrapolation.CLAMP,
+    );
+
+    // 🚨 NEW: A subtle Z-tilt. This makes the fast 360 spin feel much slower,
+    // more graceful, and aerodynamic (like a tumbling leaf rather than a spinning coin)
+    const rotateZ = interpolate(
+      distance,
+      inputRange,
+      [-25, 0, 25],
+      Extrapolation.CLAMP,
+    );
+
     const scale = interpolate(
       distance,
       inputRange,
-      [0.5, 1, 0.5],
+      [0.4, 1, 0.4],
       Extrapolation.CLAMP,
     );
     const opacity = interpolate(
@@ -906,7 +1012,18 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
       [0, 1, 0],
       Extrapolation.CLAMP,
     );
-    return { opacity, transform: [{ translateX }, { scale }] };
+
+    return {
+      opacity,
+      transform: [
+        { perspective: 1000 },
+        { translateX },
+        { translateY },
+        { scale },
+        { rotateY: `${rotateY}deg` },
+        { rotateZ: `${rotateZ}deg` },
+      ],
+    };
   });
 
   const textStyle = useAnimatedStyle(() => {
@@ -916,7 +1033,7 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
     const translateY = interpolate(
       distance,
       inputRange,
-      [-50, 0, 50],
+      [80, 0, 80],
       Extrapolation.CLAMP,
     );
     const opacity = interpolate(
@@ -925,21 +1042,105 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
       [0, 1, 0],
       Extrapolation.CLAMP,
     );
+
     return { opacity, transform: [{ translateY }] };
   });
 
   return (
-    <View className="flex-1 items-center justify-center pt-10">
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+      showsVerticalScrollIndicator={false}
+      contentContainerClassName="px-6"
+    >
+      {/* 🚨 3D CRYSTAL CARD */}
       <Animated.View
-        style={[imageStyle]}
-        className="w-full aspect-square bg-black/5 dark:bg-white/5 rounded-[40px] items-center justify-center mb-10"
+        style={[
+          cardStyle,
+          {
+            width: 260,
+            height: 260,
+            marginBottom: 40,
+            borderRadius: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            backfaceVisibility: "visible", // Keeps the crystal clear on both sides
+          },
+        ]}
       >
-        <Ionicons name="image-outline" size={64} color="#94A3B8" />
-        <Text className="text-text-muted-light mt-2 font-body">
-          Image Animation Placeholder
-        </Text>
+        {/* 1. Crystal Base (Replaces BlurView for flawless 3D rendering) */}
+        <LinearGradient
+          colors={
+            isDark
+              ? ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.02)"]
+              : ["rgba(255,255,255,0.9)", "rgba(255,255,255,0.4)"]
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* 2. Diagonal Surface Glare (The polished glass shine) */}
+        <LinearGradient
+          colors={["transparent", "rgba(255,255,255,0.9)", "transparent"]}
+          locations={[0.3, 0.5, 0.7]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.15 : 0.6 }]}
+        />
+
+        {/* 3. The Penguin Image */}
+        {step.image ? (
+          <Image
+            source={step.image}
+            style={{ width: 170, height: 170, zIndex: 10 }}
+            contentFit="contain"
+            transition={300}
+          />
+        ) : (
+          <Ionicons
+            name="image-outline"
+            size={64}
+            color="#94A3B8"
+            style={{ zIndex: 10 }}
+          />
+        )}
+
+        {/* 🚨 4. THE THICKNESS & BEVEL LAYER 🚨 */}
+        {/* This is what makes it look like a physical, thick block of crystal */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: 40,
+              // TOP/LEFT: Sharp bright highlight where light hits the edge
+              borderTopWidth: 2,
+              borderLeftWidth: 2,
+              borderTopColor: "rgba(255,255,255,0.9)",
+              borderLeftColor: "rgba(255,255,255,0.5)",
+
+              // BOTTOM/RIGHT: Massive thickness simulating light refraction
+              borderBottomWidth: 14,
+              borderRightWidth: 8,
+              borderBottomColor: isDark
+                ? "rgba(15, 23, 42, 0.8)"
+                : "rgba(203, 213, 225, 0.7)",
+              borderRightColor: isDark
+                ? "rgba(30, 41, 59, 0.6)"
+                : "rgba(226, 232, 240, 0.5)",
+            },
+          ]}
+          pointerEvents="none"
+        />
       </Animated.View>
 
+      {/* TEXT CONTENT */}
       <Animated.View style={[textStyle]} className="w-full items-center px-4">
         <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark text-center mb-4 leading-tight">
           {step.title}
@@ -948,7 +1149,7 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
           {step.description}
         </Text>
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -965,6 +1166,7 @@ function TryItOutStep({
   setSelectedFile,
   handleFilePick,
 }: any) {
+  const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
   const { t } = useTranslation();
 
@@ -982,7 +1184,17 @@ function TryItOutStep({
   });
 
   return (
-    <Animated.View style={textStyle} className="flex-1 justify-center pt-20">
+    <Animated.ScrollView
+      style={textStyle}
+      contentContainerStyle={{
+        flexGrow: 1,
+        alignItems: "center",
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+      contentContainerClassName="px-6"
+      showsVerticalScrollIndicator={false}
+    >
       <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark mb-4 leading-tight">
         {step.title}
       </Text>
@@ -990,162 +1202,152 @@ function TryItOutStep({
         {step.description}
       </Text>
 
-      <ScrollView
-        className="w-full"
-        showsVerticalScrollIndicator={false}
-        // 1. Ensures the scrollview takes up the necessary space
-        contentContainerStyle={{ flexGrow: 1 }}
-        // 2. Dismisses keyboard when dragging (helpful for UX)
-        keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Type Selector (Tabs) */}
-        <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
-          {[
-            { id: "document", label: t("document"), icon: "document-text" },
-            { id: "url", label: "URL", icon: "link" },
-            { id: "topic", label: "Topic", icon: "bulb" },
-          ].map((item) => (
+      {/* Type Selector (Tabs) */}
+      <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
+        {[
+          { id: "document", label: "Doc", icon: "document-text" },
+          { id: "url", label: "URL", icon: "link" },
+          { id: "topic", label: "Topic", icon: "bulb" },
+        ].map((item) => (
+          <PressableScale
+            key={item.id}
+            onPress={() => {
+              setActiveType(item.id as InputType);
+              setInputText("");
+              setSelectedFile(null);
+            }}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 12,
+              borderRadius: 12,
+              borderWidth: 1,
+              backgroundColor:
+                activeType === item.id ? "#F97316" : "transparent",
+              borderColor:
+                activeType === item.id
+                  ? "#F97316"
+                  : colorScheme === "dark"
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.1)",
+            }}
+          >
+            <Ionicons
+              name={item.icon as any}
+              size={18}
+              color={activeType === item.id ? "white" : "#94A3B8"}
+            />
+            <Text
+              className={`ml-1 font-heading font-bold ${
+                activeType === item.id
+                  ? "text-white"
+                  : "text-text-muted-light dark:text-text-muted-dark"
+              }`}
+            >
+              {item.label}
+            </Text>
+          </PressableScale>
+        ))}
+      </View>
+
+      {/* Input Content Area */}
+      <View className="py-6 justify-center w-full">
+        {activeType === "document" && (
+          <View>
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+              {t("creation.upload_your_document")}
+            </Text>
             <PressableScale
-              key={item.id}
-              onPress={() => {
-                setActiveType(item.id as InputType);
-                setInputText("");
-                setSelectedFile(null);
-              }}
+              onPress={handleFilePick}
               style={{
-                flex: 1,
-                flexDirection: "row",
+                width: "100%",
+                height: 200,
+                borderWidth: 2,
+                borderStyle: "dashed",
+                borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                borderRadius: 24,
                 alignItems: "center",
                 justifyContent: "center",
-                padding: 12,
-                borderRadius: 12,
-                borderWidth: 1,
                 backgroundColor:
-                  activeType === item.id ? "#F97316" : "transparent",
-                borderColor:
-                  activeType === item.id
-                    ? "#F97316"
-                    : colorScheme === "dark"
-                      ? "rgba(255,255,255,0.1)"
-                      : "rgba(0,0,0,0.1)",
+                  colorScheme === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                marginBottom: 16,
               }}
             >
-              <Ionicons
-                name={item.icon as any}
-                size={18}
-                color={activeType === item.id ? "white" : "#94A3B8"}
-              />
-              <Text
-                className={`ml-1 font-heading font-bold ${
-                  activeType === item.id
-                    ? "text-white"
-                    : "text-text-muted-light dark:text-text-muted-dark"
-                }`}
-              >
-                {item.label}
-              </Text>
+              {selectedFile ? (
+                <>
+                  <Ionicons name="document" size={48} color="#F97316" />
+                  <Text
+                    className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
+                    numberOfLines={1}
+                  >
+                    {selectedFile.name}
+                  </Text>
+                  <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
+                    {t("creation.tap_to_change_file")}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons
+                    name="cloud-upload-outline"
+                    size={48}
+                    color="#94A3B8"
+                  />
+                  <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                    {t("creation.tap_to_select_document")}
+                  </Text>
+                </>
+              )}
             </PressableScale>
-          ))}
-        </View>
+          </View>
+        )}
 
-        {/* Input Content Area */}
-        <View className="py-6 justify-center">
-          {activeType === "document" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.upload_your_document")}
-              </Text>
-              <PressableScale
-                onPress={handleFilePick}
-                style={{
-                  width: "100%",
-                  height: 200,
-                  borderWidth: 2,
-                  borderStyle: "dashed",
-                  borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
-                  borderRadius: 24,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor:
-                    colorScheme === "dark"
-                      ? "rgba(255,255,255,0.05)"
-                      : "rgba(0,0,0,0.05)",
-                  marginBottom: 16,
-                }}
-              >
-                {selectedFile ? (
-                  <>
-                    <Ionicons name="document" size={48} color="#F97316" />
-                    <Text
-                      className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
-                      numberOfLines={1}
-                    >
-                      {selectedFile.name}
-                    </Text>
-                    <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
-                      {t("creation.tap_to_change_file")}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={48}
-                      color="#94A3B8"
-                    />
-                    <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-                      {t("creation.tap_to_select_document")}
-                    </Text>
-                  </>
-                )}
-              </PressableScale>
-            </View>
-          )}
+        {activeType === "url" && (
+          <View>
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+              {t("creation.paste_link")}
+            </Text>
+            <TextInput
+              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
+              placeholder="https://wikipedia.org/wiki/Penguin"
+              placeholderTextColor="#94A3B8"
+              value={inputText}
+              onChangeText={setInputText}
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+          </View>
+        )}
 
-          {activeType === "url" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.paste_link")}
-              </Text>
-              <TextInput
-                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
-                placeholder="https://wikipedia.org/wiki/Penguin"
-                placeholderTextColor="#94A3B8"
-                value={inputText}
-                onChangeText={setInputText}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
-          )}
-
-          {activeType === "topic" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.paste_topic_description")}
-              </Text>
-              <TextInput
-                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
-                style={{ height: 200 }}
-                placeholder={t(
-                  "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
-                )}
-                placeholderTextColor="#94A3B8"
-                value={inputText}
-                onChangeText={setInputText}
-                multiline
-                textAlignVertical="top"
-                scrollEnabled={true} // ✅ Allows internal scrolling
-                {...(Platform.OS === "android"
-                  ? { nestedScrollEnabled: true }
-                  : {})}
-              />
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </Animated.View>
+        {activeType === "topic" && (
+          <View>
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+              {t("creation.paste_topic_description")}
+            </Text>
+            <TextInput
+              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
+              style={{ height: 200 }}
+              placeholder={t(
+                "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
+              )}
+              placeholderTextColor="#94A3B8"
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              textAlignVertical="top"
+              scrollEnabled={true} // ✅ Allows internal scrolling
+              {...(Platform.OS === "android"
+                ? { nestedScrollEnabled: true }
+                : {})}
+            />
+          </View>
+        )}
+      </View>
+    </Animated.ScrollView>
   );
 }
 
@@ -1160,6 +1362,7 @@ function ResultSwipeStep({
   onFinish,
   onShowContext,
 }: any) {
+  const insets = useSafeAreaInsets();
   const containerStyle = useAnimatedStyle(() => {
     const inputRange = [index - 1, index, index + 1];
 
@@ -1179,14 +1382,21 @@ function ResultSwipeStep({
   });
 
   return (
-    <Animated.View
+    <Animated.ScrollView
       style={containerStyle}
-      className="flex-1 items-center justify-center pt-20"
+      contentContainerStyle={{
+        flexGrow: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+      showsVerticalScrollIndicator={false}
     >
-      <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark text-center mb-2">
+      <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark text-center mb-2 px-6">
         {step.title}
       </Text>
-      <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark text-center mb-2 px-4">
+      <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark text-center mb-2 px-10">
         {step.description}
       </Text>
 
@@ -1210,7 +1420,7 @@ function ResultSwipeStep({
           </View>
         )}
       </View>
-    </Animated.View>
+    </Animated.ScrollView>
   );
 }
 
@@ -1221,11 +1431,11 @@ function PaywallStep({
   pkg,
   index,
   scrollIndex,
-  windowWidth,
   isPurchasing,
   handlePurchase,
 }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const TERMS_URL =
     "https://gist.github.com/francesco-saponaro/d344c6bdaf1b47fe045772874ee35807";
@@ -1258,17 +1468,18 @@ function PaywallStep({
       contentContainerStyle={{
         flexGrow: 1,
         justifyContent: "center",
-        paddingTop: 40,
-        paddingBottom: 40,
+        paddingTop: insets.top + 40,
+        paddingBottom: insets.bottom + 20,
       }}
+      contentContainerClassName="px-6"
     >
       {/* 🚨 NEW AGGRESSIVE HEADER 🚨 */}
-      <View className="mb-6 items-center">
-        <View className="bg-action/20 px-4 py-1.5 rounded-full mb-4 border border-action/30">
-          <Text className="text-action font-heading font-bold text-xs uppercase tracking-widest">
-            {t("paywall.badge_unlocked", "BrainGuin Pro Unlocked")}
-          </Text>
-        </View>
+      <View className="mb-4 items-center">
+        <Image
+          source={step.image}
+          style={{ width: 85, height: 85, zIndex: 10, marginBottom: 10 }}
+          contentFit="contain"
+        />
 
         <View>
           <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-black text-center leading-tight">
@@ -1280,7 +1491,7 @@ function PaywallStep({
         </View>
       </View>
 
-      <View className="mb-8 space-y-2 gap-2 w-full">
+      <View className="mb-4 space-y-2 gap-2 w-full">
         <FeatureRow
           icon="document-text"
           title={t("paywall.feat_upload_title", "Upload Anything")}
@@ -1425,24 +1636,6 @@ function FeatureRow({ icon, title, desc, color }: any) {
         </Text>
         <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-0.5 leading-tight">
           {desc}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function LanguageStepLayout({ step }: any) {
-  return (
-    <View className="flex-1 justify-center pt-10">
-      <Text className="text-3xl font-heading font-bold mb-4 text-text-main-light dark:text-text-main-dark">
-        {step.title}
-      </Text>
-      <Text className="font-body mb-8 text-text-muted-light dark:text-text-muted-dark">
-        {step.description}
-      </Text>
-      <View className="h-64 bg-black/5 dark:bg-white/5 rounded-3xl items-center justify-center">
-        <Text className="text-text-muted-light dark:text-text-muted-dark">
-          Language List Placeholder
         </Text>
       </View>
     </View>

@@ -254,7 +254,7 @@ export default function CreationModal() {
         {/* Type Selector (Tabs) */}
         <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
           {[
-            { id: "document", label: t("document"), icon: "document-text" },
+            { id: "document", label: "Doc", icon: "document-text" },
             { id: "url", label: "URL", icon: "link" },
             { id: "topic", label: "Topic", icon: "bulb" },
           ].map((item) => (

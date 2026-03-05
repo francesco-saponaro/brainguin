@@ -170,7 +170,14 @@ const SwipeableCard = ({
   return (
     <GestureDetector gesture={pan}>
       <Animated.View
-        style={[styles.card, cardStyle, { height: isOnboarding ? 350 : 500 }]}
+        style={[
+          styles.card,
+          cardStyle,
+          {
+            height: isOnboarding ? 350 : 500,
+            width: isOnboarding ? "90%" : "100%",
+          },
+        ]}
       >
         {/* ✅ DELETE INDICATOR (Trash Icon) */}
         {isActive && (

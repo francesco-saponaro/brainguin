@@ -231,14 +231,14 @@ const SignupScreen = () => {
           <View className="items-center mb-8">
             <Image
               source={PENGUIN_LOGO}
-              style={{ width: 100, height: 100 }}
-              className="mb-4 lg:hidden"
+              style={{ width: 120, height: 120, marginBottom: 10 }}
               contentFit="contain"
+              className="lg:hidden"
             />
-            <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center">
+            <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center leading-tight">
               {t("auth.create_account")}
             </Text>
-            <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center mt-2">
+            <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center leading-tight">
               {t("auth.hook_ai_power")}
             </Text>
           </View>

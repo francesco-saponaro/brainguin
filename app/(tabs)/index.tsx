@@ -2,6 +2,7 @@ import GREETER_PENGUIN from "@/assets/images/greeter.png";
 import TEXT_LOGO_LIGHT from "@/assets/images/icon-text-dark.png";
 import TEXT_LOGO_DARK from "@/assets/images/icon-text-light.png";
 import PENGUIN_SIGN from "@/assets/images/processor.png";
+import FeedbackModal from "@/components/FeedbackModal";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
@@ -14,7 +15,7 @@ import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router"; // Added useFocusEffect
 import { useColorScheme } from "nativewind";
 import { PressableOpacity, PressableScale } from "pressto";
-import React, { useCallback, useState } from "react"; // Added hooks
+import React, { useCallback, useRef, useState } from "react"; // Added hooks
 import { useTranslation } from "react-i18next";
 import {
   InteractionManager,
@@ -26,6 +27,7 @@ import {
   View,
 } from "react-native";
 import { requestWidgetUpdate } from "react-native-android-widget";
+import { Modalize } from "react-native-modalize";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const APP_GROUP_ID = "group.com.brainguin.app";
@@ -38,6 +40,8 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const { session, signOut } = useAuthStore();
+
+  const feedbackModalRef = useRef<Modalize>(null);
 
   const isDesktop = width > 1000;
   const isSmallMobile = width < 390;
@@ -207,13 +211,31 @@ export default function HomeScreen() {
                 style={{ width: 140, height: 35 }}
                 contentFit="contain"
               />
-              {isSmallMobile && (
+              {/* 🚨 FEEDBACK TRIGGER BUTTON */}
+              <PressableScale
+                onPress={() => feedbackModalRef.current?.open()}
+                style={{
+                  backgroundColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.05)",
+                  padding: 6,
+                  borderRadius: 10,
+                }}
+              >
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={20}
+                  color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
+                />
+              </PressableScale>
+              {/* {isSmallMobile && (
                 <Image
                   source={GREETER_PENGUIN}
                   style={{ width: 50, height: 50 }}
                   contentFit="contain"
                 />
-              )}
+              )} */}
             </View>
           )}
 
@@ -233,13 +255,16 @@ export default function HomeScreen() {
                 Ready to Sprint?
               </Text>
             </View>
-            {!isSmallMobile && !isDesktop && (
-              <Image
-                source={GREETER_PENGUIN}
-                style={{ width: 80, height: 80 }}
-                contentFit="contain"
-              />
-            )}
+            {
+              // !isSmallMobile &&
+              !isDesktop && (
+                <Image
+                  source={GREETER_PENGUIN}
+                  style={{ width: 80, height: 80 }}
+                  contentFit="contain"
+                />
+              )
+            }
           </View>
         </View>
 
@@ -257,9 +282,9 @@ export default function HomeScreen() {
             label="URL"
             sub={t("web_articles")}
             color="#F97316"
-            onPress={() => router.push("/onboarding")}
+            // onPress={() => router.push("/onboarding")}
             // onPress={() => router.push("/paywall")}
-            // onPress={() => openCreationModal("url")}
+            onPress={() => openCreationModal("url")}
             // onPress={() =>
             //   router.replace(
             //     `/study/2914d810-7bfe-4991-8963-04df2b0865e1?isNew=true`,
@@ -433,6 +458,8 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <FeedbackModal modalRef={feedbackModalRef} />
     </View>
   );
 }
