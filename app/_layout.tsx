@@ -17,6 +17,7 @@ import {
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
+import * as Notifications from "expo-notifications";
 import { Stack, useRootNavigationState, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -128,6 +129,15 @@ export default function RootLayout() {
   // 2. THE AUTH INITIALIZER & LISTENER
   useEffect(() => {
     const initializeAuth = async () => {
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "Default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#F8FAFC",
+        });
+      }
+
       // Check System Status
       const isBlocked = await checkSystemStatus();
       if (isBlocked) return; // 🛑 STOP: Don't fetch user if maintenance/update
@@ -424,15 +434,15 @@ export default function RootLayout() {
                 </Stack.Protected>
 
                 {/* 2. If logged in but NOT onboarded: show Onboarding */}
-                <Stack.Protected guard={!!session?.user && !isOnboarded}>
+                {/* <Stack.Protected guard={!!session?.user && !isOnboarded}>
                   <Stack.Screen
                     name="onboarding/index"
                     options={{ headerShown: false }}
                   />
-                </Stack.Protected>
+                </Stack.Protected> */}
 
                 {/* 3. If logged in AND onboarded: show Main App */}
-                <Stack.Protected guard={!!session?.user && isOnboarded}>
+                <Stack.Protected guard={!!session?.user}>
                   <Stack.Screen
                     name="(tabs)"
                     options={{ headerShown: false }}
