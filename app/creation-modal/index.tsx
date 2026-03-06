@@ -10,12 +10,9 @@ import { PressableScale } from "pressto";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Keyboard,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -212,10 +209,10 @@ export default function CreationModal() {
 
   return (
     <View className="flex-1 bg-page-light dark:bg-page-dark flex-col justify-between">
-      <Pressable
+      {/* <Pressable
         style={{ ...StyleSheet.absoluteFillObject }}
         onPress={Keyboard.dismiss}
-      />
+      /> */}
 
       {/* Header */}
       <View className="pt-9 pb-6 px-6 border-b border-black/5 dark:border-white/5 flex-row justify-between items-center w-full">
@@ -400,7 +397,7 @@ export default function CreationModal() {
 
       <View
         style={{
-          paddingBottom: insets.bottom,
+          paddingBottom: insets.bottom + 10,
           paddingTop: 10,
           paddingHorizontal: 24,
         }}

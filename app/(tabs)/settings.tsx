@@ -8,7 +8,7 @@ import clsx from "clsx";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
-import { useColorScheme } from "nativewind";
+import { cssInterop, useColorScheme } from "nativewind";
 import { PressableOpacity, PressableScale } from "pressto";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,8 +16,10 @@ import {
   Alert,
   AppState,
   AppStateStatus,
+  KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   Switch,
   Text,
@@ -28,6 +30,10 @@ import {
 import Purchases from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+
+const StyledPressable = cssInterop(PressableScale, {
+  className: "style",
+});
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -307,12 +313,19 @@ export default function SettingsScreen() {
         sound: true, // Plays default sound
         data: { url: "/library" },
       },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-        hour: date.getHours(),
-        minute: date.getMinutes(),
-        repeats: true,
-      },
+      trigger:
+        Platform.OS === "android"
+          ? {
+              type: Notifications.SchedulableTriggerInputTypes.DAILY,
+              hour: date.getHours(),
+              minute: date.getMinutes(),
+            }
+          : {
+              type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+              hour: date.getHours(),
+              minute: date.getMinutes(),
+              repeats: true,
+            },
     });
   };
 
@@ -437,7 +450,7 @@ export default function SettingsScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingTop: isDesktop ? 40 : 0,
-          paddingBottom: insets.bottom + 80,
+          paddingBottom: insets.bottom + 120,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -448,7 +461,11 @@ export default function SettingsScreen() {
         </View>
 
         {/* A. PROFILE HEADER */}
-        <View className="mb-6 p-6 rounded-[32px] bg-card-light dark:bg-card-dark border border-black/5 dark:border-white/5 flex-row items-center">
+        <StyledPressable
+          activateOnHover
+          onPress={() => setIsEditingName(true)}
+          className="mb-6 p-6 rounded-[32px] bg-card-light dark:bg-card-dark border border-black/5 dark:border-white/5 flex-row items-center"
+        >
           <View className="flex-1">
             <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs uppercase font-bold tracking-wider mb-1">
               {t("settings.signed_in_as")}
@@ -467,9 +484,7 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
-          <PressableFinal
-            onPress={() => setIsEditingName(true)}
-            activateOnHover
+          <View
             style={{
               padding: 10,
               backgroundColor: isDark
@@ -479,8 +494,8 @@ export default function SettingsScreen() {
             }}
           >
             <Ionicons name="pencil" size={20} color={Colors.brand.action} />
-          </PressableFinal>
-        </View>
+          </View>
+        </StyledPressable>
 
         {/* B. SUBSCRIPTION */}
         <SectionHeader title={t("settings.section_membership")} />
@@ -617,12 +632,13 @@ export default function SettingsScreen() {
             <SectionHeader title={t("settings.section_notifications")} />
             <View className=" rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
               <SettingRow
+                onPress={() => toggleNotifications(!notificationsEnabled)}
                 icon="notifications"
                 label={t("settings.daily_reminder")}
                 rightElement={
                   <Switch
                     value={notificationsEnabled}
-                    onValueChange={toggleNotifications}
+                    // onValueChange={toggleNotifications}
                     trackColor={{ false: "#767577", true: Colors.brand.action }}
                     thumbColor={"#f4f3f4"}
                   />
@@ -693,8 +709,17 @@ export default function SettingsScreen() {
         onCancel={() => setIsDeleteModalVisible(false)}
       />
 
-      <Modal visible={isEditingName} transparent animationType="fade">
-        <View className="flex-1 bg-black/50 items-center justify-center px-6">
+      <Modal
+        visible={isEditingName}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsEditingName(false)}
+        statusBarTranslucent
+      >
+        <KeyboardAvoidingView
+          behavior="padding"
+          className="flex-1 bg-black/50 items-center justify-center px-6"
+        >
           <View className="bg-page-light dark:bg-page-dark w-full max-w-sm rounded-3xl p-6 border border-black/5 dark:border-white/10">
             <Text className="text-text-main-light dark:text-text-main-dark font-heading text-xl font-bold mb-4">
               {t("settings.update_name_title")}
@@ -708,7 +733,7 @@ export default function SettingsScreen() {
               autoFocus
             />
             <View className="flex-row gap-3">
-              <PressableFinal
+              <Pressable
                 onPress={() => setIsEditingName(false)}
                 style={{
                   flex: 1,
@@ -721,8 +746,8 @@ export default function SettingsScreen() {
                 <Text className="font-bold text-gray-600 dark:text-gray-300">
                   {t("settings.cancel_btn")}
                 </Text>
-              </PressableFinal>
-              <PressableFinal
+              </Pressable>
+              <Pressable
                 onPress={handleSaveName}
                 style={{
                   flex: 1,
@@ -735,10 +760,10 @@ export default function SettingsScreen() {
                 <Text className="font-bold text-white">
                   {t("settings.save_btn")}
                 </Text>
-              </PressableFinal>
+              </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {showTimePicker && Platform.OS === "android" && (

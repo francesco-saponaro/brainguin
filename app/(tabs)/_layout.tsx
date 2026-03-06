@@ -14,6 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import TEXT_LOGO_LIGHT from "@/assets/images/icon-text-dark.png";
 import TEXT_LOGO_DARK from "@/assets/images/icon-text-light.png";
@@ -21,10 +22,11 @@ import PENGUIN_SIGN from "@/assets/images/main.png";
 
 // --- CUSTOM TAB BAR COMPONENT ---
 function CustomTabBar({ state, descriptors, navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
-  const isDesktop = width > 1000;
+  const isDesktop = Platform.OS === "web" && width > 1000;
   const theme = isDark ? Colors.dark : Colors.light;
   const PressableFinal =
     Platform.OS === "web" ? PressableOpacity : PressableScale;
@@ -53,13 +55,6 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             const { options } = descriptors[route.key];
             const isFocused = state.index === index;
             return (
-              // <PressableScale
-              //   key={route.key}
-              //   onPress={() => navigation.navigate(route.name)}
-              //   className={`flex-row items-center px-6 py-4 rounded-2xl mx-4 ${
-              //     isFocused ? "bg-action/10" : "bg-transparent"
-              //   }`}
-              // >
               <PressableFinal
                 key={route.key}
                 activateOnHover
@@ -108,7 +103,17 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   const useLiquid = isLiquidGlassAvailable();
 
   return (
-    <View style={styles.mobileGlassContainer}>
+    <View
+      style={[
+        styles.mobileGlassContainer,
+        {
+          bottom: insets.bottom + 10,
+          borderColor: isDark
+            ? "rgba(255,255,255,0.1)"
+            : "rgba(30, 41, 59, 0.05)",
+        },
+      ]}
+    >
       {useLiquid ? (
         // 🚀 Native Liquid Glass (iOS 26+)
         <GlassView
@@ -121,7 +126,18 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         <BlurView
           intensity={Platform.OS === "ios" ? 80 : 100}
           tint={isDark ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              // The magic trick for Android: an explicit semi-transparent overlay
+              backgroundColor:
+                Platform.OS === "android"
+                  ? isDark
+                    ? "rgba(30, 41, 59, 0.70)"
+                    : "rgba(255, 255, 255, 0.85)"
+                  : "transparent",
+            },
+          ]}
         />
       )}
 
@@ -144,14 +160,23 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               <Ionicons
                 name={
                   descriptors[route.key].options.tabBarIcon({
-                    color: isFocused ? "#F97316" : "#94A3B8",
+                    color: isFocused
+                      ? !isDark
+                        ? "#0F172A"
+                        : "#F97316"
+                      : "#94A3B8",
                   }).props.name
                 }
                 size={26}
-                color={isFocused ? "#F97316" : "#94A3B8"}
+                color={
+                  isFocused ? (!isDark ? "#0F172A" : "#F97316") : "#94A3B8"
+                }
               />
               {isFocused && (
-                <View className="w-1.5 h-1.5 bg-action rounded-full mt-1" />
+                <View
+                  className="w-1.5 h-1.5 rounded-full mt-1"
+                  style={{ backgroundColor: !isDark ? "#0F172A" : "#F97316" }}
+                />
               )}
             </PressableFinal>
           );
@@ -207,13 +232,12 @@ const styles = StyleSheet.create({
   },
   mobileGlassContainer: {
     position: "absolute",
-    bottom: 30,
     left: 20,
     right: 20,
     height: 75,
     borderRadius: 38,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    elevation: 8, // Android shadow
   },
 });

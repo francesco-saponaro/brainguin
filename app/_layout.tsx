@@ -451,11 +451,26 @@ export default function RootLayout() {
                         headerShown: false,
                       }}
                     />
+                  ) : Platform.OS === "android" ? (
+                    <Stack.Screen
+                      name="creation-modal/index"
+                      options={{
+                        presentation: "formSheet",
+                        headerShown: false,
+                        sheetGrabberVisible: true,
+                        sheetCornerRadius: 24,
+                        sheetAllowedDetents: [0.9],
+                        contentStyle: {
+                          backgroundColor:
+                            colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                        },
+                      }}
+                    />
                   ) : (
                     <Stack.Screen
                       name="creation-modal/index"
                       options={{
-                        presentation: "modal", // Native slide-up behavior
+                        presentation: "modal",
                         animation: "slide_from_bottom",
                         headerShown: false,
                         sheetGrabberVisible: true,
@@ -477,6 +492,21 @@ export default function RootLayout() {
                         animation: "fade",
                         headerTitle: "Paywall",
                         headerShown: false,
+                      }}
+                    />
+                  ) : Platform.OS === "android" ? (
+                    <Stack.Screen
+                      name="paywall/index"
+                      options={{
+                        presentation: "formSheet",
+                        headerShown: false,
+                        sheetGrabberVisible: true,
+                        sheetCornerRadius: 24,
+                        sheetAllowedDetents: [0.9],
+                        contentStyle: {
+                          backgroundColor:
+                            colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                        },
                       }}
                     />
                   ) : (

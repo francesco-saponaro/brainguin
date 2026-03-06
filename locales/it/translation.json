@@ -127,6 +127,7 @@
     "delete_deck_confirm": "Elimina Tutto"
   },
   "library": {
+    "reset_filters": "Resetta Filtri",
     "header_small": "Laboratorio",
     "header_title": "Libreria",
     "search_placeholder": "Cerca mazzi...",

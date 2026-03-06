@@ -197,7 +197,7 @@ export default function HomeScreen() {
           paddingLeft: isDesktop ? 300 : 20,
           paddingRight: isDesktop ? 40 : 20,
           paddingTop: isDesktop ? 40 : 20,
-          paddingBottom: isDesktop ? 40 : 140,
+          paddingBottom: isDesktop ? 40 : insets.bottom + 120,
         }}
       >
         {/* 1. HEADER */}
@@ -315,15 +315,8 @@ export default function HomeScreen() {
             activateOnHover
             style={{
               flex: 2,
-              position: "relative",
-              overflow: "hidden",
-              minHeight: 240,
-              justifyContent: "center",
-              padding: isSmallMobile ? 16 : 26,
+
               borderRadius: isSmallMobile ? 32 : 48,
-              backgroundColor:
-                stats.dueCards > 0 ? Colors.brand.primary : "#16a34a",
-              // Match the shadow-2xl feel
               shadowColor:
                 stats.dueCards > 0 ? Colors.brand.primary : "#16a34a",
               shadowOffset: { width: 0, height: 20 },
@@ -332,66 +325,80 @@ export default function HomeScreen() {
               elevation: 10,
             }}
           >
-            {/* Background Decor */}
             <View
-              className="absolute right-[-20] bottom-[-20] rounded-full bg-white/5"
               style={{
-                transform: [{ scale: 1.2 }],
-                width: isDesktop ? 192 : 155,
-                height: isDesktop ? 192 : 155,
+                flex: 2,
+                position: "relative",
+                overflow: "hidden",
+                minHeight: 240,
+                justifyContent: "center",
+                padding: isSmallMobile ? 16 : 26,
+                borderRadius: isSmallMobile ? 32 : 48,
+                backgroundColor:
+                  stats.dueCards > 0 ? Colors.brand.primary : "#16a34a",
               }}
-            />
+            >
+              {/* Background Decor */}
+              <View
+                className="absolute right-[-20] bottom-[-20] rounded-full bg-white/5"
+                style={{
+                  transform: [{ scale: 1.2 }],
+                  width: isDesktop ? 192 : 155,
+                  height: isDesktop ? 192 : 155,
+                }}
+              />
 
-            <View className="z-10 flex-row items-center">
-              <View className="w-[65%]">
-                <View className="bg-white/10 self-start px-3 py-1 rounded-full mb-3">
-                  <Text className="text-accent font-heading text-[10px] font-bold tracking-[2px] uppercase">
+              <View className="z-10 flex-row items-center">
+                <View className="w-[65%]">
+                  <View className="bg-white/10 self-start px-3 py-1 rounded-full mb-3">
+                    <Text className="text-accent font-heading text-[10px] font-bold tracking-[2px] uppercase">
+                      {stats.dueCards > 0
+                        ? t("daily_mission")
+                        : t("mission_complete")}
+                    </Text>
+                  </View>
+
+                  {/* DYNAMIC TEXT */}
+                  <Text className="text-white font-heading text-3xl font-bold mb-6 leading-tight">
                     {stats.dueCards > 0
-                      ? t("daily_mission")
-                      : t("mission_complete")}
+                      ? `${stats.dueCards} ${t("cards_to_review")}`
+                      : t("all_caught_up")}
                   </Text>
+
+                  {stats.dueCards > 0 ? (
+                    <View className="bg-action py-4 px-8 rounded-2xl self-start">
+                      <Text className="text-white font-heading font-bold text-lg">
+                        {t("start_session")}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View className="bg-white/20 py-3 px-6 rounded-2xl self-start">
+                      <Text className="text-white font-heading font-bold">
+                        {t("great_job")} 🎉
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
-                {/* DYNAMIC TEXT */}
-                <Text className="text-white font-heading text-3xl font-bold mb-6 leading-tight">
-                  {stats.dueCards > 0
-                    ? `${stats.dueCards} ${t("cards_to_review")}`
-                    : t("all_caught_up")}
-                </Text>
-
-                {stats.dueCards > 0 ? (
-                  <View className="bg-action py-4 px-8 rounded-2xl self-start">
-                    <Text className="text-white font-heading font-bold text-lg">
-                      {t("start_session")}
-                    </Text>
-                  </View>
-                ) : (
-                  <View className="bg-white/20 py-3 px-6 rounded-2xl self-start">
-                    <Text className="text-white font-heading font-bold">
-                      {t("great_job")} 🎉
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* MASCOT */}
-              <View
-                className={clsx(
-                  "absolute",
-                  isSmallMobile
-                    ? "right-[-22] bottom-[-20]"
-                    : "right-[-26] bottom-[-32]",
-                )}
-              >
-                <Image
-                  source={PENGUIN_SIGN}
-                  style={{
-                    width: isDesktop ? 160 : 130,
-                    height: isDesktop ? 160 : 130,
-                  }}
-                  contentFit="contain"
-                  className="opacity-95"
-                />
+                {/* MASCOT */}
+                <View
+                  className={clsx(
+                    "absolute",
+                    isSmallMobile
+                      ? "right-[-22] bottom-[-20]"
+                      : "right-[-26] bottom-[-32]",
+                  )}
+                >
+                  <Image
+                    source={PENGUIN_SIGN}
+                    style={{
+                      width: isDesktop ? 160 : 130,
+                      height: isDesktop ? 160 : 130,
+                    }}
+                    contentFit="contain"
+                    className="opacity-95"
+                  />
+                </View>
               </View>
             </View>
           </Pressable>

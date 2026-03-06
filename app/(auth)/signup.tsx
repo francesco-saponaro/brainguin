@@ -214,178 +214,181 @@ const SignupScreen = () => {
     <SafeAreaView className="flex-1 bg-page-light dark:bg-page-dark lg:flex-row">
       {/* LEFT SIDE (Form) */}
       <KeyboardAvoidingView
+        style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 w-full lg:w-1/2"
+        className="w-full lg:w-1/2"
       >
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             padding: 24,
-            justifyContent: "center",
+            // justifyContent: "center",
           }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           className="lg:max-w-md lg:self-center w-full"
         >
-          {/* Mobile Logo */}
-          <View className="items-center mb-8">
-            <Image
-              source={PENGUIN_LOGO}
-              style={{ width: 120, height: 120, marginBottom: 10 }}
-              contentFit="contain"
-              className="lg:hidden"
-            />
-            <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center leading-tight">
-              {t("auth.create_account")}
-            </Text>
-            <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center leading-tight">
-              {t("auth.hook_ai_power")}
-            </Text>
-          </View>
-
-          {/* Email Input */}
-          <View className="mb-4">
-            <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
-              {t("auth.email_label")}
-            </Text>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
-                    errors.email ? "border-status-hard" : ""
-                  } focus:border-action outline-none`}
-                  placeholder={t("auth.email_placeholder")}
-                  placeholderTextColor="#94A3B8"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              )}
-            />
-            {errors.email && (
-              <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
-                {errors.email.message}
+          <View className="flex-1 justify-center">
+            {/* Mobile Logo */}
+            <View className="items-center mb-8">
+              <Image
+                source={PENGUIN_LOGO}
+                style={{ width: 120, height: 120, marginBottom: 10 }}
+                contentFit="contain"
+                className="lg:hidden"
+              />
+              <Text className="font-heading text-3xl text-text-main-light dark:text-text-main-dark font-bold text-center leading-tight">
+                {t("auth.create_account")}
               </Text>
-            )}
-          </View>
-
-          {/* Password Input */}
-          <View className="mb-4">
-            <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
-              {t("auth.password_label")}
-            </Text>
-            <Controller
-              control={control}
-              name="pwd"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
-                    errors.pwd ? "border-status-hard" : ""
-                  } focus:border-action outline-none`}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.pwd && (
-              <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
-                {errors.pwd.message}
+              <Text className="font-body text-text-muted-light dark:text-text-muted-dark text-center leading-tight">
+                {t("auth.hook_ai_power")}
               </Text>
-            )}
-          </View>
+            </View>
 
-          {/* Confirm Password Input */}
-          <View className="mb-8">
-            <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
-              {t("auth.confirm_password_label")}
-            </Text>
-            <Controller
-              control={control}
-              name="confirmPwd"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
-                    errors.confirmPwd ? "border-status-hard" : ""
-                  } focus:border-action outline-none`}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.confirmPwd && (
-              <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
-                {errors.confirmPwd.message}
+            {/* Email Input */}
+            <View className="mb-4">
+              <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
+                {t("auth.email_label")}
               </Text>
-            )}
-          </View>
-
-          {/* Signup Button */}
-          <PressableFinal
-            onPress={() =>
-              loading || !isFormValid ? null : handleSubmit(onSignup)()
-            }
-            activateOnHover
-            style={{
-              padding: 16,
-              borderRadius: 12,
-              alignItems: "center",
-              marginBottom: 24,
-              backgroundColor: loading || !isFormValid ? "#94A3B8" : "#F97316",
-              opacity: loading || !isFormValid ? 0.5 : 1,
-              shadowColor: "#F97316",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: loading || !isFormValid ? 0 : 0.2,
-              shadowRadius: 8,
-              elevation: loading || !isFormValid ? 0 : 4,
-            }}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-white font-heading text-lg font-bold">
-                {t("auth.create_account_button")}
-              </Text>
-            )}
-          </PressableFinal>
-
-          {/* Login Link */}
-          <View className="flex-row justify-center mb-8">
-            <Text className="font-body text-text-muted-light dark:text-text-muted-dark mr-1">
-              {t("auth.already_have_account")}
-            </Text>
-            <Link href="/(auth)" asChild>
-              <Pressable>
-                <Text className="font-heading font-bold text-action">
-                  {t("auth.login_link")}
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                      errors.email ? "border-status-hard" : ""
+                    } focus:border-action outline-none`}
+                    placeholder={t("auth.email_placeholder")}
+                    placeholderTextColor="#94A3B8"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                )}
+              />
+              {errors.email && (
+                <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
+                  {errors.email.message}
                 </Text>
-              </Pressable>
-            </Link>
-          </View>
+              )}
+            </View>
 
-          {/* Divider */}
-          <View className="flex-row items-center mb-6">
-            <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
-            <Text className="mx-4 text-text-muted-light dark:text-text-muted-dark font-body">
-              {t("auth.or_signup_with")}
-            </Text>
-            <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
-          </View>
+            {/* Password Input */}
+            <View className="mb-4">
+              <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
+                {t("auth.password_label")}
+              </Text>
+              <Controller
+                control={control}
+                name="pwd"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                      errors.pwd ? "border-status-hard" : ""
+                    } focus:border-action outline-none`}
+                    placeholder="••••••••"
+                    placeholderTextColor="#94A3B8"
+                    secureTextEntry
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.pwd && (
+                <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
+                  {errors.pwd.message}
+                </Text>
+              )}
+            </View>
 
-          {/* Social Buttons */}
-          <View className="flex-row gap-4 justify-center">
-            {/* <Pressable
+            {/* Confirm Password Input */}
+            <View className="mb-8">
+              <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
+                {t("auth.confirm_password_label")}
+              </Text>
+              <Controller
+                control={control}
+                name="confirmPwd"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                      errors.confirmPwd ? "border-status-hard" : ""
+                    } focus:border-action outline-none`}
+                    placeholder="••••••••"
+                    placeholderTextColor="#94A3B8"
+                    secureTextEntry
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+              />
+              {errors.confirmPwd && (
+                <Text className="text-status-hard text-sm mt-1 ml-1 font-body">
+                  {errors.confirmPwd.message}
+                </Text>
+              )}
+            </View>
+
+            {/* Signup Button */}
+            <PressableFinal
+              onPress={() =>
+                loading || !isFormValid ? null : handleSubmit(onSignup)()
+              }
+              activateOnHover
+              style={{
+                padding: 16,
+                borderRadius: 12,
+                alignItems: "center",
+                marginBottom: 24,
+                backgroundColor:
+                  loading || !isFormValid ? "#94A3B8" : "#F97316",
+                opacity: loading || !isFormValid ? 0.5 : 1,
+                shadowColor: "#F97316",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: loading || !isFormValid ? 0 : 0.2,
+                shadowRadius: 8,
+                elevation: loading || !isFormValid ? 0 : 4,
+              }}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white font-heading text-lg font-bold">
+                  {t("auth.create_account_button")}
+                </Text>
+              )}
+            </PressableFinal>
+
+            {/* Login Link */}
+            <View className="flex-row justify-center mb-8">
+              <Text className="font-body text-text-muted-light dark:text-text-muted-dark mr-1">
+                {t("auth.already_have_account")}
+              </Text>
+              <Link href="/(auth)" asChild>
+                <Pressable>
+                  <Text className="font-heading font-bold text-action">
+                    {t("auth.login_link")}
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
+
+            {/* Divider */}
+            <View className="flex-row items-center mb-6">
+              <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
+              <Text className="mx-4 text-text-muted-light dark:text-text-muted-dark font-body">
+                {t("auth.or_signup_with")}
+              </Text>
+              <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
+            </View>
+
+            {/* Social Buttons */}
+            <View className="flex-row gap-4 justify-center">
+              {/* <Pressable
               onPress={onGoogleLogin}
               className={clsx(
                 "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
@@ -393,42 +396,8 @@ const SignupScreen = () => {
                 "hover:bg-slate-100 dark:hover:bg-slate-800",
               )}
             > */}
-            <PressableFinal
-              onPress={onGoogleLogin}
-              style={{
-                flex: 1,
-                padding: 16,
-                borderRadius: 12,
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 1,
-                backgroundColor: colorScheme === "dark" ? "#334155" : "#FFFFFF",
-                borderColor: colorScheme === "dark" ? "#374151" : "#E5E7EB",
-              }}
-              activateOnHover
-            >
-              <Ionicons
-                name="logo-google"
-                size={20}
-                color={colorScheme === "dark" ? "#fff" : "#000"}
-              />
-              <Text className="font-heading font-semibold text-text-main-light dark:text-text-main-dark">
-                {t("auth.google")}
-              </Text>
-            </PressableFinal>
-
-            {isApple ? (
-              // <Pressable
-              //   onPress={onAppleLogin}
-              //   className={clsx(
-              //     "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
-              //     "bg-black dark:bg-white border-black dark:border-white",
-              //     "hover:bg-slate-900 dark:hover:bg-slate-100",
-              //   )}
-              // >
               <PressableFinal
-                onPress={onAppleLogin}
+                onPress={onGoogleLogin}
                 style={{
                   flex: 1,
                   padding: 16,
@@ -438,21 +407,59 @@ const SignupScreen = () => {
                   alignItems: "center",
                   borderWidth: 1,
                   backgroundColor:
-                    colorScheme === "dark" ? "#FFFFFF" : "#000000",
-                  borderColor: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                    colorScheme === "dark" ? "#334155" : "#FFFFFF",
+                  borderColor: colorScheme === "dark" ? "#374151" : "#E5E7EB",
+                  gap: 4,
                 }}
                 activateOnHover
               >
                 <Ionicons
-                  name="logo-apple"
+                  name="logo-google"
                   size={20}
-                  color={colorScheme === "dark" ? "#000" : "#fff"}
+                  color={colorScheme === "dark" ? "#fff" : "#000"}
                 />
-                <Text className="font-heading font-semibold text-white dark:text-black">
-                  {t("auth.apple")}
+                <Text className="font-heading font-semibold text-text-main-light dark:text-text-main-dark">
+                  {t("auth.google")}
                 </Text>
               </PressableFinal>
-            ) : null}
+
+              {isApple ? (
+                // <Pressable
+                //   onPress={onAppleLogin}
+                //   className={clsx(
+                //     "flex-1 p-4 rounded-xl flex-row justify-center items-center gap-2 border transition-all duration-200 active:scale-95",
+                //     "bg-black dark:bg-white border-black dark:border-white",
+                //     "hover:bg-slate-900 dark:hover:bg-slate-100",
+                //   )}
+                // >
+                <PressableFinal
+                  onPress={onAppleLogin}
+                  style={{
+                    flex: 1,
+                    padding: 16,
+                    borderRadius: 12,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderWidth: 1,
+                    backgroundColor:
+                      colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                    borderColor: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                    gap: 4,
+                  }}
+                  activateOnHover
+                >
+                  <Ionicons
+                    name="logo-apple"
+                    size={20}
+                    color={colorScheme === "dark" ? "#000" : "#fff"}
+                  />
+                  <Text className="font-heading font-semibold text-white dark:text-black">
+                    {t("auth.apple")}
+                  </Text>
+                </PressableFinal>
+              ) : null}
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

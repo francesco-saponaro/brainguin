@@ -4,7 +4,6 @@ import FlashcardSwiper from "@/components/Study/FlashcardSwiper";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import * as DocumentPicker from "expo-document-picker";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,9 +14,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -878,15 +879,12 @@ export default function OnboardingScreen() {
       <Modal
         visible={contextModalVisible}
         transparent
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setContextModalVisible(false)}
+        statusBarTranslucent
       >
-        <View style={styles.overlay}>
-          <BlurView
-            intensity={30}
-            tint={colorScheme === "dark" ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
+        <View className="flex-1 bg-black/60 items-center justify-center px-4">
           <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10">
             <View className="flex-row justify-between items-center mb-6 w-full">
               <View className="flex-row items-center gap-2">
@@ -896,7 +894,7 @@ export default function OnboardingScreen() {
                 </Text>
               </View>
 
-              <PressableScale
+              <Pressable
                 onPress={() => setContextModalVisible(false)}
                 style={{
                   backgroundColor:
@@ -906,21 +904,20 @@ export default function OnboardingScreen() {
                   padding: 8,
                   borderRadius: 99,
                 }}
-                activateOnHover
               >
                 <Ionicons
                   name="close"
                   size={20}
                   color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
                 />
-              </PressableScale>
+              </Pressable>
             </View>
 
             <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed text-center">
               {activeContext}
             </Text>
 
-            <PressableScale
+            <Pressable
               onPress={() => setContextModalVisible(false)}
               style={{
                 marginTop: 40,
@@ -930,12 +927,11 @@ export default function OnboardingScreen() {
                 borderRadius: 16,
                 alignItems: "center",
               }}
-              activateOnHover
             >
               <Text className="text-white font-bold text-lg">
                 {t("study.hint_btn", "Got it!")}
               </Text>
-            </PressableScale>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -1186,170 +1182,177 @@ function TryItOutStep({
   });
 
   return (
-    <Animated.ScrollView
-      style={textStyle}
-      contentContainerStyle={{
-        flexGrow: 1,
-        alignItems: "center",
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-      }}
-      contentContainerClassName="px-6"
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      // "padding" usually works best inside bottom sheets on Android
+      behavior="padding"
+      keyboardVerticalOffset={96}
     >
-      <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark mb-4 leading-tight">
-        {step.title}
-      </Text>
-      <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark mb-8 leading-relaxed">
-        {step.description}
-      </Text>
+      <Animated.ScrollView
+        style={textStyle}
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: "center",
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        }}
+        contentContainerClassName="px-6"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark mb-4 leading-tight">
+          {step.title}
+        </Text>
+        <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark mb-8 leading-relaxed">
+          {step.description}
+        </Text>
 
-      {/* Type Selector (Tabs) */}
-      <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
-        {[
-          { id: "document", label: "Doc", icon: "document-text" },
-          { id: "url", label: "URL", icon: "link" },
-          { id: "topic", label: "Topic", icon: "bulb" },
-        ].map((item) => (
-          <PressableScale
-            key={item.id}
-            onPress={() => {
-              setActiveType(item.id as InputType);
-              setInputText("");
-              setSelectedFile(null);
-            }}
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 12,
-              borderRadius: 12,
-              borderWidth: 1,
-              backgroundColor:
-                activeType === item.id ? "#F97316" : "transparent",
-              borderColor:
-                activeType === item.id
-                  ? "#F97316"
-                  : colorScheme === "dark"
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.1)",
-            }}
-          >
-            <Ionicons
-              name={item.icon as any}
-              size={18}
-              color={activeType === item.id ? "white" : "#94A3B8"}
-            />
-            <Text
-              className={`ml-1 font-heading font-bold ${
-                activeType === item.id
-                  ? "text-white"
-                  : "text-text-muted-light dark:text-text-muted-dark"
-              }`}
-            >
-              {item.label}
-            </Text>
-          </PressableScale>
-        ))}
-      </View>
-
-      {/* Input Content Area */}
-      <View className="py-6 justify-center w-full">
-        {activeType === "document" && (
-          <View>
-            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-              {t("creation.upload_your_document")}
-            </Text>
+        {/* Type Selector (Tabs) */}
+        <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
+          {[
+            { id: "document", label: "Doc", icon: "document-text" },
+            { id: "url", label: "URL", icon: "link" },
+            { id: "topic", label: "Topic", icon: "bulb" },
+          ].map((item) => (
             <PressableScale
-              onPress={handleFilePick}
+              key={item.id}
+              onPress={() => {
+                setActiveType(item.id as InputType);
+                setInputText("");
+                setSelectedFile(null);
+              }}
               style={{
-                width: "100%",
-                height: 200,
-                borderWidth: 2,
-                borderStyle: "dashed",
-                borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
-                borderRadius: 24,
+                flex: 1,
+                flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
+                padding: 12,
+                borderRadius: 12,
+                borderWidth: 1,
                 backgroundColor:
-                  colorScheme === "dark"
-                    ? "rgba(255,255,255,0.05)"
-                    : "rgba(0,0,0,0.05)",
-                marginBottom: 16,
+                  activeType === item.id ? "#F97316" : "transparent",
+                borderColor:
+                  activeType === item.id
+                    ? "#F97316"
+                    : colorScheme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
               }}
             >
-              {selectedFile ? (
-                <>
-                  <Ionicons name="document" size={48} color="#F97316" />
-                  <Text
-                    className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
-                    numberOfLines={1}
-                  >
-                    {selectedFile.name}
-                  </Text>
-                  <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
-                    {t("creation.tap_to_change_file")}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons
-                    name="cloud-upload-outline"
-                    size={48}
-                    color="#94A3B8"
-                  />
-                  <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-                    {t("creation.tap_to_select_document")}
-                  </Text>
-                </>
-              )}
+              <Ionicons
+                name={item.icon as any}
+                size={18}
+                color={activeType === item.id ? "white" : "#94A3B8"}
+              />
+              <Text
+                className={`ml-1 font-heading font-bold ${
+                  activeType === item.id
+                    ? "text-white"
+                    : "text-text-muted-light dark:text-text-muted-dark"
+                }`}
+              >
+                {item.label}
+              </Text>
             </PressableScale>
-          </View>
-        )}
+          ))}
+        </View>
 
-        {activeType === "url" && (
-          <View>
-            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-              {t("creation.paste_link")}
-            </Text>
-            <TextInput
-              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
-              placeholder="https://wikipedia.org/wiki/Penguin"
-              placeholderTextColor="#94A3B8"
-              value={inputText}
-              onChangeText={setInputText}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-          </View>
-        )}
+        {/* Input Content Area */}
+        <View className="py-6 justify-center w-full">
+          {activeType === "document" && (
+            <View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                {t("creation.upload_your_document")}
+              </Text>
+              <PressableScale
+                onPress={handleFilePick}
+                style={{
+                  width: "100%",
+                  height: 200,
+                  borderWidth: 2,
+                  borderStyle: "dashed",
+                  borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                  borderRadius: 24,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                  marginBottom: 16,
+                }}
+              >
+                {selectedFile ? (
+                  <>
+                    <Ionicons name="document" size={48} color="#F97316" />
+                    <Text
+                      className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
+                      numberOfLines={1}
+                    >
+                      {selectedFile.name}
+                    </Text>
+                    <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
+                      {t("creation.tap_to_change_file")}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons
+                      name="cloud-upload-outline"
+                      size={48}
+                      color="#94A3B8"
+                    />
+                    <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                      {t("creation.tap_to_select_document")}
+                    </Text>
+                  </>
+                )}
+              </PressableScale>
+            </View>
+          )}
 
-        {activeType === "topic" && (
-          <View>
-            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-              {t("creation.paste_topic_description")}
-            </Text>
-            <TextInput
-              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
-              style={{ height: 200 }}
-              placeholder={t(
-                "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
-              )}
-              placeholderTextColor="#94A3B8"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              textAlignVertical="top"
-              scrollEnabled={true} // ✅ Allows internal scrolling
-              {...(Platform.OS === "android"
-                ? { nestedScrollEnabled: true }
-                : {})}
-            />
-          </View>
-        )}
-      </View>
-    </Animated.ScrollView>
+          {activeType === "url" && (
+            <View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                {t("creation.paste_link")}
+              </Text>
+              <TextInput
+                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
+                placeholder="https://wikipedia.org/wiki/Penguin"
+                placeholderTextColor="#94A3B8"
+                value={inputText}
+                onChangeText={setInputText}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </View>
+          )}
+
+          {activeType === "topic" && (
+            <View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                {t("creation.paste_topic_description")}
+              </Text>
+              <TextInput
+                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
+                style={{ height: 200 }}
+                placeholder={t(
+                  "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
+                )}
+                placeholderTextColor="#94A3B8"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                textAlignVertical="top"
+                scrollEnabled={true} // ✅ Allows internal scrolling
+                {...(Platform.OS === "android"
+                  ? { nestedScrollEnabled: true }
+                  : {})}
+              />
+            </View>
+          )}
+        </View>
+      </Animated.ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

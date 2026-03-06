@@ -1,10 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
-import { BlurView } from "expo-blur";
-import { PressableScale } from "pressto";
+import { PressableOpacity } from "pressto";
 import React from "react";
 import { useTranslation } from "react-i18next"; // 1. Import hook
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, Text, View } from "react-native";
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -27,11 +26,18 @@ export default function ConfirmModal({
 }: ConfirmModalProps) {
   const { t } = useTranslation(); // 2. Initialize hook
 
-  return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+  const PressableFinal = Platform.OS === "web" ? PressableOpacity : Pressable;
 
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      presentationStyle="overFullScreen"
+      animationType="fade"
+      onRequestClose={onCancel}
+      statusBarTranslucent
+    >
+      <View className="flex-1 bg-black/60 items-center justify-center px-2">
         <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10">
           <View
             className={clsx(
@@ -65,7 +71,7 @@ export default function ConfirmModal({
                   : "bg-action hover:bg-orange-600", // Orange shifts to deep orange
               )}
             > */}
-            <PressableScale
+            <PressableFinal
               onPress={onConfirm}
               style={{
                 width: "100%",
@@ -85,7 +91,7 @@ export default function ConfirmModal({
               <Text className="text-white font-heading font-bold text-lg">
                 {confirmLabel}
               </Text>
-            </PressableScale>
+            </PressableFinal>
 
             {/* CANCEL BUTTON */}
             {/* <Pressable
@@ -96,7 +102,7 @@ export default function ConfirmModal({
                 "hover:bg-black/5 dark:hover:bg-white/10",
               )}
             > */}
-            <PressableScale
+            <PressableFinal
               onPress={onCancel}
               style={{
                 width: "100%",
@@ -109,19 +115,10 @@ export default function ConfirmModal({
               <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-lg">
                 {t("common.cancel")}
               </Text>
-            </PressableScale>
+            </PressableFinal>
           </View>
         </View>
       </View>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

@@ -2,7 +2,6 @@ import FlashcardSwiper from "@/components/Study/FlashcardSwiper";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
@@ -16,18 +15,21 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
 import { Modalize } from "react-native-modalize";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
 import { PressableScale } from "pressto";
 
 export default function StudyScreen() {
+  const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const { id, isNew } = useLocalSearchParams(); // Can be a UUID or "daily"
@@ -622,7 +624,7 @@ export default function StudyScreen() {
           }
         }}
       >
-        <View className="p-8 pb-12">
+        <View className="p-8" style={{ paddingBottom: insets.bottom + 10 }}>
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl">
               {t("study.exam_modal.title", "When is your Exam? 📅")}
@@ -703,8 +705,10 @@ export default function StudyScreen() {
           backgroundColor: isDark ? "#1E293B" : "#F8FAFC", // Match your theme
           borderTopLeftRadius: 32,
           borderTopRightRadius: 32,
+        }}
+        childrenStyle={{
+          paddingBottom: insets.bottom + 10,
           paddingTop: 40,
-          paddingBottom: 60,
           paddingHorizontal: 24,
         }}
         handlePosition="inside"
@@ -828,15 +832,12 @@ export default function StudyScreen() {
       <Modal
         visible={contextModalVisible}
         transparent
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setContextModalVisible(false)}
+        statusBarTranslucent
       >
-        <View style={styles.overlay}>
-          <BlurView
-            intensity={30}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
+        <View className="flex-1 bg-black/60 items-center justify-center px-4">
           <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10">
             <View className="flex-row justify-between items-center mb-6 w-full">
               <View className="flex-row items-center gap-2">
@@ -846,7 +847,7 @@ export default function StudyScreen() {
                 </Text>
               </View>
 
-              <PressableScale
+              <Pressable
                 onPress={() => setContextModalVisible(false)}
                 style={{
                   backgroundColor:
@@ -856,21 +857,20 @@ export default function StudyScreen() {
                   padding: 8,
                   borderRadius: 99,
                 }}
-                activateOnHover
               >
                 <Ionicons
                   name="close"
                   size={20}
                   color={isDark ? "#94A3B8" : "#64748B"}
                 />
-              </PressableScale>
+              </Pressable>
             </View>
 
             <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed text-center">
               {activeContext}
             </Text>
 
-            <PressableScale
+            <Pressable
               onPress={() => setContextModalVisible(false)}
               style={{
                 marginTop: 40,
@@ -880,12 +880,11 @@ export default function StudyScreen() {
                 borderRadius: 16,
                 alignItems: "center",
               }}
-              activateOnHover
             >
               <Text className="text-white font-bold text-lg">
                 {t("study.hint_btn")}
               </Text>
-            </PressableScale>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -905,12 +904,3 @@ const StatBox = ({ label, value, color, textColor }: any) => (
     </Text>
   </View>
 );
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

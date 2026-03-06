@@ -78,7 +78,9 @@ export default function FeedbackModal({ modalRef }: FeedbackModalProps) {
     <Portal>
       <Modalize
         ref={modalRef}
-        keyboardAvoidingBehavior={Platform.OS === "ios" ? "padding" : "height"}
+        avoidKeyboardLikeIOS={true}
+        // Use 'padding' for both platforms now that Android is acting like iOS
+        keyboardAvoidingBehavior="padding"
         adjustToContentHeight
         panGestureEnabled={true}
         closeOnOverlayTap={true}
@@ -92,7 +94,8 @@ export default function FeedbackModal({ modalRef }: FeedbackModalProps) {
           paddingHorizontal: 24,
           paddingTop: 30,
           // Apply inset padding here to ensure it pushes content up
-          paddingBottom: insets.bottom,
+          paddingBottom:
+            Platform.OS === "android" ? insets.bottom + 10 : insets.bottom,
         }}
         handlePosition="inside"
         handleStyle={{
@@ -144,7 +147,9 @@ export default function FeedbackModal({ modalRef }: FeedbackModalProps) {
         />
 
         <Pressable
-          onPress={isSubmitting ? undefined : handleSubmit}
+          onPress={
+            isSubmitting || !message.trim().length ? undefined : handleSubmit
+          }
           style={{
             marginTop: 24,
             backgroundColor: "#F97316",
@@ -152,7 +157,7 @@ export default function FeedbackModal({ modalRef }: FeedbackModalProps) {
             paddingVertical: 16,
             borderRadius: 16,
             alignItems: "center",
-            opacity: isSubmitting ? 0.7 : 1,
+            opacity: isSubmitting || !message.trim().length ? 0.7 : 1,
           }}
         >
           {isSubmitting ? (

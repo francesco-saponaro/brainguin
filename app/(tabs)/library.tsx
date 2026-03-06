@@ -474,7 +474,9 @@ export default function LibraryScreen() {
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               columnWrapperStyle={numColumns > 1 ? { gap: 16 } : null}
-              contentContainerStyle={{ paddingBottom: isDesktop ? 40 : 140 }}
+              contentContainerStyle={{
+                paddingBottom: isDesktop ? 40 : insets.bottom + 120,
+              }}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
               refreshControl={
@@ -541,6 +543,10 @@ export default function LibraryScreen() {
         transparent={true}
         animationType="fade"
         statusBarTranslucent={true}
+        onRequestClose={() => {
+          // We return nothing/do nothing, which effectively "disables" it
+          console.log("Back button blocked during Thinking State");
+        }}
       >
         <ThinkingState />
       </Modal>
@@ -622,162 +628,187 @@ function DeckCard({
       activateOnHover
       style={{
         flex: 1,
-        padding: 20,
-        borderRadius: 32,
         marginBottom: 16,
-        borderWidth: 1,
-        position: "relative",
-        overflow: "hidden",
-        justifyContent: "space-between",
-        minHeight: 280,
-        backgroundColor: isDark ? Colors.dark.card : Colors.light.card,
-        borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+        // 1. ONLY shadow and layout properties go on the outer layer
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.05,
         shadowRadius: 20,
-        elevation: 3,
+        elevation: 1,
         opacity: isArchived ? 0.6 : 1,
+        borderRadius: 32,
       }}
     >
-      {!isArchived && (
-        <View className="absolute right-[-30] top-[-30] w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
-      )}
-
-      {/* --- TOP ROW: Source Badge & Right Actions --- */}
-      <View className="flex-row justify-between items-start mb-4">
-        {/* Source Badge */}
-        <View
-          className={`px-3 py-1.5 rounded-full ${badge.color.split(" ")[0]}`}
-        >
-          <Text
-            className={`text-[10px] font-bold uppercase tracking-wider ${badge.color.split(" ")[1]}`}
-          >
-            {badge.label}
-          </Text>
-        </View>
-
-        {/* Right Actions: Exam Date & Delete */}
-        <View className="flex-row items-center gap-2">
-          {item.exam_date ? (
-            <StyledPressable
-              onPress={onEditExamDate}
-              className="bg-action/10 px-3 py-1.5 rounded-full flex-row items-center gap-1 border border-action/20"
-            >
-              <Ionicons name="calendar" size={12} color={Colors.brand.action} />
-              <Text className="text-action text-[10px] font-bold uppercase tracking-widest">
-                {formatDate(item.exam_date)}
-              </Text>
-            </StyledPressable>
-          ) : (
-            <StyledPressable
-              onPress={onEditExamDate}
-              className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex-row items-center gap-1"
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={12}
-                color={isDark ? "#94A3B8" : "#64748B"}
-              />
-              <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
-                {t("library.card.add_exam", "Add Exam")}
-              </Text>
-            </StyledPressable>
-          )}
-
-          <PressableFinal
-            activateOnHover
-            onPress={onDelete}
-            style={{
-              width: 32,
-              height: 32,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: 0.6,
-            }}
-          >
-            <Ionicons
-              name="trash-outline"
-              size={18}
-              color={isDark ? "#FFF" : "#000"}
-            />
-          </PressableFinal>
-        </View>
-      </View>
-
-      <View className="mb-6">
-        <Text
-          numberOfLines={2}
-          className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl leading-tight"
-        >
-          {item.title}
-        </Text>
-        <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs uppercase font-bold mt-2 tracking-wider">
-          {mastered} / {count} {t("library.card.mastered_count")}
-        </Text>
-      </View>
-
-      <View className="gap-3">
-        <View
-          className={clsx(
-            "py-3.5 rounded-2xl items-center border",
-            isCompleted
-              ? "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800"
-              : "bg-action/10 border-action/5",
-          )}
-        >
-          <Text
-            className={clsx(
-              "font-heading font-bold text-xs uppercase tracking-[2px]",
-              isCompleted
-                ? "text-green-600 dark:text-green-400"
-                : "text-action",
-            )}
-          >
-            {isCompleted
-              ? t("library.card.status_completed")
-              : t("library.card.start_review")}
-          </Text>
-        </View>
-
-        {!isCompleted && !isArchived && (
-          <PressableFinal
-            onPress={onGenerate}
-            activateOnHover
-            style={{
-              paddingVertical: 12,
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 6,
-            }}
-          >
-            <Ionicons name="sparkles" size={14} color={Colors.brand.action} />
-            <Text className="text-action font-bold text-xs uppercase tracking-wide">
-              {t("library.card.generate_more")}
-            </Text>
-          </PressableFinal>
+      <View
+        style={{
+          flex: 1,
+          padding: 20,
+          borderRadius: 32,
+          borderWidth: 1,
+          position: "relative",
+          justifyContent: "space-between",
+          minHeight: 280,
+          backgroundColor: isDark ? Colors.dark.card : Colors.light.card,
+          borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+          overflow: "hidden", // Now this will perfectly clip the blur!
+        }}
+      >
+        {!isArchived && (
+          <View className="absolute right-[-30] top-[-30] w-48 h-48 bg-primary/5 rounded-full blur-3xl z-0" />
         )}
 
-        <PressableFinal
-          onPress={onArchive}
-          activateOnHover
-          style={{ alignItems: "center", paddingTop: 4 }}
-        >
-          <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase opacity-60">
-            {isArchived ? (
-              <Text>
-                <Ionicons name="refresh" size={10} />{" "}
-                {t("library.restore_deck_btn")}
-              </Text>
+        {/* --- TOP ROW: Source Badge & Right Actions --- */}
+        <View className="flex-row justify-between items-start mb-4">
+          {/* Source Badge */}
+          <View
+            className={`px-3 py-1.5 rounded-full ${badge.color.split(" ")[0]}`}
+          >
+            <Text
+              className={`text-[10px] font-bold uppercase tracking-wider ${badge.color.split(" ")[1]}`}
+            >
+              {badge.label}
+            </Text>
+          </View>
+
+          {/* Right Actions: Exam Date & Delete */}
+          <View className="flex-row items-center gap-2">
+            {item.exam_date ? (
+              <StyledPressable
+                onPress={onEditExamDate}
+                className="bg-action/10 px-3 py-1.5 rounded-full flex-row items-center gap-1 border border-action/20"
+              >
+                <Ionicons
+                  name="calendar"
+                  size={12}
+                  color={Colors.brand.action}
+                />
+                <Text className="text-action text-[10px] font-bold uppercase tracking-widest">
+                  {formatDate(item.exam_date)}
+                </Text>
+              </StyledPressable>
             ) : (
-              <Text>
-                <Ionicons name="file-tray-full" size={10} />{" "}
-                {t("library.archive_deck_btn")}
-              </Text>
+              <StyledPressable
+                onPress={onEditExamDate}
+                className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex-row items-center gap-1"
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={12}
+                  color={isDark ? "#94A3B8" : "#64748B"}
+                />
+                <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
+                  {t("library.card.add_exam", "Add Exam")}
+                </Text>
+              </StyledPressable>
             )}
+
+            <PressableFinal
+              activateOnHover
+              onPress={onDelete}
+              style={{
+                width: 32,
+                height: 32,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: 0.6,
+              }}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={18}
+                color={isDark ? "#FFF" : "#000"}
+              />
+            </PressableFinal>
+          </View>
+        </View>
+
+        <View className="mb-6">
+          <Text
+            numberOfLines={2}
+            className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl leading-tight"
+          >
+            {item.title}
           </Text>
-        </PressableFinal>
+          <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-xs uppercase font-bold mt-2 tracking-wider">
+            {mastered} / {count} {t("library.card.mastered_count")}
+          </Text>
+        </View>
+
+        <View className="gap-3">
+          <View
+            className={clsx(
+              "py-3.5 rounded-2xl items-center border",
+              isCompleted
+                ? "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800"
+                : "bg-action/10 border-action/5",
+            )}
+          >
+            <Text
+              className={clsx(
+                "font-heading font-bold text-xs uppercase tracking-[2px]",
+                isCompleted
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-action",
+              )}
+            >
+              {isCompleted
+                ? t("library.card.status_completed")
+                : t("library.card.start_review")}
+            </Text>
+          </View>
+
+          {!isCompleted && !isArchived && (
+            <StyledPressable
+              onPress={onGenerate}
+              activateOnHover
+              style={{
+                paddingVertical: 12,
+                paddingHorizontal: 16, // Padding helps give the text breathing room
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
+                gap: 6,
+                alignSelf: "center", // This keeps it from stretching to 100% width
+              }}
+            >
+              <Ionicons name="sparkles" size={14} color={Colors.brand.action} />
+              <Text
+                numberOfLines={1}
+                style={{
+                  includeFontPadding: false, // Fixes Android vertical alignment
+                  flexShrink: 0, // FORCES the button to widen rather than the text wrapping
+                }}
+                className="text-action font-bold text-xs uppercase"
+              >
+                {t("library.card.generate_more")}
+              </Text>
+            </StyledPressable>
+          )}
+
+          <PressableFinal
+            onPress={onArchive}
+            activateOnHover
+            style={{
+              alignItems: "center",
+              paddingHorizontal: 4,
+              alignSelf: "center",
+            }}
+          >
+            <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase opacity-60">
+              {isArchived ? (
+                <Text>
+                  <Ionicons name="refresh" size={10} />{" "}
+                  {t("library.restore_deck_btn")}
+                </Text>
+              ) : (
+                <Text>
+                  <Ionicons name="file-tray-full" size={10} />{" "}
+                  {t("library.archive_deck_btn")}
+                </Text>
+              )}
+            </Text>
+          </PressableFinal>
+        </View>
       </View>
     </PressableFinal>
   );
@@ -801,8 +832,7 @@ function FilterModal({
 
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
-  const PressableFinal =
-    Platform.OS === "web" ? PressableOpacity : PressableScale;
+  const PressableFinal = Platform.OS === "web" ? PressableOpacity : Pressable;
 
   React.useEffect(() => {
     if (visible) {
@@ -825,8 +855,10 @@ function FilterModal({
       transparent
       presentationStyle="overFullScreen"
       animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View className="flex-1 bg-black/60 items-center justify-center px-6">
+      <View className="flex-1 bg-black/60 items-center justify-center px-4">
         <View className="bg-page-light dark:bg-page-dark w-full max-w-md rounded-[40px] p-8 shadow-2xl">
           {/* Header */}
           <View className="flex-row justify-between items-center mb-8">
@@ -853,10 +885,10 @@ function FilterModal({
           </View>
 
           {/* 1. DECK STATUS (NEW) */}
-          <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-4">
+          <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-2">
             Status
           </Text>
-          <View className="flex-row flex-wrap gap-2 mb-8">
+          <View className="flex-row flex-wrap gap-2 mb-4">
             {[
               { id: "active", label: t("library.status_active") },
               { id: "archived", label: t("library.status_archived") },
@@ -867,9 +899,9 @@ function FilterModal({
                 activateOnHover
                 onPress={() => setTempStatus(opt.id)}
                 style={{
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
-                  borderRadius: 16,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 14,
                   borderWidth: 1,
                   backgroundColor:
                     tempStatus === opt.id ? Colors.brand.action : "transparent",
@@ -896,19 +928,19 @@ function FilterModal({
           </View>
 
           {/* 2. SORT BY */}
-          <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-4">
+          <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-2">
             {t("library.sort_by")}
           </Text>
-          <View className="flex-row flex-wrap gap-2 mb-8">
+          <View className="flex-row flex-wrap gap-2 mb-4">
             {["newest", "oldest", "reviewed"].map((opt: any) => (
               <PressableFinal
                 key={opt}
                 activateOnHover
                 onPress={() => setTempSort(opt)}
                 style={{
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
-                  borderRadius: 16,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 14,
                   borderWidth: 1,
                   backgroundColor:
                     tempSort === opt ? Colors.brand.action : "transparent",
@@ -935,7 +967,7 @@ function FilterModal({
           </View>
 
           {/* 3. SOURCE TYPE */}
-          <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-4">
+          <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-2">
             {t("library.source_type")}
           </Text>
           <View className="flex-row flex-wrap gap-2 mb-10">
@@ -945,9 +977,9 @@ function FilterModal({
                 activateOnHover
                 onPress={() => setTempType(type)}
                 style={{
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
-                  borderRadius: 16,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 14,
                   borderWidth: 1,
                   backgroundColor:
                     tempType === type ? Colors.brand.action : "transparent",
@@ -974,25 +1006,63 @@ function FilterModal({
           </View>
 
           {/* APPLY */}
-          <PressableFinal
-            onPress={handleApply}
-            activateOnHover
-            style={{
-              backgroundColor: isDark ? Colors.dark.text : Colors.light.text,
-              paddingVertical: 20,
-              borderRadius: 24,
-              alignItems: "center",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.2,
-              shadowRadius: 8,
-              elevation: 4,
-            }}
-          >
-            <Text className="text-white dark:text-black font-heading font-bold text-lg">
-              {t("library.apply_filters")}
-            </Text>
-          </PressableFinal>
+          <View className="gap-4">
+            <PressableFinal
+              onPress={handleApply}
+              activateOnHover
+              style={{
+                backgroundColor: isDark ? Colors.dark.text : Colors.light.text,
+                paddingVertical: 16,
+                borderRadius: 24,
+                alignItems: "center",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <Text
+                numberOfLines={1}
+                className="text-white dark:text-black font-heading font-bold text-lg text-center"
+                style={{
+                  includeFontPadding: false, // Fixes Android vertical alignment
+                  flexShrink: 0, // FORCES the button to widen rather than the text wrapping
+                }}
+              >
+                {t("library.apply_filters")}
+              </Text>
+            </PressableFinal>
+
+            <PressableFinal
+              onPress={() => {
+                setSortBy("newest");
+                setFilterType("all");
+                setFilterStatus("active");
+              }}
+              activateOnHover
+              style={{
+                paddingVertical: 12,
+                paddingHorizontal: 16, // Padding helps give the text breathing room
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
+                gap: 6,
+                alignSelf: "center", // This keeps it from stretching to 100% width
+              }}
+            >
+              <Text
+                numberOfLines={1}
+                style={{
+                  includeFontPadding: false, // Fixes Android vertical alignment
+                  flexShrink: 0, // FORCES the button to widen rather than the text wrapping
+                }}
+                className="text-action font-medium text-md"
+              >
+                {t("library.reset_filters")}
+              </Text>
+            </PressableFinal>
+          </View>
         </View>
       </View>
     </Modal>

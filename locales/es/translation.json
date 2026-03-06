@@ -135,6 +135,7 @@
     "delete_deck_confirm": "Eliminar Todo"
   },
   "library": {
+    "reset_filters": "Restablecer filtros",
     "header_small": "Laboratorio",
     "header_title": "Biblioteca",
     "search_placeholder": "Buscar mazos...",

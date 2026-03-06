@@ -13,7 +13,6 @@ interface WidgetProps {
 
 export function AndroidWidget({ dueCards = 0 }: WidgetProps) {
   const bgColor = (dueCards > 0 ? "#0F172A" : "#16a34a") as ColorProp;
-
   const textColor = "#ffffff" as ColorProp;
   const pillBg = "#ffffff1a" as ColorProp;
   const accentColor = "#38BDF8" as ColorProp;
@@ -29,41 +28,63 @@ export function AndroidWidget({ dueCards = 0 }: WidgetProps) {
       clickAction={dueCards > 0 ? "brainguin://study/daily" : "brainguin://"}
     >
       {/* LAYER 1: BACKGROUND & DECOR */}
-      <OverlapWidget style={{ height: "match_parent", width: "match_parent" }}>
+      <FlexWidget
+        style={{
+          height: "match_parent",
+          width: "match_parent",
+          backgroundColor: bgColor,
+          borderRadius: 32,
+        }}
+      />
+
+      {/* DECORATIVE CIRCLE (Bottom Right) */}
+      <FlexWidget
+        style={{
+          height: "match_parent",
+          width: "match_parent",
+          justifyContent: "flex-end",
+          alignItems: "flex-end",
+        }}
+      >
         <FlexWidget
           style={{
-            height: "match_parent",
-            width: "match_parent",
-            backgroundColor: bgColor,
+            width: 150,
+            height: 150,
+            borderRadius: 75,
+            backgroundColor: "#ffffff0d" as ColorProp,
+            marginRight: -40,
+            marginBottom: -40,
           }}
         />
-        <FlexWidget
-          style={{
-            height: "match_parent",
-            width: "match_parent",
-            justifyContent: "flex-end",
-            alignItems: "flex-end",
-          }}
-        >
-          <FlexWidget
-            style={{
-              width: 150,
-              height: 150,
-              borderRadius: 75,
-              backgroundColor: "#ffffff0d" as ColorProp,
-              marginRight: -40,
-              marginBottom: -40,
-            }}
-          />
-        </FlexWidget>
-      </OverlapWidget>
+      </FlexWidget>
 
-      {/* LAYER 2: CONTENT */}
+      {/* LAYER 2: THE PENGUIN (Pinned to Bottom Left) */}
+      <FlexWidget
+        style={{
+          height: "match_parent",
+          width: "match_parent",
+          justifyContent: "flex-end",
+          alignItems: "flex-end",
+        }}
+      >
+        <ImageWidget
+          image={require("@/assets/images/main.png")}
+          imageWidth={80}
+          imageHeight={80}
+          style={{
+            marginRight: 12,
+            marginBottom: 12,
+          }}
+        />
+      </FlexWidget>
+
+      {/* LAYER 3: CONTENT (Centered) */}
       <FlexWidget
         style={{
           height: "match_parent",
           width: "match_parent",
           flexDirection: "row",
+          alignItems: "center", // Vertically centers the row content
           padding: 16,
         }}
       >
@@ -71,13 +92,11 @@ export function AndroidWidget({ dueCards = 0 }: WidgetProps) {
           style={{
             flex: 1,
             flexDirection: "column",
-            justifyContent: "space-between",
+            justifyContent: "center", // Centered top-to-bottom
           }}
         >
-          {/* 1. PILL LABEL WRAPPER (Replaces alignSelf) */}
-          <FlexWidget
-            style={{ width: "match_parent", justifyContent: "flex-start" }}
-          >
+          {/* 1. PILL LABEL */}
+          <FlexWidget style={{ marginBottom: 8 }}>
             <FlexWidget
               style={{
                 backgroundColor: pillBg,
@@ -98,7 +117,7 @@ export function AndroidWidget({ dueCards = 0 }: WidgetProps) {
           </FlexWidget>
 
           {/* 2. MAIN TEXT */}
-          <FlexWidget style={{ width: "match_parent" }}>
+          <FlexWidget style={{ marginBottom: 12 }}>
             {dueCards > 0 ? (
               <FlexWidget
                 style={{ flexDirection: "row", alignItems: "flex-end" }}
@@ -109,7 +128,12 @@ export function AndroidWidget({ dueCards = 0 }: WidgetProps) {
                 />
                 <TextWidget
                   text=" Cards"
-                  style={{ fontSize: 16, color: textColor, marginLeft: 4 }}
+                  style={{
+                    fontSize: 16,
+                    color: textColor,
+                    marginLeft: 4,
+                    marginBottom: 4,
+                  }}
                 />
               </FlexWidget>
             ) : (
@@ -120,43 +144,25 @@ export function AndroidWidget({ dueCards = 0 }: WidgetProps) {
             )}
           </FlexWidget>
 
-          {/* 3. ACTION BUTTON WRAPPER (Replaces alignSelf) */}
+          {/* 3. ACTION BUTTON */}
           <FlexWidget
-            style={{ width: "match_parent", justifyContent: "flex-start" }}
+            style={{
+              backgroundColor:
+                dueCards > 0 ? actionColor : ("#ffffff33" as ColorProp),
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+            }}
           >
-            <FlexWidget
-              style={{
-                backgroundColor:
-                  dueCards > 0 ? actionColor : ("#ffffff33" as ColorProp),
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-              }}
-              clickAction="OPEN_APP"
-            >
-              <TextWidget
-                text={dueCards > 0 ? "Start Session" : "Great Job 🎉"}
-                style={{ fontSize: 12, color: textColor, fontWeight: "bold" }}
-              />
-            </FlexWidget>
+            <TextWidget
+              text={dueCards > 0 ? "Start Session" : "Great Job 🎉"}
+              style={{ fontSize: 12, color: textColor, fontWeight: "bold" }}
+            />
           </FlexWidget>
         </FlexWidget>
 
-        {/* PENGUIN */}
-        <FlexWidget
-          style={{
-            justifyContent: "flex-end",
-            alignItems: "flex-end",
-            width: 80,
-          }}
-        >
-          <ImageWidget
-            image={require("@/assets/images/main.png")}
-            imageWidth={80}
-            imageHeight={80}
-            style={{ marginBottom: 10 }}
-          />
-        </FlexWidget>
+        {/* Empty space for the penguin (since penguin is in an overlap layer) */}
+        <FlexWidget style={{ width: 80 }} />
       </FlexWidget>
     </OverlapWidget>
   );

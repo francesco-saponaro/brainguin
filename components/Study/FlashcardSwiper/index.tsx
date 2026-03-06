@@ -2,13 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { PressableScale } from "pressto";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -291,14 +285,9 @@ const CardContent = React.memo(
             {t("study.card_counter", { index: index + 1, total })}
           </Text>
           {card.context && (
-            <Pressable
-              onPress={() => onShowContext(card.context)}
-              style={({ pressed }) => [
-                { padding: 10, opacity: pressed ? 0.5 : 1 },
-              ]}
-            >
+            <PressableScale onPress={() => onShowContext(card.context)}>
               <Ionicons name="bulb-outline" size={24} color="#F97316" />
-            </Pressable>
+            </PressableScale>
           )}
         </View>
 

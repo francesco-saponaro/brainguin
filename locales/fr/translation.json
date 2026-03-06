@@ -126,6 +126,7 @@
     "delete_deck_confirm": "Tout supprimer"
   },
   "library": {
+    "reset_filters": "Réinitialiser les filtres",
     "header_small": "Votre Labo",
     "header_title": "Bibliothèque",
     "search_placeholder": "Rechercher des paquets...",

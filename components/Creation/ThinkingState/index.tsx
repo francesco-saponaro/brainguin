@@ -13,10 +13,13 @@ import Animated, {
 } from "react-native-reanimated";
 
 import PROCESSOR_PENGUIN from "@/assets/images/processor.png";
+import { useColorScheme } from "nativewind";
 
 export default function ThinkingState() {
   const [messageIndex, setMessageIndex] = React.useState(0);
   const { t } = useTranslation();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const LOADING_MESSAGES = [
     t("creation.reading"),
@@ -79,11 +82,20 @@ export default function ThinkingState() {
       }}
     >
       {/* Glass Background Backdrop */}
-      <BlurView
-        intensity={90}
-        tint="dark"
-        style={{ position: "absolute", width: "100%", height: "100%" }}
-      />
+      {Platform.OS === "android" ? (
+        <BlurView
+          intensity={30}
+          tint={isDark ? "dark" : "light"}
+          experimentalBlurMethod="dimezisBlurView"
+          style={{ position: "absolute", width: "100%", height: "100%" }}
+        />
+      ) : (
+        <BlurView
+          intensity={90}
+          tint={isDark ? "dark" : "light"}
+          style={{ position: "absolute", width: "100%", height: "100%" }}
+        />
+      )}
 
       <View className="items-center">
         {/* Glow Effect */}
@@ -99,7 +111,7 @@ export default function ThinkingState() {
           />
         </Animated.View>
 
-        <Text className="text-white font-heading text-2xl font-bold mt-8 mb-2">
+        <Text className="text-text-main-light dark:text-text-main-dark font-heading text-2xl font-bold mt-8 mb-2">
           {t("creation.thinking")}
         </Text>
 
