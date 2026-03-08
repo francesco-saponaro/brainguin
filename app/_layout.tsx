@@ -434,15 +434,15 @@ export default function RootLayout() {
                 </Stack.Protected>
 
                 {/* 2. If logged in but NOT onboarded: show Onboarding */}
-                {/* <Stack.Protected guard={!!session?.user && !isOnboarded}>
+                <Stack.Protected guard={!!session?.user && !isOnboarded}>
                   <Stack.Screen
                     name="onboarding/index"
                     options={{ headerShown: false }}
                   />
-                </Stack.Protected> */}
+                </Stack.Protected>
 
                 {/* 3. If logged in AND onboarded: show Main App */}
-                <Stack.Protected guard={!!session?.user}>
+                <Stack.Protected guard={!!session?.user && isOnboarded}>
                   <Stack.Screen
                     name="(tabs)"
                     options={{ headerShown: false }}

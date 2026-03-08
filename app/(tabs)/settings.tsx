@@ -638,7 +638,7 @@ export default function SettingsScreen() {
                 rightElement={
                   <Switch
                     value={notificationsEnabled}
-                    // onValueChange={toggleNotifications}
+                    onValueChange={toggleNotifications}
                     trackColor={{ false: "#767577", true: Colors.brand.action }}
                     thumbColor={"#f4f3f4"}
                   />
