@@ -99,6 +99,7 @@ export default function CreationModal() {
             inputType: inputType,
             data: payloadData,
             userId: session.user.id,
+            mimeType: inputType === "document" ? inputData.mimeType : null,
           },
         },
       );
@@ -128,7 +129,7 @@ export default function CreationModal() {
       });
 
       // Navigate to the new deck
-      router.replace(`/study/${data.deck_id}`);
+      router.replace(`/study/${data.deck_id}?isNew=true`);
     } catch (e: any) {
       setIsThinking(false);
       console.error(e);

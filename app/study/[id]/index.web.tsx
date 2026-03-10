@@ -1,24 +1,22 @@
 import FlashcardSwiper from "@/components/Study/FlashcardSwiper";
+import { WebDatePicker } from "@/components/WebDatePicker";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useColorScheme } from "nativewind";
+import { cssInterop, useColorScheme } from "nativewind";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
-  InteractionManager,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import DatePicker from "react-native-date-picker";
 import { Modalize } from "react-native-modalize";
 import {
   SafeAreaView,
@@ -26,7 +24,21 @@ import {
 } from "react-native-safe-area-context";
 
 import CELEBRATOR_PENGUIN from "@/assets/images/celebrator.png";
-import { PressableScale } from "pressto";
+import { PressableOpacity } from "pressto";
+
+const StyledPressable = cssInterop(PressableOpacity, {
+  className: "style",
+});
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "2-digit",
+  });
+};
 
 export default function StudyScreen() {
   const insets = useSafeAreaInsets();
@@ -55,7 +67,7 @@ export default function StudyScreen() {
   const [contextModalVisible, setContextModalVisible] = useState(false);
   const howItWorksModalRef = useRef<Modalize>(null);
   const examModalRef = useRef<Modalize>(null); // 👈 Replaces examModalVisible state
-  const [showDatePicker, setShowDatePicker] = useState(false); // 👈 New
+  const [showWebPicker, setShowWebPicker] = useState(false); // Controls the Web Picker visibility
   const [tempDate, setTempDate] = useState(new Date()); // 👈 New
   const [activeContext, setActiveContext] = useState("");
 
@@ -65,11 +77,27 @@ export default function StudyScreen() {
   };
 
   // 🚨 OPEN MODALIZE
+  // 🚨 OPEN MODALIZE - FIXED FOR WEB
   useEffect(() => {
+    console.log(
+      "Effect Sync - Loading:",
+      loading,
+      "isNew value:",
+      isNew,
+      "Type:",
+      typeof isNew,
+    );
     if (!loading && isNew === "true") {
-      InteractionManager.runAfterInteractions(() => {
-        examModalRef.current?.open();
-      });
+      console.log("Opening Exam Date Modal for NEW session...", isNew);
+
+      // A small delay ensures the component is mounted and ref is assigned
+      const timer = setTimeout(() => {
+        if (examModalRef.current) {
+          examModalRef.current.open();
+        }
+      }, 100); // 100ms is usually enough for Web/Mobile sync
+
+      return () => clearTimeout(timer);
     }
   }, [loading, isNew]);
 
@@ -278,6 +306,11 @@ export default function StudyScreen() {
           .eq("id", id);
         setDeck((prev: any) => ({ ...prev, exam_date: targetDateStr }));
 
+        // ✅ NEW: If removing the date, reset the local temp state too
+        if (!date) {
+          setTempDate(new Date());
+        }
+
         // 🚨 MAGIC PULL-FORWARD LOGIC 🚨
         // If an exam is set, any cards scheduled AFTER the exam date are pulled back to TODAY!
         if (targetDateStr) {
@@ -289,6 +322,7 @@ export default function StudyScreen() {
         }
       }
 
+      setShowWebPicker(false);
       examModalRef.current?.close();
       router.setParams({ isNew: "" });
     } catch (e) {
@@ -350,27 +384,12 @@ export default function StudyScreen() {
   const handleExit = () => {
     // If user has rated at least 1 card but hasn't finished
     if (progress > 0 && !isFinished) {
-      if (Platform.OS === "web") {
-        if (
-          confirm(
-            t("study.quit_session_title") + "\n" + t("study.quit_session_msg"),
-          )
-        ) {
-          router.back();
-        }
-      } else {
-        Alert.alert(
-          t("study.quit_session_title"),
-          t("study.quit_session_msg"),
-          [
-            { text: t("common.cancel"), style: "cancel" },
-            {
-              text: t("study.quit_session_confirm"),
-              style: "destructive",
-              onPress: () => router.back(),
-            },
-          ],
-        );
+      if (
+        confirm(
+          t("study.quit_session_title") + "\n" + t("study.quit_session_msg"),
+        )
+      ) {
+        router.back();
       }
     } else {
       router.back();
@@ -440,7 +459,7 @@ export default function StudyScreen() {
               />
             </View>
 
-            <PressableScale
+            <PressableOpacity
               onPress={() => router.replace("/(tabs)/library")}
               style={{
                 backgroundColor: "#F97316",
@@ -460,9 +479,9 @@ export default function StudyScreen() {
               <Text className="text-white font-bold font-heading text-lg">
                 {t("study.finished_btn")}
               </Text>
-            </PressableScale>
+            </PressableOpacity>
 
-            <PressableScale
+            <PressableOpacity
               onPress={() => {
                 setSessionStats({ hard: 0, medium: 0, easy: 0 });
                 setProgress(0);
@@ -478,7 +497,7 @@ export default function StudyScreen() {
               <Text className="text-text-muted-light dark:text-text-muted-dark font-semibold">
                 {t("study.review_again")}
               </Text>
-            </PressableScale>
+            </PressableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -491,9 +510,9 @@ export default function StudyScreen() {
       {/* HEADER */}
       <View
         className="flex-row items-center justify-between px-6 mb-4"
-        style={{ paddingTop: Platform.OS === "web" ? 30 : 10 }}
+        style={{ paddingTop: 30 }}
       >
-        <PressableScale
+        <PressableOpacity
           onPress={handleExit}
           activateOnHover
           style={{
@@ -509,7 +528,7 @@ export default function StudyScreen() {
           }}
         >
           <Ionicons name="close" size={24} color={deck ? "#64748B" : "#FFF"} />
-        </PressableScale>
+        </PressableOpacity>
         <View className="flex-1 items-center mx-4">
           <Text className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-bold uppercase tracking-widest">
             {id === "daily" ? "DAILY MISSION" : t("study.header_small")}
@@ -524,29 +543,46 @@ export default function StudyScreen() {
 
         <View className="flex-row items-center gap-2">
           {/* ✅ 📅 EXAM PACE BUTTON */}
-          {id !== "daily" && (
-            <PressableScale
-              onPress={() => examModalRef.current?.open()}
-              style={{
-                width: 40,
-                height: 40,
-                backgroundColor: isDark
-                  ? "rgba(255,255,255,0.1)"
-                  : "rgba(0,0,0,0.05)",
-                borderRadius: 20,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Ionicons
-                name="calendar"
-                size={20}
-                color={deck?.exam_date ? "#F97316" : isDark ? "#FFF" : "#000"}
-              />
-            </PressableScale>
-          )}
+          {id !== "daily" ? (
+            deck?.exam_date ? (
+              <StyledPressable
+                onPress={() => examModalRef.current?.open()}
+                activateOnHover
+                className="bg-action/10 px-3 py-1.5 rounded-full flex-row items-center gap-1 border border-action/20"
+              >
+                <Ionicons
+                  name="calendar"
+                  size={12}
+                  color={deck?.exam_date ? "#F97316" : isDark ? "#FFF" : "#000"}
+                />
+                <Text className="text-action text-[10px] font-bold uppercase tracking-widest">
+                  {formatDate(deck.exam_date)}
+                </Text>
+              </StyledPressable>
+            ) : (
+              <PressableOpacity
+                onPress={() => examModalRef.current?.open()}
+                style={{
+                  width: 40,
+                  height: 40,
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.05)",
+                  borderRadius: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons
+                  name="calendar"
+                  size={20}
+                  color={deck?.exam_date ? "#F97316" : isDark ? "#FFF" : "#000"}
+                />
+              </PressableOpacity>
+            )
+          ) : null}
 
-          <PressableScale
+          <PressableOpacity
             onPress={() => howItWorksModalRef.current?.open()}
             style={{
               width: 40,
@@ -560,19 +596,19 @@ export default function StudyScreen() {
             }}
           >
             <Ionicons name="help" size={24} color="#F97316" />
-          </PressableScale>
+          </PressableOpacity>
         </View>
       </View>
 
       {/* ✅ NEW: SUBTITLE INSTRUCTION */}
-      <PressableScale onPress={() => howItWorksModalRef.current?.open()}>
+      <PressableOpacity onPress={() => howItWorksModalRef.current?.open()}>
         <Text className="text-text-muted-light dark:text-text-muted-dark text-xs text-center mt-2 font-medium">
           {t("study.instruction_tap")} • {t("study.instruction_swipe")} •{" "}
           <Text className="text-action font-bold">
             {t("study.how_it_works_link")}
           </Text>
         </Text>
-      </PressableScale>
+      </PressableOpacity>
 
       {/* SWIPER AREA */}
       <View className="flex-1 px-4 pb-10 w-full max-w-[800px] self-center">
@@ -623,6 +659,8 @@ export default function StudyScreen() {
         }}
         withHandle={isNew !== "true"}
         onClosed={() => {
+          setShowWebPicker(false);
+
           // Clear params when the user swipes it down or it closes
           if (isNew === "true") {
             router.setParams({ isNew: "" });
@@ -634,7 +672,7 @@ export default function StudyScreen() {
             <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-2xl">
               {t("study.exam_modal.title", "When is your Exam? 📅")}
             </Text>
-            {/* {isNew !== "true" && (
+            {isNew !== "true" && (
               <Pressable
                 onPress={() => examModalRef.current?.close()}
                 className="bg-black/5 dark:bg-white/10 p-2 rounded-full"
@@ -645,60 +683,62 @@ export default function StudyScreen() {
                   color={isDark ? "white" : "black"}
                 />
               </Pressable>
-            )} */}
+            )}
           </View>
 
           <Text className="text-text-muted-light dark:text-text-muted-dark text-base mb-6 leading-6">
             {t("study.exam_modal.desc")}
           </Text>
 
-          <View className="gap-3 mt-2">
-            <Pressable
-              onPress={() => {
-                examModalRef.current?.close();
-                // Wait for Modalize to animate down before opening native DatePicker
-                setTimeout(() => setShowDatePicker(true), 300);
-              }}
-              className="bg-action py-4 rounded-xl items-center flex-row justify-center gap-2"
-            >
-              <Ionicons name="calendar" size={20} color="white" />
-              <Text className="text-white font-bold text-lg">
-                {t("study.exam_modal.pick_date", "Pick Exam Date")}
-              </Text>
-            </Pressable>
+          {/* TOGGLE BETWEEN BUTTONS AND THE PICKER */}
+          {!showWebPicker ? (
+            <View className="gap-3 mt-2">
+              <Pressable
+                onPress={() => setShowWebPicker(true)} // Reveal the Web Picker
+                className="bg-action py-4 rounded-xl items-center flex-row justify-center gap-2"
+              >
+                <Ionicons name="calendar" size={20} color="white" />
+                <Text className="text-white font-bold text-lg">
+                  {t("study.exam_modal.pick_date", "Pick Exam Date")}
+                </Text>
+              </Pressable>
 
-            <Pressable
-              onPress={() => {
-                examModalRef.current?.close();
-                saveExamDate(null);
-              }}
-              className="py-4 rounded-xl border border-black/10 dark:border-white/10"
-            >
-              <Text className="text-center font-bold text-text-muted-light dark:text-text-muted-dark">
-                {t("study.exam_modal.no_exam")}
-              </Text>
-            </Pressable>
-          </View>
+              <Pressable
+                onPress={() => saveExamDate(null)}
+                className="py-4 rounded-xl border border-black/10 dark:border-white/10"
+              >
+                <Text className="text-center font-bold text-text-muted-light dark:text-text-muted-dark">
+                  {t("study.exam_modal.no_exam")}
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View className="mt-2 items-center">
+              {/* YOUR WEB PICKER COMPONENT */}
+              <WebDatePicker
+                selectedDate={tempDate}
+                onSelect={(date: Date | null) => {
+                  if (date) {
+                    setTempDate(date);
+                    saveExamDate(date);
+                    setShowWebPicker(false); // Close the picker view after selection
+                  }
+                }}
+                onClose={() => setShowWebPicker(false)} // 👈 Add this line
+              />
+
+              <Pressable
+                onPress={() => setShowWebPicker(false)}
+                className="mt-4 p-2"
+              >
+                <Text className="text-action font-semibold">
+                  {t("common.cancel")}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </Modalize>
-
-      {/* --- NATIVE DATE PICKER OVERLAY --- */}
-      <DatePicker
-        modal
-        open={showDatePicker}
-        date={tempDate}
-        mode="date"
-        minimumDate={new Date(new Date().setDate(new Date().getDate() + 2))}
-        title={t("study.exam_modal.pick_date", "Select Exam Date")}
-        onConfirm={(date) => {
-          setShowDatePicker(false);
-          setTempDate(date);
-          saveExamDate(date);
-        }}
-        onCancel={() => {
-          setShowDatePicker(false);
-        }}
-      />
 
       {/* --- HOW IT WORKS MODAL --- */}
       <Modalize

@@ -1,4 +1,6 @@
 {
+  "change_date": "Cambiar fecha",
+  "remove_date": "Eliminar fecha",
   "document": "Documento",
   "auth": {
     "welcome_back": "¡Hola de nuevo!",

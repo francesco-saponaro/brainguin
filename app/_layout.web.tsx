@@ -21,6 +21,7 @@ import { PressablesConfig } from "pressto";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Platform, View } from "react-native";
+import { Host } from "react-native-portalize";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -204,109 +205,117 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <PressablesConfig
-            globalHandlers={{
-              onPress: () => {
-                Haptics.selectionAsync();
-              },
-            }}
-            // animationType="spring"
-            // animationConfig={{ damping: 20, stiffness: 150 }}
+      <Host>
+        <SafeAreaProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
           >
-            <Stack>
-              {/* 1. If not logged in: show Auth */}
-              <Stack.Protected guard={isAuthReady && !session?.user}>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              </Stack.Protected>
+            <PressablesConfig
+              globalHandlers={{
+                onPress: () => {
+                  Haptics.selectionAsync();
+                },
+              }}
+              // animationType="spring"
+              // animationConfig={{ damping: 20, stiffness: 150 }}
+            >
+              <Stack>
+                {/* 1. If not logged in: show Auth */}
+                <Stack.Protected guard={isAuthReady && !session?.user}>
+                  <Stack.Screen
+                    name="(auth)"
+                    options={{ headerShown: false }}
+                  />
+                </Stack.Protected>
 
-              {/* 2. If logged in but NOT onboarded: show Onboarding */}
-              <Stack.Protected guard={!!session?.user && !isOnboarded}>
+                {/* 2. If logged in but NOT onboarded: show Onboarding */}
+                <Stack.Protected guard={!!session?.user && !isOnboarded}>
+                  <Stack.Screen
+                    name="onboarding/index"
+                    options={{ headerShown: false }}
+                  />
+                </Stack.Protected>
+
+                {/* 3. If logged in AND onboarded: show Main App */}
+                <Stack.Protected guard={!!session?.user && isOnboarded}>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="study/[id]/index"
+                    options={{ headerShown: false }}
+                  />
+                  {Platform.OS === "web" ? (
+                    <Stack.Screen
+                      name="creation-modal/index"
+                      options={{
+                        presentation: "transparentModal", // Native slide-up behavior
+                        animation: "fade",
+                        headerTitle: "Creation Modal",
+                        headerShown: false,
+                      }}
+                    />
+                  ) : (
+                    <Stack.Screen
+                      name="creation-modal/index"
+                      options={{
+                        presentation: "modal", // Native slide-up behavior
+                        animation: "slide_from_bottom",
+                        headerShown: false,
+                        sheetGrabberVisible: true,
+                        sheetCornerRadius: 24,
+                        sheetAllowedDetents: "fitToContents",
+                        contentStyle: {
+                          backgroundColor:
+                            colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                        },
+                      }}
+                    />
+                  )}
+
+                  {Platform.OS === "web" ? (
+                    <Stack.Screen
+                      name="paywall/index"
+                      options={{
+                        presentation: "transparentModal", // Native slide-up behavior
+                        animation: "fade",
+                        headerTitle: "Paywall",
+                        headerShown: false,
+                      }}
+                    />
+                  ) : (
+                    <Stack.Screen
+                      name="paywall/index"
+                      options={{
+                        presentation: "modal", // Native slide-up behavior
+                        animation: "slide_from_bottom",
+                        headerShown: false,
+                        sheetGrabberVisible: true,
+                        sheetCornerRadius: 24,
+                        sheetAllowedDetents: "fitToContents",
+                        contentStyle: {
+                          backgroundColor:
+                            colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                        },
+                      }}
+                    />
+                  )}
+                </Stack.Protected>
+
+                {/* 4. Update Password (Public/Recovery) */}
                 <Stack.Screen
-                  name="onboarding/index"
+                  name="update-password/index"
                   options={{ headerShown: false }}
                 />
-              </Stack.Protected>
+              </Stack>
 
-              {/* 3. If logged in AND onboarded: show Main App */}
-              <Stack.Protected guard={!!session?.user && isOnboarded}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="study/[id]/index"
-                  options={{ headerShown: false }}
-                />
-                {Platform.OS === "web" ? (
-                  <Stack.Screen
-                    name="creation-modal/index"
-                    options={{
-                      presentation: "transparentModal", // Native slide-up behavior
-                      animation: "fade",
-                      headerTitle: "Creation Modal",
-                      headerShown: false,
-                    }}
-                  />
-                ) : (
-                  <Stack.Screen
-                    name="creation-modal/index"
-                    options={{
-                      presentation: "modal", // Native slide-up behavior
-                      animation: "slide_from_bottom",
-                      headerShown: false,
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      sheetAllowedDetents: "fitToContents",
-                      contentStyle: {
-                        backgroundColor:
-                          colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
-                      },
-                    }}
-                  />
-                )}
-
-                {Platform.OS === "web" ? (
-                  <Stack.Screen
-                    name="paywall/index"
-                    options={{
-                      presentation: "transparentModal", // Native slide-up behavior
-                      animation: "fade",
-                      headerTitle: "Paywall",
-                      headerShown: false,
-                    }}
-                  />
-                ) : (
-                  <Stack.Screen
-                    name="paywall/index"
-                    options={{
-                      presentation: "modal", // Native slide-up behavior
-                      animation: "slide_from_bottom",
-                      headerShown: false,
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      sheetAllowedDetents: "fitToContents",
-                      contentStyle: {
-                        backgroundColor:
-                          colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
-                      },
-                    }}
-                  />
-                )}
-              </Stack.Protected>
-
-              {/* 4. Update Password (Public/Recovery) */}
-              <Stack.Screen
-                name="update-password/index"
-                options={{ headerShown: false }}
-              />
-            </Stack>
-
-            <Toast />
-            <StatusBar style="auto" />
-          </PressablesConfig>
-        </ThemeProvider>
-      </SafeAreaProvider>
+              <Toast />
+              <StatusBar style="auto" />
+            </PressablesConfig>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </Host>
     </View>
   );
 }

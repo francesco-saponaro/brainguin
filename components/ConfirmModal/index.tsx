@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
+import { useColorScheme } from "nativewind";
 import { PressableOpacity } from "pressto";
 import React from "react";
 import { useTranslation } from "react-i18next"; // 1. Import hook
@@ -11,8 +12,10 @@ interface ConfirmModalProps {
   message: string;
   confirmLabel?: string;
   onConfirm: () => void;
+  cancelLabel?: string;
   onCancel: () => void;
   isDestructive?: boolean;
+  onClose?: () => void;
 }
 
 export default function ConfirmModal({
@@ -21,10 +24,14 @@ export default function ConfirmModal({
   message,
   confirmLabel = "Confirm",
   onConfirm,
+  cancelLabel,
   onCancel,
   isDestructive = false,
+  onClose,
 }: ConfirmModalProps) {
   const { t } = useTranslation(); // 2. Initialize hook
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const PressableFinal = Platform.OS === "web" ? PressableOpacity : Pressable;
 
@@ -38,7 +45,30 @@ export default function ConfirmModal({
       statusBarTranslucent
     >
       <View className="flex-1 bg-black/60 items-center justify-center px-2">
-        <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10">
+        <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10 relative">
+          {onClose ? (
+            <PressableFinal
+              onPress={onClose}
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(255,255,255,0.1)"
+                  : "rgba(0,0,0,0.05)",
+                padding: 8,
+                borderRadius: 99,
+                position: "absolute",
+                top: 20,
+                right: 20,
+              }}
+              activateOnHover
+            >
+              <Ionicons
+                name="close"
+                size={20}
+                color={isDark ? "#FFF" : "#64748B"}
+              />
+            </PressableFinal>
+          ) : null}
+
           <View
             className={clsx(
               "w-20 h-20 rounded-full items-center justify-center mb-6",
@@ -113,7 +143,7 @@ export default function ConfirmModal({
               activateOnHover
             >
               <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-lg">
-                {t("common.cancel")}
+                {cancelLabel || t("common.cancel")}
               </Text>
             </PressableFinal>
           </View>

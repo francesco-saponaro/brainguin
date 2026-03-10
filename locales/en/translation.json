@@ -1,4 +1,6 @@
 {
+  "change_date": "Change Date",
+  "remove_date": "Remove Date",
   "document": "Document",
   "auth": {
     "document": "Document",

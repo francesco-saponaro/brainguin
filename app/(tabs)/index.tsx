@@ -255,6 +255,25 @@ export default function HomeScreen() {
                 Ready to Sprint?
               </Text>
             </View>
+            {isDesktop ? (
+              <PressableScale
+                onPress={() => feedbackModalRef.current?.open()}
+                style={{
+                  backgroundColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.05)",
+                  padding: 6,
+                  borderRadius: 10,
+                }}
+              >
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={20}
+                  color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
+                />
+              </PressableScale>
+            ) : null}
             {
               // !isSmallMobile &&
               !isDesktop && (

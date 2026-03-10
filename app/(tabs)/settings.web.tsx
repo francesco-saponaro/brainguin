@@ -3,25 +3,20 @@ import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import clsx from "clsx";
 import * as Linking from "expo-linking";
-import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { cssInterop, useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { PressableOpacity } from "pressto";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
-  AppState,
-  AppStateStatus,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
   ScrollView,
-  Switch,
   Text,
   TextInput,
   useWindowDimensions,
@@ -31,7 +26,7 @@ import Purchases from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
-const StyledPressable = cssInterop(PressableScale, {
+const StyledPressable = cssInterop(PressableOpacity, {
   className: "style",
 });
 
@@ -70,14 +65,6 @@ export default function SettingsScreen() {
         setProfile(data);
         setTempName(data.full_name || "");
         setIsPro(data.is_pro || false);
-        setNotificationsEnabled(data.is_notifications_enabled || false);
-
-        if (data.notification_time) {
-          const [hours, minutes] = data.notification_time.split(":");
-          const date = new Date();
-          date.setHours(parseInt(hours), parseInt(minutes));
-          setNotificationTime(date);
-        }
 
         if (data.preferences?.theme) {
           setColorScheme(data.preferences.theme);
@@ -86,34 +73,6 @@ export default function SettingsScreen() {
     };
     loadSettings();
   }, [session]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener(
-      "change",
-      async (nextAppState: AppStateStatus) => {
-        // If the app is returning to the foreground
-        if (nextAppState === "active") {
-          const { status } = await Notifications.getPermissionsAsync();
-
-          // If they granted it in settings, update the UI and DB
-          if (status === "granted" && !notificationsEnabled) {
-            setNotificationsEnabled(true);
-            await scheduleNotification(notificationTime);
-            updateProfile({ is_notifications_enabled: true });
-          }
-          // If they revoked it in settings, update the UI and DB
-          else if (status !== "granted" && notificationsEnabled) {
-            setNotificationsEnabled(false);
-            updateProfile({ is_notifications_enabled: false });
-          }
-        }
-      },
-    );
-
-    return () => {
-      subscription.remove();
-    };
-  }, [notificationsEnabled, notificationTime]);
 
   // --- 2. UPDATE HELPERS ---
   const updateProfile = async (updates: any) => {
@@ -212,7 +171,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleThemeChange = (themeKey: "light" | "dark" | "system") => {
+  const handleThemeChange = (themeKey: "light" | "dark") => {
     // 1. Update UI Immediately
     setColorScheme(themeKey);
 
@@ -224,109 +183,6 @@ export default function SettingsScreen() {
       },
     });
   };
-
-  const toggleNotifications = async (value: boolean) => {
-    // 1. If turning OFF: Easy, just cancel and save.
-    if (!value) {
-      setNotificationsEnabled(false);
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      updateProfile({ is_notifications_enabled: false });
-      return;
-    }
-
-    // 2. If turning ON: Check status explicitly first
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    // 3. If we don't have permission yet (undetermined) or it was denied before...
-    if (existingStatus !== "granted") {
-      // Try to ask for it
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    // 4. If STILL not granted, it means they denied it (possibly permanently)
-    if (finalStatus !== "granted") {
-      setNotificationsEnabled(false);
-
-      Alert.alert(
-        t("settings.notification_permission_title"),
-        t("settings.notification_permission_msg"),
-        [
-          { text: t("common.cancel"), style: "cancel" },
-          {
-            // Add "Open Settings" to your locale or hardcode "Settings" for now
-            text: "Settings",
-            onPress: () => {
-              if (Platform.OS === "ios") {
-                Linking.openURL("app-settings:");
-              } else {
-                Linking.openSettings();
-              }
-            },
-          },
-        ],
-      );
-      return;
-    }
-
-    // 5. Success! Enable switch, Schedule, and Save
-    setNotificationsEnabled(true);
-    await scheduleNotification(notificationTime);
-    updateProfile({ is_notifications_enabled: true });
-  };
-
-  const handleTimeChange = async (event: any, selectedDate?: Date) => {
-    if (Platform.OS === "android") setShowTimePicker(false);
-
-    if (selectedDate) {
-      setNotificationTime(selectedDate);
-
-      // Save string to DB "HH:MM"
-      const timeString = selectedDate.toLocaleTimeString([], {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      await updateProfile({ notification_time: timeString });
-
-      // Only reschedule if the switch is ON
-      if (notificationsEnabled) {
-        await scheduleNotification(selectedDate);
-      }
-    }
-  };
-
-  const scheduleNotification = async (date: Date) => {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        // 👇 CUSTOMIZE THIS PART
-        title: t("settings.notification_scheduled_title"),
-        body: t("settings.notification_scheduled_body"),
-        sound: true, // Plays default sound
-        data: { url: "/library" },
-      },
-      trigger:
-        Platform.OS === "android"
-          ? {
-              type: Notifications.SchedulableTriggerInputTypes.DAILY,
-              hour: date.getHours(),
-              minute: date.getMinutes(),
-            }
-          : {
-              type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-              hour: date.getHours(),
-              minute: date.getMinutes(),
-              repeats: true,
-            },
-    });
-  };
-
-  // --- NEW: DELETE LOGIC SPLIT ---
 
   // 1. Shows the Modal
   const promptDeleteAccount = () => {
@@ -360,7 +216,8 @@ export default function SettingsScreen() {
   const PRIVACY_URL =
     "https://gist.github.com/francesco-saponaro/aeb8f04b6fd0b80a809fdb7119158fe5";
 
-  const openLegal = (url: string) => Linking.openURL(url);
+  const openLegal = (url: string) =>
+    window.open(url, "_blank", "noopener,noreferrer");
 
   const SectionHeader = ({ title }: { title: string }) => (
     <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold text-xs uppercase tracking-widest mb-3 mt-6 ml-4">
@@ -375,65 +232,69 @@ export default function SettingsScreen() {
     onPress,
     rightElement,
     isDestructive,
-  }: any) => (
-    <View className="bg-card-light dark:bg-card-dark">
-      <PressableScale
-        onPress={onPress}
-        activateOnHover={!!onPress}
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 16,
-          marginBottom: 1,
-        }}
-      >
-        <View
-          className={clsx(
-            "w-10 h-10 rounded-xl items-center justify-center mr-4",
-            isDestructive
-              ? "bg-red-100 dark:bg-red-900/20"
-              : "bg-black/5 dark:bg-white/5",
-          )}
-        >
-          <Ionicons
-            name={icon}
-            size={20}
-            color={isDestructive ? "#EF4444" : isDark ? "#94A3B8" : "#64748B"}
-          />
-        </View>
+  }: any) => {
+    const FinalParent = onPress ? PressableOpacity : View;
 
-        <View className="flex-1">
-          <Text
+    return (
+      <View className="bg-card-light dark:bg-card-dark">
+        <FinalParent
+          onPress={onPress}
+          activateOnHover={!!onPress}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            marginBottom: 1,
+          }}
+        >
+          <View
             className={clsx(
-              "font-heading font-bold text-base",
+              "w-10 h-10 rounded-xl items-center justify-center mr-4",
               isDestructive
-                ? "text-red-500"
-                : "text-text-main-light dark:text-text-main-dark",
+                ? "bg-red-100 dark:bg-red-900/20"
+                : "bg-black/5 dark:bg-white/5",
             )}
           >
-            {label}
-          </Text>
-        </View>
+            <Ionicons
+              name={icon}
+              size={20}
+              color={isDestructive ? "#EF4444" : isDark ? "#94A3B8" : "#64748B"}
+            />
+          </View>
 
-        {rightElement
-          ? rightElement
-          : value && (
-              <View className="flex-row items-center">
-                <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-sm mr-2">
-                  {value}
-                </Text>
-                {onPress && (
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={isDark ? "#64748B" : "#94A3B8"}
-                  />
-                )}
-              </View>
-            )}
-      </PressableScale>
-    </View>
-  );
+          <View className="flex-1">
+            <Text
+              className={clsx(
+                "font-heading font-bold text-base",
+                isDestructive
+                  ? "text-red-500"
+                  : "text-text-main-light dark:text-text-main-dark",
+              )}
+            >
+              {label}
+            </Text>
+          </View>
+
+          {rightElement
+            ? rightElement
+            : value && (
+                <View className="flex-row items-center">
+                  <Text className="text-text-muted-light dark:text-text-muted-dark font-body text-sm mr-2">
+                    {value}
+                  </Text>
+                  {onPress && (
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={isDark ? "#64748B" : "#94A3B8"}
+                    />
+                  )}
+                </View>
+              )}
+        </FinalParent>
+      </View>
+    );
+  };
 
   return (
     <View
@@ -542,11 +403,11 @@ export default function SettingsScreen() {
             label={t("settings.theme")}
             rightElement={
               <View className="flex-row bg-black/5 dark:bg-white/10 rounded-full p-1">
-                {["light", "dark", "system"].map((themeKey) => (
-                  <PressableScale
+                {["light", "dark"].map((themeKey) => (
+                  <PressableOpacity
                     key={themeKey}
                     onPress={() =>
-                      handleThemeChange(themeKey as "light" | "dark" | "system")
+                      handleThemeChange(themeKey as "light" | "dark")
                     }
                     style={{
                       paddingHorizontal: 12,
@@ -572,7 +433,7 @@ export default function SettingsScreen() {
                     >
                       {themeKey}
                     </Text>
-                  </PressableScale>
+                  </PressableOpacity>
                 ))}
               </View>
             }
@@ -584,7 +445,7 @@ export default function SettingsScreen() {
             rightElement={
               <View className="flex-row gap-2">
                 {["en", "es", "fr", "it"].map((lang) => (
-                  <PressableScale
+                  <PressableOpacity
                     key={lang}
                     onPress={() => changeLanguage(lang)}
                     style={{
@@ -616,40 +477,11 @@ export default function SettingsScreen() {
                     >
                       {lang}
                     </Text>
-                  </PressableScale>
+                  </PressableOpacity>
                 ))}
               </View>
             }
           />
-        </View>
-
-        {/* D. NOTIFICATIONS */}
-        <SectionHeader title={t("settings.section_notifications")} />
-        <View className=" rounded-3xl overflow-hidden border border-black/5 dark:border-white/5">
-          <SettingRow
-            onPress={() => toggleNotifications(!notificationsEnabled)}
-            icon="notifications"
-            label={t("settings.daily_reminder")}
-            rightElement={
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={toggleNotifications}
-                trackColor={{ false: "#767577", true: Colors.brand.action }}
-                thumbColor={"#f4f3f4"}
-              />
-            }
-          />
-          {notificationsEnabled && (
-            <SettingRow
-              icon="time"
-              label={t("settings.reminder_time")}
-              value={notificationTime.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              onPress={() => setShowTimePicker(true)}
-            />
-          )}
         </View>
 
         {/* E. LEGAL */}
@@ -690,7 +522,6 @@ export default function SettingsScreen() {
         </Text>
       </ScrollView>
 
-      {/* MODALS */}
       {/* --- CONFIRMATION MODAL FOR DELETE --- */}
       <ConfirmModal
         visible={isDeleteModalVisible}
@@ -758,42 +589,6 @@ export default function SettingsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
-      {showTimePicker && Platform.OS === "android" && (
-        <DateTimePicker
-          value={notificationTime}
-          mode="time"
-          is24Hour={true}
-          display="default"
-          onChange={handleTimeChange}
-        />
-      )}
-
-      {Platform.OS === "ios" && showTimePicker && (
-        <Modal transparent animationType="slide">
-          <View className="flex-1 justify-end">
-            <View className="bg-card-light dark:bg-card-dark pb-8">
-              <View className="flex-row justify-between p-4 border-b border-black/5 dark:border-white/5">
-                <PressableScale onPress={() => setShowTimePicker(false)}>
-                  <Text className="text-text-muted-light">
-                    {t("settings.cancel_btn")}
-                  </Text>
-                </PressableScale>
-                <PressableScale onPress={() => setShowTimePicker(false)}>
-                  <Text className="text-action font-bold">Done</Text>
-                </PressableScale>
-              </View>
-              <DateTimePicker
-                value={notificationTime}
-                mode="time"
-                display="spinner"
-                onChange={handleTimeChange}
-                textColor={isDark ? "white" : "black"}
-              />
-            </View>
-          </View>
-        </Modal>
-      )}
     </View>
   );
 }

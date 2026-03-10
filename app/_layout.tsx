@@ -555,6 +555,7 @@ export default function RootLayout() {
   );
 }
 
+// eas build --profile production --platform ios --auto-submit
 // eas build --platform ios --profile development
 // eas update --branch production --message "Fixed translation bug in RootLayout"
 
