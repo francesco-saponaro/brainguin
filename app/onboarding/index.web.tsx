@@ -1,6 +1,7 @@
 import ThinkingState from "@/components/Creation/ThinkingState";
 import LanguageStep from "@/components/LanguageStep";
 import FlashcardSwiper from "@/components/Study/FlashcardSwiper";
+import { WebDatePicker } from "@/components/WebDatePicker";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,8 +10,8 @@ import * as DocumentPicker from "expo-document-picker";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "expo-router";
-import { useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { cssInterop, useColorScheme } from "nativewind";
+import { PressableOpacity } from "pressto";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -25,7 +26,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import DatePicker from "react-native-date-picker";
 import { Modalize } from "react-native-modalize";
 import Purchases, { PurchasesPackage } from "react-native-purchases";
 import Animated, {
@@ -44,6 +44,11 @@ import NerdPng from "@/assets/images/nerd.png";
 import PdfPng from "@/assets/images/pdf.png";
 import SmarterPng from "@/assets/images/smarter.png";
 import TimesaverPng from "@/assets/images/timesaver.png";
+import clsx from "clsx";
+
+const StyledPressable = cssInterop(PressableOpacity, {
+  className: "style",
+});
 
 const API_KEY =
   Platform.OS === "ios"
@@ -85,7 +90,7 @@ export default function OnboardingScreen() {
 
   // --- NEW: EXAM DATE STATE ---
   const examModalRef = useRef<Modalize>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showWebPicker, setShowWebPicker] = useState(false);
   const [tempDate, setTempDate] = useState(new Date());
 
   // We need to track the ID of the newly generated deck to attach the exam date to it
@@ -219,6 +224,17 @@ export default function OnboardingScreen() {
     }
   };
 
+  const goToPreviousPage = () => {
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      scrollRef.current?.scrollTo({
+        x: prevIndex * windowWidth,
+        animated: true,
+      });
+      setCurrentIndex(prevIndex);
+    }
+  };
+
   const completeOnboarding = async () => {
     // 🚨 FIX: Get the absolute latest user from the store state directly
     const currentUser = useAuthStore.getState().session?.user;
@@ -289,19 +305,19 @@ export default function OnboardingScreen() {
 
       if (limitError) throw limitError;
 
-      if (limitData.limit_reached) {
-        // Set the flag allowing progression
-        setHasGenerated(true);
+      // if (limitData.limit_reached) {
+      //   // Set the flag allowing progression
+      //   setHasGenerated(true);
 
-        // Scroll immediately
-        const nextIndex = currentIndex + 2;
-        scrollRef.current?.scrollTo({
-          x: nextIndex * windowWidth,
-          animated: true,
-        });
-        setCurrentIndex(nextIndex);
-        return;
-      }
+      //   // Scroll immediately
+      //   const nextIndex = currentIndex + 2;
+      //   scrollRef.current?.scrollTo({
+      //     x: nextIndex * windowWidth,
+      //     animated: true,
+      //   });
+      //   setCurrentIndex(nextIndex);
+      //   return;
+      // }
 
       // ✅ STEP 2: PREPARE DATA
       setIsThinking(true);
@@ -573,8 +589,21 @@ export default function OnboardingScreen() {
   };
 
   const handleDeleteCard = async (cardId: string) => {
+    // 🚨 FIX: Check if the card they are deleting is the last one in the deck array
+    const isLastCardInDeck = cards[cards.length - 1]?.id === cardId;
+
     // 1. Optimistic UI Update (Remove immediately so user doesn't wait)
-    setCards((prev) => prev.filter((c) => c.id !== cardId));
+    const remainingCards = cards.filter((c) => c.id !== cardId);
+
+    // 2. Update UI instantly
+    setCards(remainingCards);
+
+    // 3. Finish if the deck is completely empty OR if they just deleted the final card
+    if (remainingCards.length === 0 || isLastCardInDeck) {
+      setTimeout(() => {
+        handleSessionFinish();
+      }, 50); // Tiny delay to let the swipe animation finish cleanly
+    }
   };
 
   const handleSessionFinish = () => {
@@ -639,21 +668,10 @@ export default function OnboardingScreen() {
 
   const buttonConfig = getButtonConfig();
 
-  // 🚨 The Locking Logic:
-  // If they are on index 0-5, they can scroll, BUT we must intercept if they try to go past 5 without generating.
-  // We can achieve this simply by disabling scroll on Index 5 until they press the button!
-  let isScrollEnabled = true;
-
-  if (currentIndex === 5 && !hasGenerated) {
-    isScrollEnabled = false; // Force them to press the button
-  } else if (currentIndex >= 6) {
-    isScrollEnabled = false; // Lock them on Result/Paywall
-  }
-
   if (dimensions.width === 0) return null;
 
   return (
-    <View className="flex-1 bg-page-light dark:bg-page-dark">
+    <View className="flex-1 bg-page-light dark:bg-page-dark pb-4">
       <View className="flex-1">
         {/* Header */}
         {steps[currentIndex]?.type !== "paywall" ? (
@@ -676,7 +694,7 @@ export default function OnboardingScreen() {
           onScroll={scrollHandler}
           scrollEventThrottle={16}
           className="flex-1"
-          scrollEnabled={isScrollEnabled}
+          scrollEnabled={false}
         >
           {steps.map((step, index) => (
             <View
@@ -745,10 +763,37 @@ export default function OnboardingScreen() {
         {/* Footer Button */}
         {steps[currentIndex]?.type !== "paywall" ? (
           <View
-            className="px-6 pt-4 bg-page-light dark:bg-page-dark"
+            className="px-6 pt-4 bg-page-light dark:bg-page-dark gap-3 flex-row items-center justify-center max-w-[800px] mx-auto w-full"
             style={{ paddingBottom: insets.bottom + 10 }}
           >
-            <PressableScale
+            {/* SECONDARY BACK BUTTON */}
+            {currentIndex > 0 &&
+              steps[currentIndex]?.type !== "interactive-swipe" && (
+                <PressableOpacity
+                  onPress={goToPreviousPage}
+                  activateOnHover
+                  style={{
+                    backgroundColor:
+                      colorScheme === "dark" ? "#1E293B" : "#FFFFFF",
+                    paddingVertical: 18,
+                    borderRadius: 16,
+                    alignItems: "center",
+                    shadowColor: colorScheme === "dark" ? "#1E293B" : "#FFFFFF",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 10,
+                    elevation: 5,
+                    flex: 1,
+                  }}
+                >
+                  <Text className="text-text-muted-light dark:text-text-muted-dark font-heading font-bold text-base">
+                    {t("onboarding.back_button", "Back")}
+                  </Text>
+                </PressableOpacity>
+              )}
+
+            {/* PRIMARY BUTTON */}
+            <PressableOpacity
               onPress={buttonConfig.action}
               activateOnHover
               style={{
@@ -764,12 +809,13 @@ export default function OnboardingScreen() {
                 shadowOpacity: 0.2,
                 shadowRadius: 10,
                 elevation: 5,
+                flex: 2,
               }}
             >
               <Text className="text-white font-heading font-bold text-lg">
                 {buttonConfig.text}
               </Text>
-            </PressableScale>
+            </PressableOpacity>
           </View>
         ) : null}
       </View>
@@ -793,6 +839,9 @@ export default function OnboardingScreen() {
               : "rgba(0,0,0,0.2)",
         }}
         withHandle={false}
+        onClosed={() => {
+          setShowWebPicker(false);
+        }}
       >
         <View className="p-8" style={{ paddingBottom: insets.bottom + 10 }}>
           <View className="flex-row justify-between items-center mb-4">
@@ -802,77 +851,58 @@ export default function OnboardingScreen() {
           </View>
 
           <Text className="text-text-muted-light dark:text-text-muted-dark text-base mb-6 leading-6">
-            {t(
-              "study.exam_modal.desc",
-              "Set a date and our AI will automatically pace your daily reviews so you are 100% prepared.",
-            )}
+            {t("study.exam_modal.desc")}
           </Text>
 
-          <View className="gap-3 mt-2">
-            <PressableScale
-              onPress={() => {
-                examModalRef.current?.close();
-                setTimeout(() => setShowDatePicker(true), 300);
-              }}
-              activateOnHover
-              style={{
-                backgroundColor: "#F97316",
-                paddingVertical: 16,
-                borderRadius: 16,
-                alignItems: "center",
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              <Ionicons name="calendar" size={20} color="white" />
-              <Text className="text-white font-bold text-lg">
-                {t("study.exam_modal.pick_date", "Pick Exam Date")}
-              </Text>
-            </PressableScale>
+          {/* TOGGLE BETWEEN BUTTONS AND THE PICKER */}
+          {!showWebPicker ? (
+            <View className="gap-3 mt-2">
+              <StyledPressable
+                onPress={() => setShowWebPicker(true)} // Reveal the Web Picker
+                className="bg-action py-4 rounded-xl items-center flex-row justify-center gap-2"
+              >
+                <Ionicons name="calendar" size={20} color="white" />
+                <Text className="text-white font-bold text-lg">
+                  {t("study.exam_modal.pick_date", "Pick Exam Date")}
+                </Text>
+              </StyledPressable>
 
-            <PressableScale
-              onPress={() => {
-                examModalRef.current?.close();
-                saveExamDate(null);
-              }}
-              activateOnHover
-              style={{
-                paddingVertical: 16,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor:
-                  colorScheme === "dark"
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.1)",
-                alignItems: "center",
-              }}
-            >
-              <Text className="font-bold text-text-muted-light dark:text-text-muted-dark">
-                {t("study.exam_modal.no_exam", "I don't have an exam")}
-              </Text>
-            </PressableScale>
-          </View>
+              <StyledPressable
+                onPress={() => saveExamDate(null)}
+                className="py-4 rounded-xl border border-black/10 dark:border-white/10"
+              >
+                <Text className="text-center font-bold text-text-muted-light dark:text-text-muted-dark">
+                  {t("study.exam_modal.no_exam")}
+                </Text>
+              </StyledPressable>
+            </View>
+          ) : (
+            <View className="mt-2 items-center">
+              {/* YOUR WEB PICKER COMPONENT */}
+              <WebDatePicker
+                selectedDate={tempDate}
+                onSelect={(date: Date | null) => {
+                  if (date) {
+                    setTempDate(date);
+                    saveExamDate(date);
+                    setShowWebPicker(false); // Close the picker view after selection
+                  }
+                }}
+                onClose={() => setShowWebPicker(false)} // 👈 Add this line
+              />
+
+              <StyledPressable
+                onPress={() => setShowWebPicker(false)}
+                className="mt-4 p-2"
+              >
+                <Text className="text-action font-semibold">
+                  {t("common.cancel")}
+                </Text>
+              </StyledPressable>
+            </View>
+          )}
         </View>
       </Modalize>
-
-      {/* --- NATIVE DATE PICKER OVERLAY --- */}
-      <DatePicker
-        modal
-        open={showDatePicker}
-        date={tempDate}
-        mode="date"
-        minimumDate={new Date(new Date().setDate(new Date().getDate() + 2))}
-        title={t("study.exam_modal.pick_date", "Select Exam Date")}
-        onConfirm={(date) => {
-          setShowDatePicker(false);
-          setTempDate(date);
-          saveExamDate(date);
-        }}
-        onCancel={() => {
-          setShowDatePicker(false);
-        }}
-      />
 
       {/* --- CONTEXT MODAL --- */}
       <Modal
@@ -896,7 +926,7 @@ export default function OnboardingScreen() {
                 </Text>
               </View>
 
-              <PressableScale
+              <PressableOpacity
                 onPress={() => setContextModalVisible(false)}
                 style={{
                   backgroundColor:
@@ -913,14 +943,14 @@ export default function OnboardingScreen() {
                   size={20}
                   color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
                 />
-              </PressableScale>
+              </PressableOpacity>
             </View>
 
             <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed text-center">
               {activeContext}
             </Text>
 
-            <PressableScale
+            <PressableOpacity
               onPress={() => setContextModalVisible(false)}
               style={{
                 marginTop: 40,
@@ -935,7 +965,7 @@ export default function OnboardingScreen() {
               <Text className="text-white font-bold text-lg">
                 {t("study.hint_btn", "Got it!")}
               </Text>
-            </PressableScale>
+            </PressableOpacity>
           </View>
         </View>
       </Modal>
@@ -978,12 +1008,6 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
       [-windowWidth, 0, windowWidth],
       Extrapolation.CLAMP,
     );
-    const translateY = interpolate(
-      distance,
-      inputRange,
-      [250, 0, 250],
-      Extrapolation.CLAMP,
-    );
 
     // The 360 Flip
     const rotateY = interpolate(
@@ -1008,19 +1032,13 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
       [0.4, 1, 0.4],
       Extrapolation.CLAMP,
     );
-    const opacity = interpolate(
-      distance,
-      inputRange,
-      [0, 1, 0],
-      Extrapolation.CLAMP,
-    );
 
     return {
-      opacity,
+      opacity: 1,
       transform: [
         { perspective: 1000 },
         { translateX },
-        { translateY },
+        { translateY: 0 },
         { scale },
         { rotateY: `${rotateY}deg` },
         { rotateZ: `${rotateZ}deg` },
@@ -1032,20 +1050,7 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
     const distance = index - scrollIndex.value;
     const inputRange = [-1, 0, 1];
 
-    const translateY = interpolate(
-      distance,
-      inputRange,
-      [80, 0, 80],
-      Extrapolation.CLAMP,
-    );
-    const opacity = interpolate(
-      distance,
-      inputRange,
-      [0, 1, 0],
-      Extrapolation.CLAMP,
-    );
-
-    return { opacity, transform: [{ translateY }] };
+    return { opacity: 1, transform: [{ translateY: 0 }] };
   });
 
   return (
@@ -1060,97 +1065,99 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
       showsVerticalScrollIndicator={false}
       contentContainerClassName="px-6"
     >
-      {/* 🚨 3D CRYSTAL CARD */}
-      <Animated.View
-        style={[
-          cardStyle,
-          {
-            width: 260,
-            height: 260,
-            marginBottom: 40,
-            borderRadius: 40,
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            backfaceVisibility: "visible", // Keeps the crystal clear on both sides
-          },
-        ]}
-      >
-        {/* 1. Crystal Base (Replaces BlurView for flawless 3D rendering) */}
-        <LinearGradient
-          colors={
-            isDark
-              ? ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.02)"]
-              : ["rgba(255,255,255,0.9)", "rgba(255,255,255,0.4)"]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-
-        {/* 2. Diagonal Surface Glare (The polished glass shine) */}
-        <LinearGradient
-          colors={["transparent", "rgba(255,255,255,0.9)", "transparent"]}
-          locations={[0.3, 0.5, 0.7]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.15 : 0.6 }]}
-        />
-
-        {/* 3. The Penguin Image */}
-        {step.image ? (
-          <Image
-            source={step.image}
-            style={{ width: 170, height: 170, zIndex: 10 }}
-            contentFit="contain"
-            transition={300}
-          />
-        ) : (
-          <Ionicons
-            name="image-outline"
-            size={64}
-            color="#94A3B8"
-            style={{ zIndex: 10 }}
-          />
-        )}
-
-        {/* 🚨 4. THE THICKNESS & BEVEL LAYER 🚨 */}
-        {/* This is what makes it look like a physical, thick block of crystal */}
-        <View
+      <View className="max-w-[800px] w-full items-center justify-center">
+        {/* 🚨 3D CRYSTAL CARD */}
+        <Animated.View
           style={[
-            StyleSheet.absoluteFill,
+            cardStyle,
             {
+              width: 260,
+              height: 260,
+              marginBottom: 40,
               borderRadius: 40,
-              // TOP/LEFT: Sharp bright highlight where light hits the edge
-              borderTopWidth: 2,
-              borderLeftWidth: 2,
-              borderTopColor: "rgba(255,255,255,0.9)",
-              borderLeftColor: "rgba(255,255,255,0.5)",
-
-              // BOTTOM/RIGHT: Massive thickness simulating light refraction
-              borderBottomWidth: 14,
-              borderRightWidth: 8,
-              borderBottomColor: isDark
-                ? "rgba(15, 23, 42, 0.8)"
-                : "rgba(203, 213, 225, 0.7)",
-              borderRightColor: isDark
-                ? "rgba(30, 41, 59, 0.6)"
-                : "rgba(226, 232, 240, 0.5)",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              backfaceVisibility: "visible", // Keeps the crystal clear on both sides
             },
           ]}
-          pointerEvents="none"
-        />
-      </Animated.View>
+        >
+          {/* 1. Crystal Base (Replaces BlurView for flawless 3D rendering) */}
+          <LinearGradient
+            colors={
+              isDark
+                ? ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.02)"]
+                : ["rgba(255,255,255,0.9)", "rgba(255,255,255,0.4)"]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
 
-      {/* TEXT CONTENT */}
-      <Animated.View style={[textStyle]} className="w-full items-center px-4">
-        <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark text-center mb-4 leading-tight">
-          {step.title}
-        </Text>
-        <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark text-center leading-relaxed">
-          {step.description}
-        </Text>
-      </Animated.View>
+          {/* 2. Diagonal Surface Glare (The polished glass shine) */}
+          <LinearGradient
+            colors={["transparent", "rgba(255,255,255,0.9)", "transparent"]}
+            locations={[0.3, 0.5, 0.7]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.15 : 0.6 }]}
+          />
+
+          {/* 3. The Penguin Image */}
+          {step.image ? (
+            <Image
+              source={step.image}
+              style={{ width: 170, height: 170, zIndex: 10 }}
+              contentFit="contain"
+              transition={300}
+            />
+          ) : (
+            <Ionicons
+              name="image-outline"
+              size={64}
+              color="#94A3B8"
+              style={{ zIndex: 10 }}
+            />
+          )}
+
+          {/* 🚨 4. THE THICKNESS & BEVEL LAYER 🚨 */}
+          {/* This is what makes it look like a physical, thick block of crystal */}
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderRadius: 40,
+                // TOP/LEFT: Sharp bright highlight where light hits the edge
+                borderTopWidth: 2,
+                borderLeftWidth: 2,
+                borderTopColor: "rgba(255,255,255,0.9)",
+                borderLeftColor: "rgba(255,255,255,0.5)",
+
+                // BOTTOM/RIGHT: Massive thickness simulating light refraction
+                borderBottomWidth: 14,
+                borderRightWidth: 8,
+                borderBottomColor: isDark
+                  ? "rgba(15, 23, 42, 0.8)"
+                  : "rgba(203, 213, 225, 0.7)",
+                borderRightColor: isDark
+                  ? "rgba(30, 41, 59, 0.6)"
+                  : "rgba(226, 232, 240, 0.5)",
+              },
+            ]}
+            pointerEvents="none"
+          />
+        </Animated.View>
+
+        {/* TEXT CONTENT */}
+        <Animated.View style={[textStyle]} className="w-full items-center px-4">
+          <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark text-center mb-4 leading-tight">
+            {step.title}
+          </Text>
+          <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark text-center leading-relaxed">
+            {step.description}
+          </Text>
+        </Animated.View>
+      </View>
     </ScrollView>
   );
 }
@@ -1191,163 +1198,165 @@ function TryItOutStep({
       contentContainerStyle={{
         flexGrow: 1,
         alignItems: "center",
-        paddingTop: insets.top,
+        paddingTop: insets.top + 40,
         paddingBottom: insets.bottom,
       }}
       contentContainerClassName="px-6"
       showsVerticalScrollIndicator={false}
     >
-      <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark mb-4 leading-tight">
-        {step.title}
-      </Text>
-      <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark mb-8 leading-relaxed">
-        {step.description}
-      </Text>
+      <View className="max-w-[820px] w-full items-center justify-center px-[10px]">
+        <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark mb-4 leading-tight">
+          {step.title}
+        </Text>
+        <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark mb-8 leading-relaxed text-center">
+          {step.description}
+        </Text>
 
-      {/* Type Selector (Tabs) */}
-      <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
-        {[
-          { id: "document", label: "Doc", icon: "document-text" },
-          { id: "url", label: "URL", icon: "link" },
-          { id: "topic", label: "Topic", icon: "bulb" },
-        ].map((item) => (
-          <PressableScale
-            key={item.id}
-            onPress={() => {
-              setActiveType(item.id as InputType);
-              setInputText("");
-              setSelectedFile(null);
-            }}
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 12,
-              borderRadius: 12,
-              borderWidth: 1,
-              backgroundColor:
-                activeType === item.id ? "#F97316" : "transparent",
-              borderColor:
-                activeType === item.id
-                  ? "#F97316"
-                  : colorScheme === "dark"
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.1)",
-            }}
-          >
-            <Ionicons
-              name={item.icon as any}
-              size={18}
-              color={activeType === item.id ? "white" : "#94A3B8"}
-            />
-            <Text
-              className={`ml-1 font-heading font-bold ${
-                activeType === item.id
-                  ? "text-white"
-                  : "text-text-muted-light dark:text-text-muted-dark"
-              }`}
-            >
-              {item.label}
-            </Text>
-          </PressableScale>
-        ))}
-      </View>
-
-      {/* Input Content Area */}
-      <View className="py-6 justify-center w-full">
-        {activeType === "document" && (
-          <View>
-            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-              {t("creation.upload_your_document")}
-            </Text>
-            <PressableScale
-              onPress={handleFilePick}
+        {/* Type Selector (Tabs) */}
+        <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
+          {[
+            { id: "document", label: "Doc", icon: "document-text" },
+            { id: "url", label: "URL", icon: "link" },
+            { id: "topic", label: "Topic", icon: "bulb" },
+          ].map((item) => (
+            <PressableOpacity
+              key={item.id}
+              onPress={() => {
+                setActiveType(item.id as InputType);
+                setInputText("");
+                setSelectedFile(null);
+              }}
               style={{
-                width: "100%",
-                height: 200,
-                borderWidth: 2,
-                borderStyle: "dashed",
-                borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
-                borderRadius: 24,
+                flex: 1,
+                flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
+                padding: 12,
+                borderRadius: 12,
+                borderWidth: 1,
                 backgroundColor:
-                  colorScheme === "dark"
-                    ? "rgba(255,255,255,0.05)"
-                    : "rgba(0,0,0,0.05)",
-                marginBottom: 16,
+                  activeType === item.id ? "#F97316" : "transparent",
+                borderColor:
+                  activeType === item.id
+                    ? "#F97316"
+                    : colorScheme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
               }}
             >
-              {selectedFile ? (
-                <>
-                  <Ionicons name="document" size={48} color="#F97316" />
-                  <Text
-                    className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
-                    numberOfLines={1}
-                  >
-                    {selectedFile.name}
-                  </Text>
-                  <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
-                    {t("creation.tap_to_change_file")}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons
-                    name="cloud-upload-outline"
-                    size={48}
-                    color="#94A3B8"
-                  />
-                  <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-                    {t("creation.tap_to_select_document")}
-                  </Text>
-                </>
-              )}
-            </PressableScale>
-          </View>
-        )}
+              <Ionicons
+                name={item.icon as any}
+                size={18}
+                color={activeType === item.id ? "white" : "#94A3B8"}
+              />
+              <Text
+                className={`ml-1 font-heading font-bold ${
+                  activeType === item.id
+                    ? "text-white"
+                    : "text-text-muted-light dark:text-text-muted-dark"
+                }`}
+              >
+                {item.label}
+              </Text>
+            </PressableOpacity>
+          ))}
+        </View>
 
-        {activeType === "url" && (
-          <View>
-            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-              {t("creation.paste_link")}
-            </Text>
-            <TextInput
-              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
-              placeholder="https://wikipedia.org/wiki/Penguin"
-              placeholderTextColor="#94A3B8"
-              value={inputText}
-              onChangeText={setInputText}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-          </View>
-        )}
+        {/* Input Content Area */}
+        <View className="py-6 justify-center w-full">
+          {activeType === "document" && (
+            <View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                {t("creation.upload_your_document")}
+              </Text>
+              <PressableOpacity
+                onPress={handleFilePick}
+                style={{
+                  width: "100%",
+                  height: 200,
+                  borderWidth: 2,
+                  borderStyle: "dashed",
+                  borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                  borderRadius: 24,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                  marginBottom: 16,
+                }}
+              >
+                {selectedFile ? (
+                  <>
+                    <Ionicons name="document" size={48} color="#F97316" />
+                    <Text
+                      className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
+                      numberOfLines={1}
+                    >
+                      {selectedFile.name}
+                    </Text>
+                    <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
+                      {t("creation.tap_to_change_file")}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons
+                      name="cloud-upload-outline"
+                      size={48}
+                      color="#94A3B8"
+                    />
+                    <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                      {t("creation.tap_to_select_document")}
+                    </Text>
+                  </>
+                )}
+              </PressableOpacity>
+            </View>
+          )}
 
-        {activeType === "topic" && (
-          <View>
-            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-              {t("creation.paste_topic_description")}
-            </Text>
-            <TextInput
-              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
-              style={{ height: 200 }}
-              placeholder={t(
-                "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
-              )}
-              placeholderTextColor="#94A3B8"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              textAlignVertical="top"
-              scrollEnabled={true} // ✅ Allows internal scrolling
-              {...(Platform.OS === "android"
-                ? { nestedScrollEnabled: true }
-                : {})}
-            />
-          </View>
-        )}
+          {activeType === "url" && (
+            <View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                {t("creation.paste_link")}
+              </Text>
+              <TextInput
+                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
+                placeholder="https://wikipedia.org/wiki/Penguin"
+                placeholderTextColor="#94A3B8"
+                value={inputText}
+                onChangeText={setInputText}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </View>
+          )}
+
+          {activeType === "topic" && (
+            <View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                {t("creation.paste_topic_description")}
+              </Text>
+              <TextInput
+                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
+                style={{ height: 200 }}
+                placeholder={t(
+                  "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
+                )}
+                placeholderTextColor="#94A3B8"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                textAlignVertical="top"
+                scrollEnabled={true} // ✅ Allows internal scrolling
+                {...(Platform.OS === "android"
+                  ? { nestedScrollEnabled: true }
+                  : {})}
+              />
+            </View>
+          )}
+        </View>
       </View>
     </Animated.ScrollView>
   );
@@ -1389,16 +1398,16 @@ function ResultSwipeStep({
       contentContainerStyle={{
         flexGrow: 1,
         alignItems: "center",
-        justifyContent: "center",
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
+        paddingTop: insets.top + 20,
+        paddingBottom: insets.bottom + 20,
       }}
+      contentContainerClassName="px-6"
       showsVerticalScrollIndicator={false}
     >
-      <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark text-center mb-2 px-6">
+      <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark text-center mb-2 px-6 max-w-[800px] w-full self-center">
         {step.title}
       </Text>
-      <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark text-center mb-2 px-10">
+      <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark text-center mb-10 px-10 max-w-[800px] w-full self-center">
         {step.description}
       </Text>
 
@@ -1475,157 +1484,174 @@ function PaywallStep({
       }}
       contentContainerClassName="px-6"
     >
-      {/* 🚨 NEW AGGRESSIVE HEADER 🚨 */}
-      <View className="mb-4 items-center">
-        <Image
-          source={step.image}
-          style={{ width: 85, height: 85, zIndex: 10, marginBottom: 10 }}
-          contentFit="contain"
-        />
+      <View className="max-w-[820px] w-full items-center justify-center mx-auto px-[10px]">
+        {/* 🚨 NEW AGGRESSIVE HEADER 🚨 */}
+        <View className="mb-4 items-center">
+          <Image
+            source={step.image}
+            style={{ width: 170, height: 170, zIndex: 10, marginBottom: 10 }}
+            contentFit="contain"
+          />
 
-        <View>
-          <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-black text-center leading-tight">
-            {t("paywall.headerTitle", "Unlock Limitless\n")}
-          </Text>
-          <Text className="font-heading text-4xl font-black text-center leading-tight text-orange-500">
-            {t("paywall.headerHighlight", "Learning")}
-          </Text>
-        </View>
-      </View>
-
-      <View className="mb-4 space-y-2 gap-2 w-full">
-        <FeatureRow
-          icon="document-text"
-          title={t("paywall.feat_upload_title", "Upload Anything")}
-          desc={t(
-            "paywall.feat_upload_desc",
-            "Instantly convert infinite PDFs, links, or text into cards.",
-          )}
-          color="#38BDF8"
-        />
-        <FeatureRow
-          icon="calendar"
-          title={t("paywall.feat_exam_title", "Exam Pacing Mode")}
-          desc={t(
-            "paywall.feat_exam_desc",
-            "Set a deadline and let the AI build your daily study schedule.",
-          )}
-          color="#8B5CF6"
-        />
-        <FeatureRow
-          icon="brain"
-          title={t("paywall.feat_algo_title", "Smart Spaced Repetition")}
-          desc={t(
-            "paywall.feat_algo_desc",
-            "Unlock the full memory algorithm to never forget a fact.",
-          )}
-          color="#F97316"
-        />
-        <FeatureRow
-          icon="flame"
-          title={t("paywall.feat_habit_title", "Unlimited Daily Stack")}
-          desc={t(
-            "paywall.feat_habit_desc",
-            "Keep your streak alive and master thousands of cards.",
-          )}
-          color="#22C55E"
-        />
-      </View>
-
-      <LinearGradient
-        colors={["#F97316", "#EA580C"]}
-        style={{
-          borderRadius: 24,
-          paddingHorizontal: 24,
-          paddingTop: 24,
-          paddingBottom: 20,
-        }}
-      >
-        <View className="flex-row justify-between items-center mb-4">
-          <View className="bg-white/20 px-3 py-1 rounded-lg">
-            <Text className="text-white font-bold text-[10px] uppercase tracking-widest">
-              {t("paywall.bestValue", "Best Value")}
+          <View className="flex-row gap-[8px]">
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading text-4xl font-black text-center leading-tight">
+              {t("paywall.headerTitle", "Unlock Limitless\n")}
+            </Text>
+            <Text className="font-heading text-4xl font-black text-center leading-tight text-orange-500">
+              {t("paywall.headerHighlight", "Learning")}
             </Text>
           </View>
-          <Text className="text-white/70 text-xs font-bold line-through">
-            €59.99
-          </Text>
         </View>
 
-        <View className="flex-row items-baseline mb-1">
-          {pkg ? (
-            <Text className="text-white font-heading text-4xl font-bold">
-              {pkg.product.priceString || "€29.99"}
-            </Text>
-          ) : null}
-          <Text className="text-white/90 font-body text-base ml-1">
-            {t("paywall.perYear", "/ year")}
-          </Text>
+        <View className="mb-4 gap-2 w-full">
+          <View className="flex-row gap-2">
+            <FeatureRow
+              icon="document-text"
+              title={t("paywall.feat_upload_title", "Upload Anything")}
+              desc={t(
+                "paywall.feat_upload_desc",
+                "Instantly convert infinite PDFs, links, or text into cards.",
+              )}
+              color="#38BDF8"
+              className="flex-1"
+            />
+            <FeatureRow
+              icon="calendar"
+              title={t("paywall.feat_exam_title", "Exam Pacing Mode")}
+              desc={t(
+                "paywall.feat_exam_desc",
+                "Set a deadline and let the AI build your daily study schedule.",
+              )}
+              color="#8B5CF6"
+              className="flex-1"
+            />
+          </View>
+          <View className="flex-row gap-2">
+            <FeatureRow
+              icon="brain"
+              title={t("paywall.feat_algo_title", "Smart Spaced Repetition")}
+              desc={t(
+                "paywall.feat_algo_desc",
+                "Unlock the full memory algorithm to never forget a fact.",
+              )}
+              color="#F97316"
+              className="flex-1"
+            />
+            <FeatureRow
+              icon="flame"
+              title={t("paywall.feat_habit_title", "Unlimited Daily Stack")}
+              desc={t(
+                "paywall.feat_habit_desc",
+                "Keep your streak alive and master thousands of cards.",
+              )}
+              color="#22C55E"
+              className="flex-1"
+            />
+          </View>
         </View>
 
-        <Text className="text-white/80 font-body text-xs mb-2">
-          {pkg
-            ? t("paywall.monthlyBreakdown", {
-                // 1. We take the numeric price and divide by 12
-                // 2. We use Intl.NumberFormat to automatically handle the symbol position and decimals
-                price: new Intl.NumberFormat(undefined, {
-                  style: "currency",
-                  currency: pkg.product.currencyCode,
-                }).format(pkg.product.price / 12),
-              })
-            : null}
-        </Text>
-
-        <PressableScale
-          onPress={isPurchasing ? undefined : handlePurchase}
-          activateOnHover
+        <LinearGradient
+          colors={["#F97316", "#EA580C"]}
           style={{
-            backgroundColor: "white",
+            borderRadius: 24,
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: 20,
             width: "100%",
-            paddingVertical: 16,
-            borderRadius: 12,
-            alignItems: "center",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 2,
-            elevation: 2,
-            opacity: isPurchasing ? 0.7 : 1,
           }}
         >
-          {isPurchasing ? (
-            <ActivityIndicator color="#EA580C" />
-          ) : (
-            <Text className="text-orange-600 font-bold text-lg">
-              {t("paywall.cta")}
+          <View className="flex-row justify-between items-center mb-4">
+            <View className="bg-white/20 px-3 py-1 rounded-lg">
+              <Text className="text-white font-bold text-[10px] uppercase tracking-widest">
+                {t("paywall.bestValue", "Best Value")}
+              </Text>
+            </View>
+            <Text className="text-white/70 text-xs font-bold line-through">
+              €59.99
             </Text>
-          )}
-        </PressableScale>
+          </View>
 
-        <Text className="text-white/60 text-[10px] font-medium mt-4 text-center">
-          {t("paywall.guarantee", "Cancel anytime. No questions asked.")}
-        </Text>
-      </LinearGradient>
+          <View className="flex-row items-baseline mb-1">
+            {pkg ? (
+              <Text className="text-white font-heading text-4xl font-bold">
+                {pkg.product.priceString || "€29.99"}
+              </Text>
+            ) : null}
+            <Text className="text-white/90 font-body text-base ml-1">
+              {t("paywall.perYear", "/ year")}
+            </Text>
+          </View>
 
-      <View className="flex-row justify-center gap-6 mt-6 opacity-60">
-        <PressableScale onPress={() => openLegal(PRIVACY_URL)}>
-          <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
-            {t("privacy", "Privacy Policy")}
+          <Text className="text-white/80 font-body text-xs mb-2">
+            {pkg
+              ? t("paywall.monthlyBreakdown", {
+                  // 1. We take the numeric price and divide by 12
+                  // 2. We use Intl.NumberFormat to automatically handle the symbol position and decimals
+                  price: new Intl.NumberFormat(undefined, {
+                    style: "currency",
+                    currency: pkg.product.currencyCode,
+                  }).format(pkg.product.price / 12),
+                })
+              : null}
           </Text>
-        </PressableScale>
-        <PressableScale onPress={() => openLegal(TERMS_URL)}>
-          <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
-            {t("terms", "Terms of Service")}
+
+          <PressableOpacity
+            onPress={isPurchasing ? undefined : handlePurchase}
+            activateOnHover
+            style={{
+              backgroundColor: "white",
+              width: "100%",
+              paddingVertical: 16,
+              borderRadius: 12,
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 2,
+              opacity: isPurchasing ? 0.7 : 1,
+              maxWidth: 800,
+            }}
+          >
+            {isPurchasing ? (
+              <ActivityIndicator color="#EA580C" />
+            ) : (
+              <Text className="text-orange-600 font-bold text-lg">
+                {t("paywall.cta")}
+              </Text>
+            )}
+          </PressableOpacity>
+
+          <Text className="text-white/60 text-[10px] font-medium mt-4 text-center">
+            {t("paywall.guarantee", "Cancel anytime. No questions asked.")}
           </Text>
-        </PressableScale>
+        </LinearGradient>
+
+        <View className="flex-row justify-center gap-6 mt-6 opacity-60">
+          <PressableOpacity onPress={() => openLegal(PRIVACY_URL)}>
+            <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
+              {t("privacy", "Privacy Policy")}
+            </Text>
+          </PressableOpacity>
+          <PressableOpacity onPress={() => openLegal(TERMS_URL)}>
+            <Text className="text-text-main-light dark:text-text-main-dark text-[11px] font-medium underline">
+              {t("terms", "Terms of Service")}
+            </Text>
+          </PressableOpacity>
+        </View>
       </View>
     </Animated.ScrollView>
   );
 }
 
-function FeatureRow({ icon, title, desc, color }: any) {
+function FeatureRow({ icon, title, desc, color, className }: any) {
   return (
-    <View className="flex-row items-center bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-black/5 dark:border-white/10">
+    <View
+      className={clsx(
+        "flex-row items-center bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-black/5 dark:border-white/10",
+        className,
+      )}
+    >
       <View
         style={{ backgroundColor: color + "20" }}
         className="w-12 h-12 rounded-xl items-center justify-center mr-4"

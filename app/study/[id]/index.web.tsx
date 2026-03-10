@@ -600,46 +600,51 @@ export default function StudyScreen() {
         </View>
       </View>
 
-      {/* ✅ NEW: SUBTITLE INSTRUCTION */}
-      <PressableOpacity onPress={() => howItWorksModalRef.current?.open()}>
-        <Text className="text-text-muted-light dark:text-text-muted-dark text-xs text-center mt-2 font-medium">
-          {t("study.instruction_tap")} • {t("study.instruction_swipe")} •{" "}
-          <Text className="text-action font-bold">
-            {t("study.how_it_works_link")}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        {/* ✅ NEW: SUBTITLE INSTRUCTION */}
+        <PressableOpacity onPress={() => howItWorksModalRef.current?.open()}>
+          <Text className="text-text-muted-light dark:text-text-muted-dark text-xs text-center mt-2 font-medium">
+            {t("study.instruction_tap")} • {t("study.instruction_swipe")} •{" "}
+            <Text className="text-action font-bold">
+              {t("study.how_it_works_link")}
+            </Text>
           </Text>
-        </Text>
-      </PressableOpacity>
+        </PressableOpacity>
 
-      {/* SWIPER AREA */}
-      <View className="flex-1 px-4 pb-10 w-full max-w-[800px] self-center">
-        {cards.length > 0 ? (
-          <FlashcardSwiper
-            cards={cards}
-            onFinish={handleSessionFinish}
-            onRate={handleRateCard}
-            onShowContext={(ctx) => onOpenContext(ctx)}
-            onDelete={(cardId) => handleDeleteCard(cardId)}
-          />
-        ) : (
-          <View className="flex-1 items-center justify-center">
-            {id === "daily" ? (
-              <View className="items-center">
-                <Ionicons name="checkmark-circle" size={64} color="#22C55E" />
-                <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-xl mt-4">
-                  All Caught Up!
+        {/* SWIPER AREA */}
+        <View className="flex-1 px-4 pt-16 pb-10 w-full max-w-[800px] self-center">
+          {cards.length > 0 ? (
+            <FlashcardSwiper
+              cards={cards}
+              onFinish={handleSessionFinish}
+              onRate={handleRateCard}
+              onShowContext={(ctx) => onOpenContext(ctx)}
+              onDelete={(cardId) => handleDeleteCard(cardId)}
+            />
+          ) : (
+            <View className="flex-1 items-center justify-center">
+              {id === "daily" ? (
+                <View className="items-center">
+                  <Ionicons name="checkmark-circle" size={64} color="#22C55E" />
+                  <Text className="text-text-main-light dark:text-text-main-dark font-heading font-bold text-xl mt-4">
+                    All Caught Up!
+                  </Text>
+                  <Text className="text-text-muted-light text-center mt-2 px-8">
+                    You have no cards due for review right now. Great job!
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-text-muted-light font-body text-center px-8">
+                  {t("errors.no_cards_found", "No cards found in this deck.")}
                 </Text>
-                <Text className="text-text-muted-light text-center mt-2 px-8">
-                  You have no cards due for review right now. Great job!
-                </Text>
-              </View>
-            ) : (
-              <Text className="text-text-muted-light font-body text-center px-8">
-                {t("errors.no_cards_found", "No cards found in this deck.")}
-              </Text>
-            )}
-          </View>
-        )}
-      </View>
+              )}
+            </View>
+          )}
+        </View>
+      </ScrollView>
 
       {/* --- ✅ NEW: EXAM DATE / PACE MODAL --- */}
       {/* --- ✅ NEW: MODALIZE EXAM DATE --- */}

@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "nativewind";
-import { PressableScale } from "pressto";
+import { PressableOpacity, PressableScale } from "pressto";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Platform, ScrollView, Text, View } from "react-native";
 import CountryFlag from "react-native-country-flag"; // 🆕 Import the flag library
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -18,6 +18,9 @@ interface Props {
   onLanguageSelect: () => void;
   activeLanguage: string;
 }
+
+const FinalPressable =
+  Platform.OS === "web" ? PressableOpacity : PressableScale; // 🆕 Use the same component for both platforms
 
 const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
   const insets = useSafeAreaInsets();
@@ -59,7 +62,7 @@ const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
           //       : "border-card-light dark:border-card-dark bg-card-light dark:bg-card-dark hover:border-action/50 hover:bg-slate-50 dark:hover:bg-slate-800"
           //   }`}
           // >
-          <PressableScale
+          <FinalPressable
             key={lang.code}
             activateOnHover
             onPress={() => handleSelect(lang.code)}
@@ -107,7 +110,7 @@ const LanguageStep = ({ onLanguageSelect, activeLanguage }: Props) => {
             {activeLanguage === lang.code && (
               <Ionicons name="checkmark-circle" size={24} color="#F97316" />
             )}
-          </PressableScale>
+          </FinalPressable>
         ))}
       </View>
     </ScrollView>

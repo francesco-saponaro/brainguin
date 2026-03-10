@@ -168,14 +168,15 @@ const SwipeableCard = ({
           styles.card,
           cardStyle,
           {
-            height: isOnboarding ? 350 : 500,
-            width: isOnboarding ? "90%" : "100%",
+            height: isOnboarding ? 350 : 400,
+            width: "90%",
           },
         ]}
       >
         {/* ✅ DELETE INDICATOR (Trash Icon) */}
         {isActive && (
           <Animated.View
+            pointerEvents="none"
             style={[
               StyleSheet.absoluteFill,
               styles.deleteOverlay,
@@ -194,6 +195,7 @@ const SwipeableCard = ({
         {/* Rating Indicator */}
         {isActive && (
           <Animated.View
+            pointerEvents="none"
             style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
           />
         )}
@@ -473,7 +475,11 @@ export default function FlashcardSwiper({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center" },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    // justifyContent: "center",
+  },
   card: {
     width: "100%",
     backgroundColor: "white",
