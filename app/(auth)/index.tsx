@@ -25,7 +25,6 @@ import Toast from "react-native-toast-message"; // <--- 1. IMPORT TOAST
 // Internal Imports
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 import { supabase } from "@/lib/supabase";
-import { useAuthStore } from "@/store/storeUser";
 import { LoginSchema, LoginSchemaType } from "@/zodSchemas";
 
 // Handles WebBrowser cleanup on Web
@@ -38,8 +37,8 @@ import { PressableOpacity, PressableScale } from "pressto";
 const LoginScreen = () => {
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
-  const { session, setSession, isOnboarded } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [recoverVisible, setRecoverVisible] = useState<boolean>(false);
   const PressableFinal =
     Platform.OS === "web" ? PressableOpacity : PressableScale;
@@ -274,6 +273,7 @@ const LoginScreen = () => {
             </View>
 
             {/* Password Input */}
+            {/* Password Input */}
             <View className="mb-2">
               <Text className="font-body text-text-main-light dark:text-text-main-dark mb-1.5 ml-1 font-medium">
                 {t("auth.password_placeholder")}
@@ -282,17 +282,29 @@ const LoginScreen = () => {
                 control={control}
                 name="pwd"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
-                      errors.pwd ? "border-status-hard" : ""
-                    } focus:border-action outline-none`}
-                    placeholder="••••••••"
-                    placeholderTextColor="#94A3B8"
-                    secureTextEntry
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
+                  <View className="relative justify-center">
+                    <TextInput
+                      className={`bg-input-light dark:bg-input-dark p-4 pr-12 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                        errors.pwd ? "border-status-hard" : ""
+                      } focus:border-action outline-none`}
+                      placeholder="••••••••"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry={!showPassword} // Toggle logic here
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 p-1"
+                    >
+                      <Ionicons
+                        name={showPassword ? "eye-off-outline" : "eye-outline"}
+                        size={22}
+                        color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
+                      />
+                    </Pressable>
+                  </View>
                 )}
               />
               {errors.pwd && (

@@ -8,7 +8,7 @@ import CountryFlag from "react-native-country-flag"; // 🆕 Import the flag lib
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const LANGUAGES = [
-  { code: "en", label: "English", isoCode: "us" }, // ISO codes for the icons
+  { code: "en", label: "English", isoCode: "gb" }, // ISO codes for the icons
   { code: "es", label: "Español", isoCode: "es" },
   { code: "fr", label: "Français", isoCode: "fr" },
   { code: "it", label: "Italiano", isoCode: "it" },

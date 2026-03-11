@@ -36,6 +36,7 @@ const SignupScreen = () => {
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const schema = SignupSchema(t);
   const {
@@ -284,17 +285,29 @@ const SignupScreen = () => {
                 control={control}
                 name="pwd"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
-                      errors.pwd ? "border-status-hard" : ""
-                    } focus:border-action outline-none`}
-                    placeholder="••••••••"
-                    placeholderTextColor="#94A3B8"
-                    secureTextEntry
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
+                  <View className="relative justify-center">
+                    <TextInput
+                      className={`bg-input-light dark:bg-input-dark p-4 pr-12 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                        errors.pwd ? "border-status-hard" : ""
+                      } focus:border-action outline-none`}
+                      placeholder="••••••••"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry={!showPassword}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 p-1"
+                    >
+                      <Ionicons
+                        name={showPassword ? "eye-off-outline" : "eye-outline"}
+                        size={22}
+                        color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
+                      />
+                    </Pressable>
+                  </View>
                 )}
               />
               {errors.pwd && (
@@ -313,17 +326,30 @@ const SignupScreen = () => {
                 control={control}
                 name="confirmPwd"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className={`bg-input-light dark:bg-input-dark p-4 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
-                      errors.confirmPwd ? "border-status-hard" : ""
-                    } focus:border-action outline-none`}
-                    placeholder="••••••••"
-                    placeholderTextColor="#94A3B8"
-                    secureTextEntry
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
+                  <View className="relative justify-center">
+                    <TextInput
+                      className={`bg-input-light dark:bg-input-dark p-4 pr-12 rounded-xl font-body text-text-main-light dark:text-text-main-dark border border-card-light dark:border-card-dark ${
+                        errors.confirmPwd ? "border-status-hard" : ""
+                      } focus:border-action outline-none`}
+                      placeholder="••••••••"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry={!showPassword}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                    {/* We repeat the icon here so the user can toggle from either field */}
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 p-1"
+                    >
+                      <Ionicons
+                        name={showPassword ? "eye-off-outline" : "eye-outline"}
+                        size={22}
+                        color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
+                      />
+                    </Pressable>
+                  </View>
                 )}
               />
               {errors.confirmPwd && (
