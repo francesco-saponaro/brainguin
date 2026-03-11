@@ -141,7 +141,7 @@ export default function PaywallScreen() {
       <View
         className="w-full lg:w-[600px] bg-page-light dark:bg-page-dark rounded-[32px] shadow-2xl overflow-hidden"
         style={{
-          height: height * 0.95,
+          height: height * 0.9,
           display: "flex",
           flexDirection: "column",
         }}
@@ -150,7 +150,9 @@ export default function PaywallScreen() {
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 20,
-            paddingBottom: insets.bottom + 40,
+            paddingBottom: 20,
+            flexGrow: 1,
+            justifyContent: "center",
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -200,25 +202,47 @@ export default function PaywallScreen() {
           </View>
 
           {/* 2. MIDDLE SECTION */}
-          <View className="mt-6 mb-4 space-y-1 gap-1 w-full">
-            <FeatureRow
-              icon="infinite"
-              title={t("paywall.feat1Title")}
-              desc={t("paywall.feat1Desc")}
-              color="#38BDF8"
-            />
-            <FeatureRow
-              icon="brain"
-              title={t("paywall.feat2Title")}
-              desc={t("paywall.feat2Desc")}
-              color="#F97316"
-            />
-            <FeatureRow
-              icon="shield-checkmark"
-              title={t("paywall.feat3Title")}
-              desc={t("paywall.feat3Desc")}
-              color="#22C55E"
-            />
+          <View className="mt-6 mb-4 gap-2 w-full">
+            <View className="flex-row gap-2">
+              <FeatureRow
+                icon="document-text"
+                title={t("paywall.feat_upload_title", "Upload Anything")}
+                desc={t(
+                  "paywall.feat_upload_desc",
+                  "Instantly convert infinite PDFs, links, or text into cards.",
+                )}
+                color="#38BDF8"
+              />
+              <FeatureRow
+                icon="calendar"
+                title={t("paywall.feat_exam_title", "Exam Pacing Mode")}
+                desc={t(
+                  "paywall.feat_exam_desc",
+                  "Set a deadline and let the AI build your daily study schedule.",
+                )}
+                color="#8B5CF6"
+              />
+            </View>
+            <View className="flex-row gap-2">
+              <FeatureRow
+                icon="brain"
+                title={t("paywall.feat_algo_title", "Smart Spaced Repetition")}
+                desc={t(
+                  "paywall.feat_algo_desc",
+                  "Unlock the full memory algorithm to never forget a fact.",
+                )}
+                color="#F97316"
+              />
+              <FeatureRow
+                icon="flame"
+                title={t("paywall.feat_habit_title", "Unlimited Daily Stack")}
+                desc={t(
+                  "paywall.feat_habit_desc",
+                  "Keep your streak alive and master thousands of cards.",
+                )}
+                color="#22C55E"
+              />
+            </View>
           </View>
 
           {/* 3. BOTTOM SECTION */}
@@ -312,9 +336,9 @@ export default function PaywallScreen() {
   );
 }
 
-function FeatureRow({ icon, title, desc, color }: any) {
+function FeatureRow({ icon, title, desc, color, className }: any) {
   return (
-    <View className="flex-row items-center bg-black/5 dark:bg-white/5 p-2 rounded-2xl border border-black/5 dark:border-white/10">
+    <View className="flex-row items-center bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-black/5 dark:border-white/10 flex-1">
       <View
         style={{ backgroundColor: color + "20" }}
         className="w-12 h-12 rounded-xl items-center justify-center mr-4"

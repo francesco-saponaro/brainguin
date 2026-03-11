@@ -4,7 +4,6 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
-import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { cssInterop, useColorScheme } from "nativewind";
 import { PressableOpacity } from "pressto";
@@ -14,7 +13,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -22,7 +20,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import Purchases from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
@@ -44,9 +41,6 @@ export default function SettingsScreen() {
   const [profile, setProfile] = useState<any>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [notificationTime, setNotificationTime] = useState(new Date());
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
@@ -118,56 +112,36 @@ export default function SettingsScreen() {
   };
 
   const handleManageSubscription = async () => {
-    // 1. WEB GUARD: Stop immediately if on web
-    if (Platform.OS === "web") {
-      // Web users likely paid via Stripe/PayPal on your site
-      // Send them to your web billing portal
-      Linking.openURL("https://brainguin.app/billing");
+    // 1. If they aren't Pro, just send them to the Paywall to buy it!
+    if (!isPro) {
+      router.push("/paywall");
       return;
     }
 
-    // 2. NATIVE LOGIC: Now safe to use RevenueCat
     try {
-      // Double check initialization just in case
-      if (!(await Purchases.isConfigured())) {
-        // Fallback if SDK isn't ready
-        if (Platform.OS === "ios")
-          Linking.openURL("https://apps.apple.com/account/subscriptions");
-        else
-          Linking.openURL(
-            "https://play.google.com/store/account/subscriptions",
-          );
-        return;
+      Toast.show({
+        type: "info",
+        text1: "Loading Billing Portal...",
+      });
+
+      // 2. Ask Supabase to generate a secure Stripe Portal link
+      const { data, error } = await supabase.functions.invoke(
+        "create-stripe-portal",
+      );
+
+      if (error || !data?.url) {
+        throw new Error("Could not load billing portal.");
       }
 
-      const customerInfo = await Purchases.getCustomerInfo();
-      const entitlement = customerInfo.entitlements.active["pro"]; // Replace 'pro' with your entitlement ID
-
-      if (!entitlement) {
-        router.push("/paywall");
-        return;
-      }
-
-      // 3. Smart Redirect based on Store
-      if (entitlement.store === "APP_STORE") {
-        Linking.openURL("https://apps.apple.com/account/subscriptions");
-      } else if (entitlement.store === "PLAY_STORE") {
-        Linking.openURL("https://play.google.com/store/account/subscriptions");
-      } else if (entitlement.store === "STRIPE") {
-        Linking.openURL("https://brainguin.app/billing");
-      } else {
-        Alert.alert(
-          "Manage Subscription",
-          "Please manage your subscription via the platform you purchased it on.",
-        );
-      }
-    } catch (e) {
+      // 3. Redirect the browser to Stripe's hosted portal
+      window.location.href = data.url;
+    } catch (e: any) {
       console.error(e);
-      // Fallback to store settings if determining source fails
-      if (Platform.OS === "ios")
-        Linking.openURL("https://apps.apple.com/account/subscriptions");
-      else
-        Linking.openURL("https://play.google.com/store/account/subscriptions");
+      Toast.show({
+        type: "error",
+        text1: "Billing Error",
+        text2: e.message || "Please contact support.",
+      });
     }
   };
 
