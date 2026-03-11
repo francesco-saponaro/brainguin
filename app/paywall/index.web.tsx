@@ -5,11 +5,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
 import { PressableOpacity } from "pressto";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Dimensions,
   Image,
   Linking,
   Pressable,
@@ -18,12 +17,8 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-// ✅ IMPORT WEB SDK & TYPES
-import { Package, Purchases } from "@revenuecat/purchases-js";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function PaywallScreen() {
   const { t } = useTranslation();
@@ -32,103 +27,87 @@ export default function PaywallScreen() {
   const { colorScheme } = useColorScheme();
   const { height } = useWindowDimensions();
 
-  const [pkg, setPkg] = useState<Package | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
-  // 1. INITIALIZE & FETCH PRODUCTS
-  useEffect(() => {
-    const setup = async () => {
-      try {
-        // ✅ 1. Get User ID from Supabase so the purchase is linked
-        const { data } = await supabase.auth.getSession();
-        const appUserId = data.session?.user.id || null;
-
-        // ✅ 2. Configure (appUserId is REQUIRED on Web)
-        if (!Purchases.isConfigured()) {
-          Purchases.configure({
-            apiKey: process.env.EXPO_PUBLIC_REVENUECAT_WEB_PRODUCTION!,
-            appUserId: appUserId!, // <--- This fixes the first error
-          });
-        }
-
-        // ✅ 3. Get the Shared Instance (Fixes "Property does not exist" error)
-        const purchases = Purchases.getSharedInstance();
-
-        // ✅ 4. Fetch Offerings from the Instance
-        const offerings = await purchases.getOfferings();
-
-        if (
-          offerings.current !== null &&
-          offerings.current.availablePackages.length !== 0
-        ) {
-          const yearlyPkg = offerings.current.availablePackages.find(
-            (p) => p.identifier === "yearly",
-          );
-          setPkg(yearlyPkg || offerings.current.availablePackages[0]);
-        }
-      } catch (e) {
-        console.log("Error fetching web offerings", e);
-      }
-    };
-    setup();
-  }, []);
-
-  // 2. PURCHASE HANDLER
+  // --- 1. STRIPE PURCHASE HANDLER ---
   const handlePurchase = async () => {
-    if (!pkg) return;
     setIsPurchasing(true);
 
     try {
-      // ✅ FIX 3: Use instance method
-      const purchases = Purchases.getSharedInstance();
-      const { customerInfo } = await purchases.purchasePackage(pkg);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
 
-      if (customerInfo.entitlements.active["pro"]) {
-        await supabase.rpc("upgrade_user_to_pro");
-
-        Toast.show({
-          type: "success",
-          text1: t("paywall.purchase_success_title"),
-          text2: t("paywall.purchase_success_desc"),
-        });
-
-        router.back();
+      if (!user) {
+        throw new Error("You must be logged in to purchase.");
       }
+
+      // We call a Supabase Edge Function to securely generate the Stripe URL
+      const { data, error } = await supabase.functions.invoke(
+        "create-stripe-checkout",
+        {
+          body: {
+            // You will add this key to your .env file
+            priceId: process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_YEARLY,
+          },
+        },
+      );
+
+      if (error || !data?.url) {
+        throw new Error("Could not initialize checkout. Please try again.");
+      }
+
+      // Redirect the browser directly to the secure Stripe Checkout Page
+      window.location.href = data.url;
     } catch (e: any) {
-      if (!e.userCancelled) {
-        Toast.show({
-          type: "error",
-          text1: t("paywall.purchase_error_title"),
-          text2: e.message,
-        });
-      }
-    } finally {
+      Toast.show({
+        type: "error",
+        text1: t("paywall.purchase_error_title"),
+        text2: e.message,
+      });
       setIsPurchasing(false);
     }
   };
 
-  // 3. RESTORE HANDLER
+  // --- 2. RESTORE / MANAGE BILLING HANDLER ---
   const handleRestore = async () => {
     setIsPurchasing(true);
     try {
-      // ✅ FIX 4: Use instance method
-      const purchases = Purchases.getSharedInstance();
-      const customerInfo = await purchases.getCustomerInfo();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
 
-      if (customerInfo.entitlements.active["pro"]) {
-        await supabase.rpc("upgrade_user_to_pro");
-        Toast.show({
-          type: "success",
-          text1: t("paywall.restore_success_title"),
-          text2: t("paywall.restore_success_desc"),
-        });
-        router.back();
+      if (!user) throw new Error("Not logged in");
+
+      // For Stripe, "Restore" usually means sending them to the Stripe Customer Portal
+      // so they can manage their active subscription.
+      const { data, error } = await supabase.functions.invoke(
+        "create-stripe-portal",
+      );
+
+      if (error || !data?.url) {
+        // Fallback: Just verify their Pro status in Supabase directly
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_pro")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.is_pro) {
+          Toast.show({
+            type: "success",
+            text1: t("paywall.restore_success_title"),
+            text2: t("paywall.restore_success_desc"),
+          });
+          router.back();
+        } else {
+          Toast.show({
+            type: "info",
+            text1: t("paywall.restore_no_purchase_title"),
+            text2: t("paywall.restore_no_purchase_desc"),
+          });
+        }
       } else {
-        Toast.show({
-          type: "info",
-          text1: t("paywall.restore_no_purchase_title"),
-          text2: t("paywall.restore_no_purchase_desc"),
-        });
+        // Redirect to Stripe Customer Portal
+        window.location.href = data.url;
       }
     } catch (e: any) {
       Toast.show({
@@ -148,21 +127,23 @@ export default function PaywallScreen() {
 
   const openLegal = (url: string) => Linking.openURL(url);
 
+  // --- UI FALLBACKS (Since we aren't fetching RevenueCat arrays anymore) ---
+  const displayPrice = "€29.99";
+  const displayMonthly = "2.50 €";
+
   return (
     <View className="flex-1 justify-center items-center p-[20px]">
-      {/* Backdrop */}
       <Pressable
         onPress={() => router.back()}
         className="absolute inset-0 bg-black/60"
       />
 
-      {/* Modal Container */}
       <View
         className="w-full lg:w-[600px] bg-page-light dark:bg-page-dark rounded-[32px] shadow-2xl overflow-hidden"
         style={{
           height: height * 0.95,
           display: "flex",
-          flexDirection: "column", // Ensures children respect flex rules
+          flexDirection: "column",
         }}
       >
         <ScrollView
@@ -251,26 +232,9 @@ export default function PaywallScreen() {
                 paddingBottom: 20,
               }}
             >
-              {/* <View className="flex-row justify-between items-center mb-4">
-                <View className="bg-white/20 px-3 py-1 rounded-lg">
-                  <Text className="text-white font-bold text-[10px] uppercase tracking-widest">
-                    {t("paywall.bestValue")}
-                  </Text>
-                </View>
-                <Text className="text-white/70 text-xs font-bold line-through">
-                  €59.99
-                </Text>
-              </View> */}
-
               <View className="flex-row items-baseline mb-1">
                 <Text className="text-white font-heading text-4xl font-bold">
-                  {/* ✅ WEB FIX: Use 'rcBillingProduct' and format the price manually */}
-                  {pkg && pkg.webBillingProduct?.price
-                    ? new Intl.NumberFormat("en-US", {
-                        style: "currency",
-                        currency: pkg.webBillingProduct.price.currency,
-                      }).format(pkg.webBillingProduct.price.amountMicros)
-                    : "€29.99"}
+                  {displayPrice}
                 </Text>
                 <Text className="text-white/90 font-body text-base ml-1">
                   {t("paywall.perYear")}
@@ -279,11 +243,7 @@ export default function PaywallScreen() {
 
               <Text className="text-white/80 font-body text-xs mb-5">
                 {t("paywall.monthlyBreakdown", {
-                  /* ✅ WEB FIX: Calculate monthly cost from 'rcBillingProduct' */
-                  price:
-                    pkg && pkg.webBillingProduct?.price
-                      ? `${(pkg.webBillingProduct.price.amountMicros / 12).toFixed(2)} ${pkg.webBillingProduct.price.currency}`
-                      : "2.50 €",
+                  price: displayMonthly,
                 })}
               </Text>
 

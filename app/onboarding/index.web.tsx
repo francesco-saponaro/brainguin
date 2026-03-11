@@ -27,7 +27,6 @@ import {
   View,
 } from "react-native";
 import { Modalize } from "react-native-modalize";
-import Purchases, { PurchasesPackage } from "react-native-purchases";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -49,11 +48,6 @@ import clsx from "clsx";
 const StyledPressable = cssInterop(PressableOpacity, {
   className: "style",
 });
-
-const API_KEY =
-  Platform.OS === "ios"
-    ? process.env.EXPO_PUBLIC_REVENUECAT_APPLE_PRODUCTION!
-    : "goog_YOUR_ANDROID_KEY";
 
 type InputType = "document" | "url" | "topic";
 
@@ -97,27 +91,7 @@ export default function OnboardingScreen() {
   const [generatedDeckId, setGeneratedDeckId] = useState<string | null>(null);
 
   // --- PAYWALL STATE ---
-  const [pkg, setPkg] = useState<PurchasesPackage | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
-
-  // Initialize RevenueCat
-  useEffect(() => {
-    const setupPurchases = async () => {
-      try {
-        await Purchases.configure({ apiKey: API_KEY });
-        const offerings = await Purchases.getOfferings();
-        if (
-          offerings.current !== null &&
-          offerings.current.availablePackages.length !== 0
-        ) {
-          setPkg(offerings.current.availablePackages[0]);
-        }
-      } catch (e) {
-        console.log("Error fetching offerings", e);
-      }
-    };
-    setupPurchases();
-  }, []);
 
   useEffect(() => {
     navigation.setOptions({
@@ -613,34 +587,36 @@ export default function OnboardingScreen() {
   };
 
   const handlePurchase = async () => {
-    console.log("Attempting to purchase package:", pkg);
-    if (!pkg) return;
     setIsPurchasing(true);
-
     try {
-      const { customerInfo } = await Purchases.purchasePackage(pkg);
+      const currentUser = useAuthStore.getState().session?.user;
+      if (!currentUser) throw new Error("You must be logged in to purchase.");
 
-      if (customerInfo.entitlements.active["pro"]) {
-        // Unlock Pro Status in DB
-        await supabase.rpc("upgrade_user_to_pro");
+      // 1. Ask Supabase for the Stripe Checkout URL
+      const { data, error } = await supabase.functions.invoke(
+        "create-stripe-checkout",
+        {
+          body: {
+            priceId: process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_YEARLY,
+          },
+        },
+      );
 
-        Toast.show({
-          type: "success",
-          text1: t("paywall.purchase_success_title", "Welcome to Pro! 🎉"),
-        });
-
-        // Finish onboarding completely!
-        completeOnboarding();
+      if (error || !data?.url) {
+        throw new Error("Could not initialize checkout. Please try again.");
       }
+
+      // 2. Mark them as onboarded BEFORE they leave the page!
+      await completeOnboarding();
+
+      // 3. Redirect the browser to Stripe
+      window.location.href = data.url;
     } catch (e: any) {
-      if (!e.userCancelled) {
-        Toast.show({
-          type: "error",
-          text1: t("paywall.purchase_error_title", "Purchase Failed"),
-          text2: e.message,
-        });
-      }
-    } finally {
+      Toast.show({
+        type: "error",
+        text1: t("paywall.purchase_error_title", "Purchase Failed"),
+        text2: e.message,
+      });
       setIsPurchasing(false);
     }
   };
@@ -749,7 +725,6 @@ export default function OnboardingScreen() {
               {step.type === "paywall" && (
                 <PaywallStep
                   step={step}
-                  pkg={pkg}
                   index={index}
                   scrollIndex={scrollIndex}
                   isPurchasing={isPurchasing}
@@ -1572,27 +1547,18 @@ function PaywallStep({
           </View>
 
           <View className="flex-row items-baseline mb-1">
-            {pkg ? (
+            <View className="flex-row items-baseline mb-1">
               <Text className="text-white font-heading text-4xl font-bold">
-                {pkg.product.priceString || "€29.99"}
+                €29.99
               </Text>
-            ) : null}
-            <Text className="text-white/90 font-body text-base ml-1">
-              {t("paywall.perYear", "/ year")}
-            </Text>
+              <Text className="text-white/90 font-body text-base ml-1">
+                {t("paywall.perYear", "/ year")}
+              </Text>
+            </View>
           </View>
 
           <Text className="text-white/80 font-body text-xs mb-2">
-            {pkg
-              ? t("paywall.monthlyBreakdown", {
-                  // 1. We take the numeric price and divide by 12
-                  // 2. We use Intl.NumberFormat to automatically handle the symbol position and decimals
-                  price: new Intl.NumberFormat(undefined, {
-                    style: "currency",
-                    currency: pkg.product.currencyCode,
-                  }).format(pkg.product.price / 12),
-                })
-              : null}
+            {t("paywall.monthlyBreakdown", { price: "2.50 €" })}
           </Text>
 
           <PressableOpacity
