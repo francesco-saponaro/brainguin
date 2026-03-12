@@ -234,7 +234,12 @@ export default function OnboardingScreen() {
         })
         .eq("id", currentUser.id);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error(
+          "⚠️ Failed to save language preference, but continuing onboarding:",
+          dbError.message,
+        );
+      }
 
       // 2. Update Auth Metadata (The "source of truth" for your route guards)
       const {
@@ -279,19 +284,19 @@ export default function OnboardingScreen() {
 
       if (limitError) throw limitError;
 
-      // if (limitData.limit_reached) {
-      //   // Set the flag allowing progression
-      //   setHasGenerated(true);
+      if (limitData.limit_reached) {
+        // Set the flag allowing progression
+        setHasGenerated(true);
 
-      //   // Scroll immediately
-      //   const nextIndex = currentIndex + 2;
-      //   scrollRef.current?.scrollTo({
-      //     x: nextIndex * windowWidth,
-      //     animated: true,
-      //   });
-      //   setCurrentIndex(nextIndex);
-      //   return;
-      // }
+        // Scroll immediately
+        const nextIndex = currentIndex + 2;
+        scrollRef.current?.scrollTo({
+          x: nextIndex * windowWidth,
+          animated: true,
+        });
+        setCurrentIndex(nextIndex);
+        return;
+      }
 
       // ✅ STEP 2: PREPARE DATA
       setIsThinking(true);

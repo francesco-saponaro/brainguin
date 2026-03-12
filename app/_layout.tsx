@@ -35,6 +35,7 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Host } from "react-native-portalize";
+import Purchases from "react-native-purchases";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -177,11 +178,29 @@ export default function RootLayout() {
     } = supabase.auth.onAuthStateChange(async (authEvent, session) => {
       if (authEvent === "SIGNED_IN" || authEvent === "TOKEN_REFRESHED") {
         if (session) {
+          // 🚨 ADDED: Log them into RevenueCat!
+          if (Platform.OS !== "web") {
+            try {
+              await Purchases.logIn(session.user.id);
+            } catch (e) {
+              console.warn("Failed to log into RevenueCat:", e);
+            }
+          }
+
           // 🚀 INSTANT CHECK ON LOGIN
           const metadataOnboarded =
             session.user.user_metadata?.is_onboarded ?? false;
           setSession(session, metadataOnboarded);
         } else {
+          // 🚨 ADDED: Log them out of RevenueCat!
+          if (Platform.OS !== "web") {
+            try {
+              await Purchases.logOut();
+            } catch (e) {
+              console.warn("Failed to log out of RC", e);
+            }
+          }
+
           setSession(null, false);
         }
       }

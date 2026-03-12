@@ -4,6 +4,7 @@ import FlashcardSwiper from "@/components/Study/FlashcardSwiper";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import * as DocumentPicker from "expo-document-picker";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -14,7 +15,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -100,7 +100,16 @@ export default function OnboardingScreen() {
   useEffect(() => {
     const setupPurchases = async () => {
       try {
+        // 1. Configure the SDK
         await Purchases.configure({ apiKey: API_KEY });
+
+        // 🚨 2. CRITICAL: Log them into RevenueCat using their Supabase ID!
+        const currentUser = useAuthStore.getState().session?.user;
+        if (currentUser) {
+          await Purchases.logIn(currentUser.id);
+        }
+
+        // 3. Fetch offerings
         const offerings = await Purchases.getOfferings();
         if (
           offerings.current !== null &&
@@ -245,7 +254,12 @@ export default function OnboardingScreen() {
         })
         .eq("id", currentUser.id);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error(
+          "⚠️ Failed to save language preference, but continuing onboarding:",
+          dbError.message,
+        );
+      }
 
       // 2. Update Auth Metadata (The "source of truth" for your route guards)
       const {
@@ -594,7 +608,12 @@ export default function OnboardingScreen() {
 
       if (customerInfo.entitlements.active["pro"]) {
         // Unlock Pro Status in DB
-        await supabase.rpc("upgrade_user_to_pro");
+        // 🚨 SAFETY NET FOR RESTORE TOO
+        try {
+          await supabase.rpc("upgrade_user_to_pro");
+        } catch (dbError) {
+          console.error("DB failed on restore:", dbError);
+        }
 
         Toast.show({
           type: "success",
@@ -612,6 +631,64 @@ export default function OnboardingScreen() {
           text2: e.message,
         });
       }
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setIsPurchasing(true);
+    try {
+      console.log("⏳ Restoring purchases...");
+      const customerInfo = await Purchases.restorePurchases();
+
+      console.log(
+        "🧾 Restore Complete. Customer Info:",
+        JSON.stringify(customerInfo, null, 2),
+      );
+      console.log(
+        "🔑 Active Entitlements:",
+        Object.keys(customerInfo.entitlements.active),
+      );
+
+      // CHECK: Is the entitlement name actually "pro"?
+      // If your logs say "premium" or "Pro", change this string!
+      if (customerInfo.entitlements.active["pro"]) {
+        console.log("✅ 'pro' entitlement found active!");
+        // 🚨 SAFETY NET FOR RESTORE TOO
+        try {
+          await supabase.rpc("upgrade_user_to_pro");
+        } catch (dbError) {
+          console.error("DB failed on restore:", dbError);
+        }
+
+        Toast.show({
+          type: "success",
+          text1: t("paywall.restore_success_title"),
+          text2: t("paywall.restore_success_desc"),
+        });
+
+        // Finish onboarding completely!
+        completeOnboarding();
+      } else {
+        console.warn(
+          "❌ No active 'pro' entitlement found. Found:",
+          customerInfo.entitlements.active,
+        );
+
+        Toast.show({
+          type: "info",
+          text1: t("paywall.restore_no_purchase_title"),
+          text2: t("paywall.restore_no_purchase_desc"),
+        });
+      }
+    } catch (e: any) {
+      console.error("❌ Restore Error:", e);
+      Toast.show({
+        type: "error",
+        text1: t("paywall.restore_error_title"),
+        text2: e.message,
+      });
     } finally {
       setIsPurchasing(false);
     }
@@ -737,6 +814,7 @@ export default function OnboardingScreen() {
                   scrollIndex={scrollIndex}
                   isPurchasing={isPurchasing}
                   handlePurchase={handlePurchase}
+                  handleRestore={handleRestore}
                 />
               )}
             </View>
@@ -879,12 +957,15 @@ export default function OnboardingScreen() {
       <Modal
         visible={contextModalVisible}
         transparent
-        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setContextModalVisible(false)}
-        statusBarTranslucent
       >
-        <View className="flex-1 bg-black/60 items-center justify-center px-4">
+        <View style={styles.overlay}>
+          <BlurView
+            intensity={30}
+            tint={colorScheme === "dark" ? "dark" : "light"}
+            style={StyleSheet.absoluteFill}
+          />
           <View className="bg-page-light dark:bg-card-dark w-[90%] max-w-[400px] rounded-[40px] p-8 items-center border border-black/5 dark:border-white/10">
             <View className="flex-row justify-between items-center mb-6 w-full">
               <View className="flex-row items-center gap-2">
@@ -894,7 +975,7 @@ export default function OnboardingScreen() {
                 </Text>
               </View>
 
-              <Pressable
+              <PressableScale
                 onPress={() => setContextModalVisible(false)}
                 style={{
                   backgroundColor:
@@ -904,20 +985,21 @@ export default function OnboardingScreen() {
                   padding: 8,
                   borderRadius: 99,
                 }}
+                activateOnHover
               >
                 <Ionicons
                   name="close"
                   size={20}
                   color={colorScheme === "dark" ? "#94A3B8" : "#64748B"}
                 />
-              </Pressable>
+              </PressableScale>
             </View>
 
             <Text className="text-text-main-light dark:text-text-main-dark font-body text-lg leading-relaxed text-center">
               {activeContext}
             </Text>
 
-            <Pressable
+            <PressableScale
               onPress={() => setContextModalVisible(false)}
               style={{
                 marginTop: 40,
@@ -927,11 +1009,12 @@ export default function OnboardingScreen() {
                 borderRadius: 16,
                 alignItems: "center",
               }}
+              activateOnHover
             >
               <Text className="text-white font-bold text-lg">
                 {t("study.hint_btn", "Got it!")}
               </Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
       </Modal>
@@ -1182,177 +1265,170 @@ function TryItOutStep({
   });
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      // "padding" usually works best inside bottom sheets on Android
-      behavior="padding"
-      keyboardVerticalOffset={96}
+    <Animated.ScrollView
+      style={textStyle}
+      contentContainerStyle={{
+        flexGrow: 1,
+        alignItems: "center",
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+      contentContainerClassName="px-6"
+      showsVerticalScrollIndicator={false}
     >
-      <Animated.ScrollView
-        style={textStyle}
-        contentContainerStyle={{
-          flexGrow: 1,
-          alignItems: "center",
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-        }}
-        contentContainerClassName="px-6"
-        showsVerticalScrollIndicator={false}
-      >
-        <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark mb-4 leading-tight">
-          {step.title}
-        </Text>
-        <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark mb-8 leading-relaxed">
-          {step.description}
-        </Text>
+      <Text className="text-3xl font-heading font-bold text-text-main-light dark:text-text-main-dark mb-4 leading-tight">
+        {step.title}
+      </Text>
+      <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark mb-8 leading-relaxed">
+        {step.description}
+      </Text>
 
-        {/* Type Selector (Tabs) */}
-        <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
-          {[
-            { id: "document", label: "Doc", icon: "document-text" },
-            { id: "url", label: "URL", icon: "link" },
-            { id: "topic", label: "Topic", icon: "bulb" },
-          ].map((item) => (
+      {/* Type Selector (Tabs) */}
+      <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
+        {[
+          { id: "document", label: "Doc", icon: "document-text" },
+          { id: "url", label: "URL", icon: "link" },
+          { id: "topic", label: "Topic", icon: "bulb" },
+        ].map((item) => (
+          <PressableScale
+            key={item.id}
+            onPress={() => {
+              setActiveType(item.id as InputType);
+              setInputText("");
+              setSelectedFile(null);
+            }}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 12,
+              borderRadius: 12,
+              borderWidth: 1,
+              backgroundColor:
+                activeType === item.id ? "#F97316" : "transparent",
+              borderColor:
+                activeType === item.id
+                  ? "#F97316"
+                  : colorScheme === "dark"
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.1)",
+            }}
+          >
+            <Ionicons
+              name={item.icon as any}
+              size={18}
+              color={activeType === item.id ? "white" : "#94A3B8"}
+            />
+            <Text
+              className={`ml-1 font-heading font-bold ${
+                activeType === item.id
+                  ? "text-white"
+                  : "text-text-muted-light dark:text-text-muted-dark"
+              }`}
+            >
+              {item.label}
+            </Text>
+          </PressableScale>
+        ))}
+      </View>
+
+      {/* Input Content Area */}
+      <View className="py-6 justify-center w-full">
+        {activeType === "document" && (
+          <View>
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+              {t("creation.upload_your_document")}
+            </Text>
             <PressableScale
-              key={item.id}
-              onPress={() => {
-                setActiveType(item.id as InputType);
-                setInputText("");
-                setSelectedFile(null);
-              }}
+              onPress={handleFilePick}
               style={{
-                flex: 1,
-                flexDirection: "row",
+                width: "100%",
+                height: 200,
+                borderWidth: 2,
+                borderStyle: "dashed",
+                borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                borderRadius: 24,
                 alignItems: "center",
                 justifyContent: "center",
-                padding: 12,
-                borderRadius: 12,
-                borderWidth: 1,
                 backgroundColor:
-                  activeType === item.id ? "#F97316" : "transparent",
-                borderColor:
-                  activeType === item.id
-                    ? "#F97316"
-                    : colorScheme === "dark"
-                      ? "rgba(255,255,255,0.1)"
-                      : "rgba(0,0,0,0.1)",
+                  colorScheme === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                marginBottom: 16,
               }}
             >
-              <Ionicons
-                name={item.icon as any}
-                size={18}
-                color={activeType === item.id ? "white" : "#94A3B8"}
-              />
-              <Text
-                className={`ml-1 font-heading font-bold ${
-                  activeType === item.id
-                    ? "text-white"
-                    : "text-text-muted-light dark:text-text-muted-dark"
-                }`}
-              >
-                {item.label}
-              </Text>
+              {selectedFile ? (
+                <>
+                  <Ionicons name="document" size={48} color="#F97316" />
+                  <Text
+                    className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
+                    numberOfLines={1}
+                  >
+                    {selectedFile.name}
+                  </Text>
+                  <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
+                    {t("creation.tap_to_change_file")}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons
+                    name="cloud-upload-outline"
+                    size={48}
+                    color="#94A3B8"
+                  />
+                  <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                    {t("creation.tap_to_select_document")}
+                  </Text>
+                </>
+              )}
             </PressableScale>
-          ))}
-        </View>
+          </View>
+        )}
 
-        {/* Input Content Area */}
-        <View className="py-6 justify-center w-full">
-          {activeType === "document" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.upload_your_document")}
-              </Text>
-              <PressableScale
-                onPress={handleFilePick}
-                style={{
-                  width: "100%",
-                  height: 200,
-                  borderWidth: 2,
-                  borderStyle: "dashed",
-                  borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
-                  borderRadius: 24,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor:
-                    colorScheme === "dark"
-                      ? "rgba(255,255,255,0.05)"
-                      : "rgba(0,0,0,0.05)",
-                  marginBottom: 16,
-                }}
-              >
-                {selectedFile ? (
-                  <>
-                    <Ionicons name="document" size={48} color="#F97316" />
-                    <Text
-                      className="text-text-main-light dark:text-text-main-dark font-heading font-bold mt-2 text-center px-4"
-                      numberOfLines={1}
-                    >
-                      {selectedFile.name}
-                    </Text>
-                    <Text className="text-text-muted-light dark:text-text-muted-dark text-xs mt-1">
-                      {t("creation.tap_to_change_file")}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={48}
-                      color="#94A3B8"
-                    />
-                    <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
-                      {t("creation.tap_to_select_document")}
-                    </Text>
-                  </>
-                )}
-              </PressableScale>
-            </View>
-          )}
+        {activeType === "url" && (
+          <View>
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+              {t("creation.paste_link")}
+            </Text>
+            <TextInput
+              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
+              placeholder="https://wikipedia.org/wiki/Penguin"
+              placeholderTextColor="#94A3B8"
+              value={inputText}
+              onChangeText={setInputText}
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+          </View>
+        )}
 
-          {activeType === "url" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.paste_link")}
-              </Text>
-              <TextInput
-                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body focus:border-action outline-none border border-card-light dark:border-card-dark"
-                placeholder="https://wikipedia.org/wiki/Penguin"
-                placeholderTextColor="#94A3B8"
-                value={inputText}
-                onChangeText={setInputText}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
-          )}
-
-          {activeType === "topic" && (
-            <View>
-              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                {t("creation.paste_topic_description")}
-              </Text>
-              <TextInput
-                className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
-                style={{ height: 200 }}
-                placeholder={t(
-                  "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
-                )}
-                placeholderTextColor="#94A3B8"
-                value={inputText}
-                onChangeText={setInputText}
-                multiline
-                textAlignVertical="top"
-                scrollEnabled={true} // ✅ Allows internal scrolling
-                {...(Platform.OS === "android"
-                  ? { nestedScrollEnabled: true }
-                  : {})}
-              />
-            </View>
-          )}
-        </View>
-      </Animated.ScrollView>
-    </KeyboardAvoidingView>
+        {activeType === "topic" && (
+          <View>
+            <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+              {t("creation.paste_topic_description")}
+            </Text>
+            <TextInput
+              className="bg-input-light dark:bg-input-dark p-4 rounded-xl text-text-main-light dark:text-text-main-dark font-body border border-transparent focus:border-action outline-none border border-card-light dark:border-card-dark"
+              style={{ height: 200 }}
+              placeholder={t(
+                "creation.e.g._the_history_of_the_samurai_quantum_mechanics_101...",
+              )}
+              placeholderTextColor="#94A3B8"
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              textAlignVertical="top"
+              scrollEnabled={true} // ✅ Allows internal scrolling
+              {...(Platform.OS === "android"
+                ? { nestedScrollEnabled: true }
+                : {})}
+            />
+          </View>
+        )}
+      </View>
+    </Animated.ScrollView>
   );
 }
 
@@ -1438,6 +1514,7 @@ function PaywallStep({
   scrollIndex,
   isPurchasing,
   handlePurchase,
+  handleRestore,
 }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -1608,6 +1685,12 @@ function PaywallStep({
         <Text className="text-white/60 text-[10px] font-medium mt-4 text-center">
           {t("paywall.guarantee", "Cancel anytime. No questions asked.")}
         </Text>
+
+        <Pressable onPress={handleRestore} className="w-fit mt-2 self-center">
+          <Text className="text-text-main-light text-white/60 text-[11px] font-medium underline">
+            {t("paywall.restore")}
+          </Text>
+        </Pressable>
       </LinearGradient>
 
       <View className="flex-row justify-center gap-6 mt-6 opacity-60">

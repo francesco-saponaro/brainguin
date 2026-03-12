@@ -18,6 +18,7 @@ import {
   Linking,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -99,7 +100,16 @@ export default function OnboardingScreen() {
   useEffect(() => {
     const setupPurchases = async () => {
       try {
+        // 1. Configure the SDK
         await Purchases.configure({ apiKey: API_KEY });
+
+        // 🚨 2. CRITICAL: Log them into RevenueCat using their Supabase ID!
+        const currentUser = useAuthStore.getState().session?.user;
+        if (currentUser) {
+          await Purchases.logIn(currentUser.id);
+        }
+
+        // 3. Fetch offerings
         const offerings = await Purchases.getOfferings();
         if (
           offerings.current !== null &&
@@ -244,7 +254,12 @@ export default function OnboardingScreen() {
         })
         .eq("id", currentUser.id);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error(
+          "⚠️ Failed to save language preference, but continuing onboarding:",
+          dbError.message,
+        );
+      }
 
       // 2. Update Auth Metadata (The "source of truth" for your route guards)
       const {
@@ -593,7 +608,12 @@ export default function OnboardingScreen() {
 
       if (customerInfo.entitlements.active["pro"]) {
         // Unlock Pro Status in DB
-        await supabase.rpc("upgrade_user_to_pro");
+        // 🚨 SAFETY NET FOR RESTORE TOO
+        try {
+          await supabase.rpc("upgrade_user_to_pro");
+        } catch (dbError) {
+          console.error("DB failed on restore:", dbError);
+        }
 
         Toast.show({
           type: "success",
@@ -611,6 +631,64 @@ export default function OnboardingScreen() {
           text2: e.message,
         });
       }
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setIsPurchasing(true);
+    try {
+      console.log("⏳ Restoring purchases...");
+      const customerInfo = await Purchases.restorePurchases();
+
+      console.log(
+        "🧾 Restore Complete. Customer Info:",
+        JSON.stringify(customerInfo, null, 2),
+      );
+      console.log(
+        "🔑 Active Entitlements:",
+        Object.keys(customerInfo.entitlements.active),
+      );
+
+      // CHECK: Is the entitlement name actually "pro"?
+      // If your logs say "premium" or "Pro", change this string!
+      if (customerInfo.entitlements.active["pro"]) {
+        console.log("✅ 'pro' entitlement found active!");
+        // 🚨 SAFETY NET FOR RESTORE TOO
+        try {
+          await supabase.rpc("upgrade_user_to_pro");
+        } catch (dbError) {
+          console.error("DB failed on restore:", dbError);
+        }
+
+        Toast.show({
+          type: "success",
+          text1: t("paywall.restore_success_title"),
+          text2: t("paywall.restore_success_desc"),
+        });
+
+        // Finish onboarding completely!
+        completeOnboarding();
+      } else {
+        console.warn(
+          "❌ No active 'pro' entitlement found. Found:",
+          customerInfo.entitlements.active,
+        );
+
+        Toast.show({
+          type: "info",
+          text1: t("paywall.restore_no_purchase_title"),
+          text2: t("paywall.restore_no_purchase_desc"),
+        });
+      }
+    } catch (e: any) {
+      console.error("❌ Restore Error:", e);
+      Toast.show({
+        type: "error",
+        text1: t("paywall.restore_error_title"),
+        text2: e.message,
+      });
     } finally {
       setIsPurchasing(false);
     }
@@ -736,6 +814,7 @@ export default function OnboardingScreen() {
                   scrollIndex={scrollIndex}
                   isPurchasing={isPurchasing}
                   handlePurchase={handlePurchase}
+                  handleRestore={handleRestore}
                 />
               )}
             </View>
@@ -1435,6 +1514,7 @@ function PaywallStep({
   scrollIndex,
   isPurchasing,
   handlePurchase,
+  handleRestore,
 }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -1605,6 +1685,12 @@ function PaywallStep({
         <Text className="text-white/60 text-[10px] font-medium mt-4 text-center">
           {t("paywall.guarantee", "Cancel anytime. No questions asked.")}
         </Text>
+
+        <Pressable onPress={handleRestore} className="w-fit mt-2 self-center">
+          <Text className="text-text-main-light text-white/60 text-[11px] font-medium underline">
+            {t("paywall.restore")}
+          </Text>
+        </Pressable>
       </LinearGradient>
 
       <View className="flex-row justify-center gap-6 mt-6 opacity-60">
