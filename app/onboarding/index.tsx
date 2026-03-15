@@ -49,7 +49,7 @@ import TimesaverPng from "@/assets/images/timesaver.png";
 const API_KEY =
   Platform.OS === "ios"
     ? process.env.EXPO_PUBLIC_REVENUECAT_APPLE_PRODUCTION!
-    : "goog_YOUR_ANDROID_KEY";
+    : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_PRODUCTION!;
 
 type InputType = "document" | "url" | "topic";
 

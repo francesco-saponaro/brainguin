@@ -25,7 +25,7 @@ import Toast from "react-native-toast-message";
 const API_KEY =
   Platform.OS === "ios"
     ? process.env.EXPO_PUBLIC_REVENUECAT_APPLE_PRODUCTION!
-    : "goog_YOUR_ANDROID_KEY";
+    : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_PRODUCTION!;
 
 export default function PaywallScreen() {
   const { t } = useTranslation(); // Initialize translation
