@@ -5,6 +5,9 @@ import { Buffer } from "node:buffer";
 import mammoth from "npm:mammoth";
 import { PDFExtract } from "npm:pdf.js-extract";
 
+// NEW IMPORTS FOR YOUTUBE AND POWERPOINT
+import officeParser from "npm:officeparser";
+
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -76,6 +79,11 @@ Deno.serve(async (req) => {
              const result = await mammoth.extractRawText({ buffer: dataBuffer });
              cleanText = result.value;
              console.log(`✅ Word Doc Extracted: ${cleanText.length} chars`);
+         }
+         // ADDED POWERPOINT SUPPORT
+         else if (safeMime.includes('presentation') || safeMime.includes('powerpoint')) {
+             console.log("📊 Extracting PowerPoint Text...");
+             cleanText = await officeParser.parseOfficeAsync(dataBuffer);
          } 
          else if (safeMime.includes('text/plain')) {
              console.log("📃 Extracting Plain Text...");
@@ -94,8 +102,15 @@ Deno.serve(async (req) => {
          }
       } 
       else if (inputType === 'url') {
-       console.log("🌐 Scraping URL...");
-       if (data.includes('twitter.com') || data.includes('x.com')) {
+        console.log("🌐 Scraping URL...");
+        // ADDED YOUTUBE SUPPORT
+         if (data.includes('youtube.com') || data.includes('youtu.be')) {
+             console.log("🎥 Extracting YouTube Transcript...");
+             const transcript = await YoutubeTranscript.fetchTranscript(data);
+             // Join all the caption blocks into one giant string
+             cleanText = transcript.map(t => t.text).join(" ");
+         }
+         else if (data.includes('twitter.com') || data.includes('x.com')) {
              console.log("🐦 Using Twitter bypass...");
              // Convert https://x.com/user/status/123 to https://api.vxtwitter.com/user/status/123
              const vxUrl = data.replace('x.com', 'api.vxtwitter.com').replace('twitter.com', 'api.vxtwitter.com');
@@ -138,7 +153,8 @@ Deno.serve(async (req) => {
         //  if (!cleanText || cleanText.length < 100) throw new Error("Website content is too short or blocked.");
          }
       } 
-      else {
+     // If it's an image, we don't extract text here, we send the images directly to OpenAI
+      else if (inputType !== 'image') {
         cleanText = data;
       }
     } catch (extractError: any) {
@@ -186,6 +202,7 @@ Deno.serve(async (req) => {
         "detected_language": "The primary language of the source text",
         "title": "A short, catchy title for this deck (max 5 words) in the DETECTED LANGUAGE",
         "summary": "A brief summary of what this deck covers in the DETECTED LANGUAGE",
+        "extracted_text": "CRITICAL: If the user uploaded images, transcribe ALL the educational notes, formulas, and text found in the images here in high detail. If the user uploaded text/URL, leave this empty string.",
         "flashcards": [
            { 
              "question": "What is the powerhouse of the cell? (Must be in DETECTED LANGUAGE)", 
@@ -195,6 +212,32 @@ Deno.serve(async (req) => {
         ]
       }
     `;
+
+    let messagesForOpenAI = [];
+
+    if (inputType === 'image') {
+        // Data is an array of base64 strings
+        const imageContents = data.map((base64String: string) => ({
+            type: "image_url",
+            image_url: { url: `data:image/jpeg;base64,${base64String}` }
+        }));
+
+        messagesForOpenAI = [
+            { role: 'system', content: prompt },
+            { 
+              role: 'user', 
+              content: [
+                { type: "text", text: "Please extract the educational content from these images and generate flashcards." },
+                ...imageContents // Spreads all the images into the request!
+              ] 
+            }
+        ];
+    } else {
+        messagesForOpenAI = [
+            { role: 'system', content: prompt },
+            { role: 'user', content: `SOURCE MATERIAL:\n\n${cleanText}` }
+        ];
+    }
     
 
     const response = await fetchWithRetry('https://api.openai.com/v1/chat/completions', {
@@ -205,10 +248,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini', 
-        messages: [ // 👈 Fixed Syntax here
-          { role: 'system', content: prompt },
-          { role: 'user', content: `SOURCE MATERIAL:\n\n${cleanText}` }
-        ],
+        messages: messagesForOpenAI,
         response_format: { type: "json_object" },
         temperature: 0.0
       })
@@ -233,8 +273,10 @@ Deno.serve(async (req) => {
           user_id: userId,
           title: content.title || "New Study Deck",
           source_type: inputType,
-          // 🚨 CRITICAL: Save 15000 chars so "Generate More" actually works!
-          source_content: cleanText.substring(0, 15000)
+          // ✅ THE FIX: If it's an image, save the text OpenAI transcribed! Otherwise, use the cleanText.
+          source_content: inputType === 'image' 
+              ? (content.extracted_text || "No text could be extracted from image.").substring(0, 15000) 
+              : cleanText.substring(0, 15000)
         })
         .select().single();
       

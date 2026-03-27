@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useColorScheme } from "nativewind";
 // ❌ REMOVED: import * as FileSystem from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { PressableScale } from "pressto";
 import React, { useEffect, useState } from "react";
@@ -20,7 +21,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
-type InputType = "document" | "url" | "topic";
+type InputType = "document" | "url" | "topic" | "image";
 
 export default function CreationModal() {
   const insets = useSafeAreaInsets();
@@ -34,11 +35,11 @@ export default function CreationModal() {
   const [activeType, setActiveType] = useState<InputType>(type || "document");
   const [inputText, setInputText] = useState("");
   const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [selectedImages, setSelectedImages] = useState<
+    ImagePicker.ImagePickerAsset[]
+  >([]);
 
-  const handleCreateSubmit = async (
-    inputType: "document" | "url" | "topic",
-    inputData: any,
-  ) => {
+  const handleCreateSubmit = async (inputType: InputType, inputData: any) => {
     if (!session?.user) {
       Toast.show({ type: "error", text1: t("login_required") });
       return;
@@ -177,6 +178,8 @@ export default function CreationModal() {
           "application/msword",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           "text/plain",
+          "application/vnd.ms-powerpoint", // .ppt
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
         ],
         copyToCacheDirectory: true,
       });
@@ -192,9 +195,30 @@ export default function CreationModal() {
     }
   };
 
+  const handlePickImages = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsMultipleSelection: true, // Let them pick multiple!
+      quality: 0.4, // Compress to avoid crashing your backend payload limits
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      // Limit to max 4 images to prevent backend 5MB payload limit errors
+      if (result.assets.length > 4) {
+        Toast.show({ type: "info", text1: "Limited to 4 images at a time." });
+      }
+      setSelectedImages(result.assets.slice(0, 4));
+    }
+  };
+
   const handleSubmit = () => {
     if (activeType === "document" && selectedFile) {
       handleCreateSubmit("document", selectedFile);
+    } else if (activeType === "image" && selectedImages.length > 0) {
+      // Send the array of base64 strings to the backend
+      const base64Array = selectedImages.map((img) => img.base64);
+      handleCreateSubmit("image", base64Array);
     } else if (
       (activeType === "url" || activeType === "topic") &&
       inputText.length > 3
@@ -252,6 +276,7 @@ export default function CreationModal() {
         <View className="flex-row py-4 gap-2 bg-page-light dark:bg-page-dark w-full">
           {[
             { id: "document", label: "Doc", icon: "document-text" },
+            { id: "image", label: "Image", icon: "camera" },
             { id: "url", label: "URL", icon: "link" },
             { id: "topic", label: "Topic", icon: "bulb" },
           ].map((item) => (
@@ -390,6 +415,38 @@ export default function CreationModal() {
                   ? { nestedScrollEnabled: true }
                   : {})}
               />
+            </View>
+          )}
+
+          {activeType === "image" && (
+            <View>
+              <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
+                Upload up to 4 images related to your topic.
+              </Text>
+              <View className="flex-row gap-4 mb-4">
+                <PressableScale
+                  onPress={handlePickImages}
+                  style={{
+                    flex: 1,
+                    height: 100,
+                    borderRadius: 16,
+                    backgroundColor: "rgba(0,0,0,0.05)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="images" size={32} color="#F97316" />
+                  <Text className="font-bold mt-2 text-text-main-light dark:text-text-main-dark">
+                    Gallery
+                  </Text>
+                </PressableScale>
+              </View>
+
+              {selectedImages.length > 0 && (
+                <Text className="text-green-500 font-bold text-center mt-2">
+                  {selectedImages.length} Image(s) Ready!
+                </Text>
+              )}
             </View>
           )}
         </View>
