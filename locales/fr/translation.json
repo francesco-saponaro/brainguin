@@ -2,6 +2,7 @@
   "change_date": "Changer la date",
   "remove_date": "Supprimer la date",
   "document": "Document",
+  "image": "Image",
   "auth": {
     "welcome_back": "Bon retour!",
     "subtitle": "Connectez-vous pour continuer votre progression",
@@ -71,7 +72,11 @@
     "welcome_description": "Arrêtez de perdre des heures à surligner et réécrire des notes. BrainGuin utilise l'IA pour faire le gros du travail, transformant n'importe quel support en capsules de connaissances que vous retiendrez vraiment.",
 
     "creation_title": "Importez n'importe quoi. 📄",
-    "creation_description": "Vous avez un énorme PDF ? Un long article web ? Ou juste un sujet précis ? Donnez-le à BrainGuin. Notre IA digère instantanément votre document et en extrait les faits les plus importants.",
+    "creation_description": "BrainGuin s'occupe de tout. Fournissez-nous simplement votre matériel d'étude, et notre IA extraira instantanément les informations essentielles que vous devez vraiment connaître.",
+
+    "webpages": "Pages web",
+    "youtubevideos": "Vidéos YouTube",
+    "photos": "Photos",
 
     "science_title": "Hackez votre mémoire ⚡",
     "science_description": "Nous utilisons un algorithme de Répétition Espacée qui prédit quand vous êtes sur le point d'oublier un fait. Une échéance ? Fixez une Date d'Examen et nous ajusterons automatiquement votre rythme !",
@@ -112,7 +117,11 @@
     "new_creation_sprint": "Nouveau Sprint de Création",
     "tap_to_change_file": "Touchez pour changer le fichier",
     "tap_to_select_document": "Touchez pour sélectionner un document",
-    "paste_link": "Coller le lien",
+
+    "upload_notes": "Télécharger des notes ou des diapositives",
+    "tap_to_select_images": "Touchez pour sélectionner jusqu'à 4 images",
+    "paste_link": "Coller un lien de page web ou de vidéo YouTube",
+
     "what_do_you_want_to_learn": "Qu'est-ce que vous voulez apprendre ?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. L'histoire du samurai, Mécanique Quantique 101...",
     "generate_flashcards": "Générer des Flashcards",
@@ -266,8 +275,8 @@
     "url_content_error": "Le contenu du site est trop court ou bloqué.",
     "timeout_error": "Nombre maximal de tentatives dépassé."
   },
-  "load_document": "Charger un document",
-  "web_articles": "Coller une URL contenant du texte",
+  "load_document": "Charger n'importe quel document",
+  "web_articles": "Coller un lien de page web ou de vidéo YouTube",
   "ai_generation_load": "Coller ou écrire du texte",
   "start_session": "Démarrer la session",
   "great_job": "Beau travail !",

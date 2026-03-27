@@ -297,18 +297,18 @@ export default function HomeScreen() {
             onPress={() => openCreationModal("document")}
           />
           <ActionButton
+            icon="camera"
+            label={t("image")}
+            sub={t("creation.upload_notes")}
+            color="#EAB308"
+            onPress={() => openCreationModal("image")}
+          />
+          <ActionButton
             icon="link"
             label="URL"
             sub={t("web_articles")}
             color="#F97316"
-            // onPress={() => router.push("/onboarding")}
-            // onPress={() => router.push("/paywall")}
             onPress={() => openCreationModal("url")}
-            // onPress={() =>
-            //   router.replace(
-            //     `/study/2914d810-7bfe-4991-8963-04df2b0865e1?isNew=true`,
-            //   )
-            // }
           />
           <ActionButton
             icon="bulb"
@@ -523,7 +523,7 @@ function ActionButton({ icon, label, sub, color, onPress }: any) {
       >
         <Ionicons name={icon} size={28} color={color} />
       </View>
-      <View>
+      <View className="flex-1">
         <Text className="text-text-main-light dark:text-text-main-dark font-heading text-lg font-bold leading-tight">
           {label}
         </Text>

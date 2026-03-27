@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/storeUser";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
@@ -416,32 +417,50 @@ export default function CreationModal() {
               {activeType === "image" && (
                 <View>
                   <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                    Upload up to 4 images related to your topic.
+                    {t("creation.upload_notes")}
                   </Text>
-                  <View className="flex-row gap-4 mb-4">
-                    <PressableOpacity
-                      activateOnHover
-                      onPress={handlePickImages}
-                      style={{
-                        flex: 1,
-                        height: 100,
-                        borderRadius: 16,
-                        backgroundColor: "rgba(0,0,0,0.05)",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Ionicons name="images" size={32} color="#F97316" />
-                      <Text className="font-bold mt-2 text-text-main-light dark:text-text-main-dark">
-                        Gallery
-                      </Text>
-                    </PressableOpacity>
-                  </View>
-
-                  {selectedImages.length > 0 && (
-                    <Text className="text-green-500 font-bold text-center mt-2">
-                      {selectedImages.length} Image(s) Ready!
+                  <PressableOpacity
+                    activateOnHover
+                    onPress={handlePickImages}
+                    style={{
+                      width: "100%",
+                      height: 200,
+                      borderWidth: 2,
+                      borderStyle: "dashed",
+                      borderColor:
+                        colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                      borderRadius: 24,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor:
+                        colorScheme === "dark"
+                          ? "rgba(255,255,255,0.05)"
+                          : "rgba(0,0,0,0.05)",
+                      marginBottom: 16,
+                    }}
+                  >
+                    <Ionicons name="images" size={48} color="#94A3B8" />
+                    <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                      {t("creation.tap_to_select_images")}
                     </Text>
+                  </PressableOpacity>
+
+                  {selectedImages?.length > 0 && (
+                    <View className="flex-row items-center justify-center gap-3 mt-2 flex-wrap w-full">
+                      {selectedImages.map((img: any, index: number) => (
+                        <View
+                          key={index}
+                          className="rounded-xl overflow-hidden border-2 border-[#F97316] shadow-sm"
+                        >
+                          <Image
+                            source={{ uri: img.uri }}
+                            style={{ width: 64, height: 64 }}
+                            contentFit="cover"
+                            transition={200}
+                          />
+                        </View>
+                      ))}
+                    </View>
                   )}
                 </View>
               )}
@@ -461,14 +480,22 @@ export default function CreationModal() {
               borderRadius: 12,
               alignItems: "center",
               backgroundColor: (
-                activeType === "document" ? !selectedFile : inputText.length < 3
+                activeType === "document"
+                  ? !selectedFile
+                  : activeType === "image"
+                    ? !selectedImages.length
+                    : inputText.length < 3
               )
                 ? colorScheme === "dark"
                   ? "#334155"
                   : "#CBD5E1"
                 : "#F97316",
               opacity: (
-                activeType === "document" ? !selectedFile : inputText.length < 3
+                activeType === "document"
+                  ? !selectedFile
+                  : activeType === "image"
+                    ? !selectedImages.length
+                    : inputText.length < 3
               )
                 ? 0.5
                 : 1,

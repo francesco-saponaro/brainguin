@@ -46,6 +46,7 @@ import NerdPng from "@/assets/images/nerd.png";
 import PdfPng from "@/assets/images/pdf.png";
 import SmarterPng from "@/assets/images/smarter.png";
 import TimesaverPng from "@/assets/images/timesaver.png";
+import { t } from "i18next";
 
 const API_KEY =
   Platform.OS === "ios"
@@ -1253,6 +1254,39 @@ function AnimatedInfoStep({ step, index, scrollIndex, windowWidth }: any) {
         <Text className="text-base font-body text-text-muted-light dark:text-text-muted-dark text-center leading-relaxed">
           {step.description}
         </Text>
+
+        {step.id === "creation" ? (
+          <View className="mt-8 flex-row justify-center w-full px-2 max-w-[400px] self-center">
+            {/* Left Column (3 rows) */}
+            <View className="flex-col gap-y-4 flex-1 items-start pr-2">
+              <Text className="text-[15px] font-heading font-bold text-text-main-light dark:text-text-main-dark tracking-wide">
+                <Text className="text-[#F97316]">•</Text> PDF
+              </Text>
+              <Text className="text-[15px] font-heading font-bold text-text-main-light dark:text-text-main-dark tracking-wide">
+                <Text className="text-[#F97316]">•</Text> PowerPoint
+              </Text>
+              <Text className="text-[15px] font-heading font-bold text-text-main-light dark:text-text-main-dark tracking-wide leading-tight">
+                <Text className="text-[#F97316]">•</Text> Word, Text, etc.
+              </Text>
+            </View>
+
+            {/* Right Column (3 rows) */}
+            <View className="flex-col gap-y-4 flex-1 items-start pl-2">
+              <Text className="text-[15px] font-heading font-bold text-text-main-light dark:text-text-main-dark tracking-wide">
+                <Text className="text-[#F97316]">•</Text>{" "}
+                {t("onboarding.websites", "Websites/Articles")}
+              </Text>
+              <Text className="text-[15px] font-heading font-bold text-text-main-light dark:text-text-main-dark tracking-wide">
+                <Text className="text-[#F97316]">•</Text>{" "}
+                {t("onboarding.youtubevideos", "YouTube Videos")}
+              </Text>
+              <Text className="text-[15px] font-heading font-bold text-text-main-light dark:text-text-main-dark tracking-wide">
+                <Text className="text-[#F97316]">•</Text>{" "}
+                {t("onboarding.photos", "Photos")}
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </Animated.View>
     </ScrollView>
   );
@@ -1458,31 +1492,48 @@ function TryItOutStep({
         {activeType === "image" && (
           <View>
             <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-              Upload Notes or Slides (Max 4)
+              {t("creation.upload_notes")}
             </Text>
-            <View className="flex-row gap-4 mb-4">
-              <PressableScale
-                onPress={handlePickImages}
-                style={{
-                  flex: 1,
-                  height: 100,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(0,0,0,0.05)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name="images" size={32} color="#F97316" />
-                <Text className="font-bold mt-2 text-text-main-light dark:text-text-main-dark">
-                  Gallery
-                </Text>
-              </PressableScale>
-            </View>
+            <PressableScale
+              onPress={handlePickImages}
+              style={{
+                width: "100%",
+                height: 200,
+                borderWidth: 2,
+                borderStyle: "dashed",
+                borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                borderRadius: 24,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor:
+                  colorScheme === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                marginBottom: 16,
+              }}
+            >
+              <Ionicons name="images" size={48} color="#94A3B8" />
+              <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                {t("creation.tap_to_select_images")}
+              </Text>
+            </PressableScale>
 
             {selectedImages?.length > 0 && (
-              <Text className="text-green-500 font-bold text-center mt-2">
-                {selectedImages.length} Image(s) Ready!
-              </Text>
+              <View className="flex-row items-center justify-center gap-3 mt-2 flex-wrap w-full">
+                {selectedImages.map((img: any, index: number) => (
+                  <View
+                    key={index}
+                    className="rounded-xl overflow-hidden border-2 border-[#F97316] shadow-sm"
+                  >
+                    <Image
+                      source={{ uri: img.uri }}
+                      style={{ width: 64, height: 64 }}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  </View>
+                ))}
+              </View>
             )}
           </View>
         )}

@@ -2,6 +2,7 @@
   "change_date": "Change Date",
   "remove_date": "Remove Date",
   "document": "Document",
+  "image": "Image",
   "auth": {
     "document": "Document",
     "welcome_back": "Welcome Back!",
@@ -72,7 +73,11 @@
     "welcome_description": "Stop wasting hours highlighting textbooks and rewriting notes. BrainGuin uses AI to do the heavy lifting, turning any study material into bite-sized knowledge you will actually remember.",
 
     "creation_title": "Upload Anything. Literally. 📄",
-    "creation_description": "Got a massive PDF? A long web article? Or just a specific topic? Feed it to BrainGuin. Our AI instantly digests your material and extracts the absolute most important facts for you.",
+    "creation_description": "BrainGuin handles it all. Just feed us your study material, and our AI will instantly extract the core facts you actually need to know.",
+
+    "webpages": "Web pages",
+    "youtubevideos": "YouTube videos",
+    "photos": "Photos",
 
     "science_title": "Hack Your Memory ⚡",
     "science_description": "We use a science-backed Spaced Repetition algorithm that predicts exactly when you are about to forget a fact and brings it back to you. Got a deadline? Set an Exam Date and we'll automatically adjust your daily pace!",
@@ -113,7 +118,11 @@
     "new_creation_sprint": "New Creation Sprint",
     "tap_to_change_file": "Tap to change file",
     "tap_to_select_document": "Tap to select a Document",
-    "paste_link": "Paste Link",
+
+    "upload_notes": "Upload Notes or Slides",
+    "tap_to_select_images": "Tap to select up to 4 images",
+    "paste_link": "Paste a Webpage or Youtube Link",
+
     "what_do_you_want_to_learn": "What do you want to learn?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. The history of the Samurai, Quantum Mechanics 101...",
     "generate_flashcards": "Generate Flashcards",
@@ -268,9 +277,10 @@
     "url_content_error": "Website content is too short or blocked.",
     "timeout_error": "Max retries exceeded. Please try again."
   },
-  "load_document": "Load a Document",
-  "web_articles": "Paste a URL containing text",
+  "load_document": "Load any Document",
+  "web_articles": "Paste a Webpage or Youtube Link",
   "ai_generation_load": "Paste or write text",
+
   "start_session": "Start Session",
   "great_job": "Great Job!",
   "memorized": "Memorized",

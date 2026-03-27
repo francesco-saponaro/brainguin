@@ -286,7 +286,7 @@ export default function LibraryScreen() {
 
   // --- 5. GENERATE MORE LOGIC ---
   const handleGenerateMore = async (item: any) => {
-    if (!session?.user) return;
+    if (!session?.user || item.source_type === "image") return;
     try {
       const { data: limitData, error: limitError } = await supabase.rpc(
         "check_user_limit",
@@ -751,7 +751,7 @@ function DeckCard({
             </Text>
           </StyledPressable>
 
-          {!isCompleted && !isArchived && (
+          {!isCompleted && !isArchived && item.source_type !== "image" && (
             <StyledPressable
               onPress={onGenerate}
               activateOnHover

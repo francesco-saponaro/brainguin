@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useColorScheme } from "nativewind";
 // ❌ REMOVED: import * as FileSystem from "expo-file-system";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { PressableScale } from "pressto";
@@ -40,6 +41,8 @@ export default function CreationModal() {
   >([]);
 
   const handleCreateSubmit = async (inputType: InputType, inputData: any) => {
+    console.log("Create Submit Triggered with:", { inputType, inputData });
+
     if (!session?.user) {
       Toast.show({ type: "error", text1: t("login_required") });
       return;
@@ -213,9 +216,11 @@ export default function CreationModal() {
   };
 
   const handleSubmit = () => {
+    console.log("Submit Clicked with State:");
     if (activeType === "document" && selectedFile) {
       handleCreateSubmit("document", selectedFile);
     } else if (activeType === "image" && selectedImages.length > 0) {
+      console.log("Selected Images for Submission:", selectedImages);
       // Send the array of base64 strings to the backend
       const base64Array = selectedImages.map((img) => img.base64);
       handleCreateSubmit("image", base64Array);
@@ -421,31 +426,48 @@ export default function CreationModal() {
           {activeType === "image" && (
             <View>
               <Text className="text-text-main-light dark:text-text-main-dark font-heading mb-2 ml-1">
-                Upload up to 4 images related to your topic.
+                {t("creation.upload_notes")}
               </Text>
-              <View className="flex-row gap-4 mb-4">
-                <PressableScale
-                  onPress={handlePickImages}
-                  style={{
-                    flex: 1,
-                    height: 100,
-                    borderRadius: 16,
-                    backgroundColor: "rgba(0,0,0,0.05)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Ionicons name="images" size={32} color="#F97316" />
-                  <Text className="font-bold mt-2 text-text-main-light dark:text-text-main-dark">
-                    Gallery
-                  </Text>
-                </PressableScale>
-              </View>
-
-              {selectedImages.length > 0 && (
-                <Text className="text-green-500 font-bold text-center mt-2">
-                  {selectedImages.length} Image(s) Ready!
+              <PressableScale
+                onPress={handlePickImages}
+                style={{
+                  width: "100%",
+                  height: 200,
+                  borderWidth: 2,
+                  borderStyle: "dashed",
+                  borderColor: colorScheme === "dark" ? "#475569" : "#CBD5E1",
+                  borderRadius: 24,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                  marginBottom: 16,
+                }}
+              >
+                <Ionicons name="images" size={48} color="#94A3B8" />
+                <Text className="text-text-muted-light dark:text-text-muted-dark font-body font-bold mt-2">
+                  {t("creation.tap_to_select_images")}
                 </Text>
+              </PressableScale>
+
+              {selectedImages?.length > 0 && (
+                <View className="flex-row items-center justify-center gap-3 mt-2 flex-wrap w-full">
+                  {selectedImages.map((img: any, index: number) => (
+                    <View
+                      key={index}
+                      className="rounded-xl overflow-hidden border-2 border-[#F97316] shadow-sm"
+                    >
+                      <Image
+                        source={{ uri: img.uri }}
+                        style={{ width: 64, height: 64 }}
+                        contentFit="cover"
+                        transition={200}
+                      />
+                    </View>
+                  ))}
+                </View>
               )}
             </View>
           )}
@@ -459,7 +481,13 @@ export default function CreationModal() {
           paddingHorizontal: 24,
         }}
         pointerEvents={
-          (activeType === "document" ? !selectedFile : inputText.length < 3)
+          (
+            activeType === "document"
+              ? !selectedFile
+              : activeType === "image"
+                ? !selectedImages.length
+                : inputText.length < 3
+          )
             ? "none"
             : "auto"
         }
@@ -473,27 +501,43 @@ export default function CreationModal() {
             borderRadius: 12,
             alignItems: "center",
             backgroundColor: (
-              activeType === "document" ? !selectedFile : inputText.length < 3
+              activeType === "document"
+                ? !selectedFile
+                : activeType === "image"
+                  ? !selectedImages.length
+                  : inputText.length < 3
             )
               ? colorScheme === "dark"
                 ? "#334155"
                 : "#CBD5E1"
               : "#F97316",
             opacity: (
-              activeType === "document" ? !selectedFile : inputText.length < 3
+              activeType === "document"
+                ? !selectedFile
+                : activeType === "image"
+                  ? !selectedImages.length
+                  : inputText.length < 3
             )
               ? 0.5
               : 1,
             shadowColor: "#F97316",
             shadowOffset: { width: 0, height: 10 },
             shadowOpacity: (
-              activeType === "document" ? !selectedFile : inputText.length < 3
+              activeType === "document"
+                ? !selectedFile
+                : activeType === "image"
+                  ? !selectedImages.length
+                  : inputText.length < 3
             )
               ? 0
               : 0.2,
             shadowRadius: 20,
             elevation: (
-              activeType === "document" ? !selectedFile : inputText.length < 3
+              activeType === "document"
+                ? !selectedFile
+                : activeType === "image"
+                  ? !selectedImages.length
+                  : inputText.length < 3
             )
               ? 0
               : 5,

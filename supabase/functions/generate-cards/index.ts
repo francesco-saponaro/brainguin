@@ -6,7 +6,7 @@ import mammoth from "npm:mammoth";
 import { PDFExtract } from "npm:pdf.js-extract";
 
 // NEW IMPORTS FOR YOUTUBE AND POWERPOINT
-import officeParser from "npm:officeparser";
+import officeParser from "https://esm.sh/officeparser@6.0.7?target=deno";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -83,7 +83,8 @@ Deno.serve(async (req) => {
          // ADDED POWERPOINT SUPPORT
          else if (safeMime.includes('presentation') || safeMime.includes('powerpoint')) {
              console.log("📊 Extracting PowerPoint Text...");
-             cleanText = await officeParser.parseOfficeAsync(dataBuffer);
+             const ast = await officeParser.parseOffice(dataBuffer);
+             cleanText = ast.toText();
          } 
          else if (safeMime.includes('text/plain')) {
              console.log("📃 Extracting Plain Text...");
@@ -104,13 +105,14 @@ Deno.serve(async (req) => {
       else if (inputType === 'url') {
         console.log("🌐 Scraping URL...");
         // ADDED YOUTUBE SUPPORT
-         if (data.includes('youtube.com') || data.includes('youtu.be')) {
-             console.log("🎥 Extracting YouTube Transcript...");
-             const transcript = await YoutubeTranscript.fetchTranscript(data);
-             // Join all the caption blocks into one giant string
-             cleanText = transcript.map(t => t.text).join(" ");
-         }
-         else if (data.includes('twitter.com') || data.includes('x.com')) {
+        //  if (data.includes('youtube.com') || data.includes('youtu.be')) {
+        //      console.log("🎥 Extracting YouTube Transcript...");
+        //      const transcript = await YoutubeTranscript.fetchTranscript(data);
+        //      // Join all the caption blocks into one giant string
+        //      cleanText = transcript.map(t => t.text).join(" ");
+        //  }
+        //  else 
+          if (data.includes('twitter.com') || data.includes('x.com')) {
              console.log("🐦 Using Twitter bypass...");
              // Convert https://x.com/user/status/123 to https://api.vxtwitter.com/user/status/123
              const vxUrl = data.replace('x.com', 'api.vxtwitter.com').replace('twitter.com', 'api.vxtwitter.com');

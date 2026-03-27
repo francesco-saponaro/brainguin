@@ -2,6 +2,7 @@
   "change_date": "Cambiar fecha",
   "remove_date": "Eliminar fecha",
   "document": "Documento",
+  "image": "Imagen",
   "auth": {
     "welcome_back": "¡Hola de nuevo!",
     "subtitle": "Inicia sesión para continuar tu progreso",
@@ -80,7 +81,11 @@
     "welcome_description": "Deja de perder horas subrayando libros y reescribiendo apuntes. BrainGuin usa IA para hacer el trabajo pesado, convirtiendo cualquier material en dosis de conocimiento que realmente recordarás.",
 
     "creation_title": "Sube cualquier cosa. 📄",
-    "creation_description": "¿Tienes un PDF enorme? ¿Un artículo web largo? ¿O solo un tema específico? Dáselo a BrainGuin. Nuestra IA asimila instantáneamente tu material y extrae los datos más importantes.",
+    "creation_description": "BrainGuin se encarga de todo. Solo danos tu material de estudio, y nuestra IA extraerá instantáneamente los datos clave que realmente necesitas saber.",
+
+    "webpages": "Páginas web",
+    "youtubevideos": "Videos de YouTube",
+    "photos": "Fotos",
 
     "science_title": "Hackea tu memoria ⚡",
     "science_description": "Usamos un algoritmo de Repetición Espaciada que predice cuándo estás a punto de olvidar un dato. ¿Tienes una fecha límite? ¡Configura una Fecha de Examen y ajustaremos tu ritmo diario!",
@@ -121,7 +126,11 @@
     "new_creation_sprint": "Nuevo Sprint de Creación",
     "tap_to_change_file": "Toca para cambiar archivo",
     "tap_to_select_document": "Toca para seleccionar un documento",
-    "paste_link": "Pegar enlace",
+
+    "upload_notes": "Sube notas o diapositivas",
+    "tap_to_select_images": "Toca para seleccionar hasta 4 imágenes",
+    "paste_link": "Pega un enlace de página web o video de YouTube",
+
     "what_do_you_want_to_learn": "¿Qué quieres aprender?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. La historia del samurai, Mecánica Cuántica 101...",
     "generate_flashcards": "Generar Flashcards",
@@ -268,8 +277,9 @@
     "expansion_failed": "Error al expandir",
     "delete_failed": "Error al eliminar"
   },
-  "load_document": "Cargar un documento",
-  "web_articles": "Pegar una URL que contenga texto",
+  "load_document": "Cargar cualquier documento",
+  "web_articles": "Pega un enlace de página web o video de YouTube",
+
   "ai_generation_load": "Pegar o escribir texto",
   "start_session": "Iniciar sesión",
   "great_job": "¡Buen trabajo!",

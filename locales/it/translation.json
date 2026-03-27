@@ -2,6 +2,7 @@
   "change_date": "Cambia data",
   "remove_date": "Rimuovi data",
   "document": "Documento",
+  "image": "Immagine",
   "auth": {
     "document": "Documento",
     "welcome_back": "Bentornato!",
@@ -72,7 +73,11 @@
     "welcome_description": "Smetti di perdere ore a sottolineare libri e riscrivere appunti. BrainGuin usa l'IA per fare il lavoro pesante, trasformando qualsiasi materiale in pillole di conoscenza che ricorderai davvero.",
 
     "creation_title": "Carica qualsiasi cosa. 📄",
-    "creation_description": "Hai un enorme PDF? Un lungo articolo web? O un argomento specifico? Dallo in pasto a BrainGuin. La nostra IA digerisce istantaneamente il materiale ed estrae i concetti più importanti.",
+    "creation_description": "BrainGuin si occupa di tutto. Dacci semplicemente il tuo materiale di studio e la nostra IA estrarrà all'istante i concetti fondamentali che devi davvero sapere.",
+
+    "webpages": "Pagine web",
+    "youtubevideos": "Video YouTube",
+    "photos": "Foto",
 
     "science_title": "Hackera la tua memoria ⚡",
     "science_description": "Usiamo un algoritmo di Ripetizione Spaziata che prevede esattamente quando stai per dimenticare un'informazione. Hai una scadenza? Imposta la Data dell'Esame e adatteremo il tuo ritmo!",
@@ -113,7 +118,11 @@
     "new_creation_sprint": "Nuovo Sprint di Creazione",
     "tap_to_change_file": "Tocca per cambiare il file",
     "tap_to_select_document": "Tocca per selezionare un documento",
-    "paste_link": "Incolla il link",
+
+    "upload_notes": "Carica note o diapositive",
+    "tap_to_select_images": "Tocca per selezionare fino a 4 immagini",
+    "paste_link": "Incolla un link di una Pagina Web o YouTube",
+
     "what_do_you_want_to_learn": "Cosa vuoi imparare?",
     "e.g._the_history_of_the_samurai_quantum_mechanics_101...": "e.g. La storia del Samurai, Meccanica Quantistica 101...",
     "generate_flashcards": "Genera le Flashcard",
@@ -267,8 +276,8 @@
     "url_content_error": "Il contenuto del sito è troppo breve o bloccato.",
     "timeout_error": "Numero massimo di tentativi superato."
   },
-  "load_document": "Carica un documento",
-  "web_articles": "Incolla un URL contenente il testo",
+  "load_document": "Carica qualsiasi documento",
+  "web_articles": "Incolla link di una pagina web o video YouTube",
   "ai_generation_load": "Incolla o scrivi il testo",
   "start_session": "Inizia Sessione",
   "great_job": "Ottimo lavoro!",

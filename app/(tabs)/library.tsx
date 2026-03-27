@@ -141,7 +141,7 @@ export default function LibraryScreen() {
   );
   // 2. Source Type (Document, URL...)
   const [filterType, setFilterType] = useState<
-    "all" | "document" | "url" | "topic"
+    "all" | "document" | "url" | "topic" | "image"
   >("all");
   // 3. Deck Status (Active vs Archived) - Default to 'active' to hide clutter
   const [filterStatus, setFilterStatus] = useState<
@@ -306,7 +306,7 @@ export default function LibraryScreen() {
 
   // --- 5. GENERATE MORE LOGIC ---
   const handleGenerateMore = async (item: any) => {
-    if (!session?.user) return;
+    if (!session?.user || item.source_type === "image") return;
     try {
       const { data: limitData, error: limitError } = await supabase.rpc(
         "check_user_limit",
@@ -600,6 +600,12 @@ function DeckCard({
           color:
             "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
         };
+      case "image":
+        return {
+          label: t("image"),
+          color:
+            "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+        };
       case "url":
         return {
           label: t("library.source_badges.url"),
@@ -757,7 +763,7 @@ function DeckCard({
             </Text>
           </View>
 
-          {!isCompleted && !isArchived && (
+          {!isCompleted && !isArchived && item.source_type !== "image" && (
             <StyledPressable
               onPress={onGenerate}
               activateOnHover
@@ -971,7 +977,7 @@ function FilterModal({
             {t("library.source_type")}
           </Text>
           <View className="flex-row flex-wrap gap-2 mb-10">
-            {["all", "document", "url", "topic"].map((type: any) => (
+            {["all", "document", "url", "topic", "image"].map((type: any) => (
               <PressableFinal
                 key={type}
                 activateOnHover
