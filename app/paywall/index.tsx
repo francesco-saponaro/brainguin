@@ -272,7 +272,7 @@ export default function PaywallScreen() {
             <View className="flex-row items-baseline mb-1">
               {pkg ? (
                 <Text className="text-white font-heading text-4xl font-bold">
-                  {pkg.product.priceString || "€29.99"}
+                  {pkg.product.priceString || "€14.99"}
                 </Text>
               ) : null}
               <Text className="text-white/90 font-body text-base ml-1">

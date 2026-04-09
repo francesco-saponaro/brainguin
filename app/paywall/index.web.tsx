@@ -128,7 +128,7 @@ export default function PaywallScreen() {
   const openLegal = (url: string) => Linking.openURL(url);
 
   // --- UI FALLBACKS (Since we aren't fetching RevenueCat arrays anymore) ---
-  const displayPrice = "€29.99";
+  const displayPrice = "€14.99";
   const displayMonthly = "2.50 €";
 
   return (

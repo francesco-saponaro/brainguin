@@ -1665,7 +1665,7 @@ function PaywallStep({
           <View className="flex-row items-baseline mb-1">
             <View className="flex-row items-baseline mb-1">
               <Text className="text-white font-heading text-4xl font-bold">
-                €29.99
+                €14.99
               </Text>
               <Text className="text-white/90 font-body text-base ml-1">
                 {t("paywall.perYear", "/ year")}
