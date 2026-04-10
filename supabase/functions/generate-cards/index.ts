@@ -161,8 +161,12 @@ Deno.serve(async (req) => {
       }
     } catch (extractError: any) {
       console.error("Extraction Failed:", extractError);
+      // return new Response(JSON.stringify({ error: `Content Error: ${extractError.message}` }), { 
+      //     status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      // });
       return new Response(JSON.stringify({ error: `Content Error: ${extractError.message}` }), { 
-          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          status: 200, // 👈 CHANGE THIS FROM 400 TO 200
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
 
@@ -316,8 +320,12 @@ Deno.serve(async (req) => {
 
   } catch (error: any) {
     console.error("🔥 Fatal Edge Function Error:", error.message);
+    // return new Response(JSON.stringify({ error: error.message }), {
+    //   status: 400,
+    //   headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // });
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+      status: 200, // 👈 CHANGE THIS FROM 400 TO 200
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

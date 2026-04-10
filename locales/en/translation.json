@@ -62,9 +62,6 @@
     "passwordTooShort": "Password must be at least 6 characters",
     "passwordsDoNotMatch": "Passwords do not match"
   },
-  "errors": {
-    "generic": "Something went wrong. Please try again."
-  },
   "onboarding": {
     "language_title": "Choose Your Language 🌍",
     "language_description": "Select the language you'd like to use BrainGuin in. Don't worry, you can always change this later in your settings!",
@@ -275,7 +272,8 @@
     "document_empty": "Document text is empty or unreadable.",
     "url_access_error": "Failed to access URL.",
     "url_content_error": "Website content is too short or blocked.",
-    "timeout_error": "Max retries exceeded. Please try again."
+    "timeout_error": "Max retries exceeded. Please try again.",
+    "generic": "Something went wrong. Please try again."
   },
   "load_document": "Load any Document",
   "web_articles": "Paste a Webpage or Youtube Link",

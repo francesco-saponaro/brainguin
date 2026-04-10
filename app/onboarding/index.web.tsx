@@ -419,6 +419,20 @@ export default function OnboardingScreen() {
       let errorText = t("errors.generic"); // Default fallback
       const rawMsg = e.message || "";
 
+      if (
+        rawMsg.includes("Document text is empty") ||
+        rawMsg.includes("might be a scanned image")
+      ) {
+        Toast.show({
+          type: "info", // 'info' is usually blue/gray, making it feel like helpful advice rather than a crash
+          text1: "Scanned PDF Detected 📸",
+          text2:
+            "This PDF has no digital text. Please take screenshots and use the 'Image' tab instead!",
+          visibilityTime: 5000, // Show it a bit longer so they can read the instructions
+        });
+        return; // Stop execution here so the generic error toast below does not fire
+      }
+
       if (rawMsg.includes("Document text is empty")) {
         errorText = t("errors.document_empty");
       } else if (rawMsg.includes("Failed to access URL")) {
